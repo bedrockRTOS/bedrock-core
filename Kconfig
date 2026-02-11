@@ -1,0 +1,61 @@
+/*
+ * Project: bedrock[RTOS]
+ * Version: 0.0.1
+ * Author:  AnmiTaliDev <anmitalidev@nuros.org>
+ * License: BSD 3-Clause
+ */
+
+mainmenu "bedrock[RTOS] Configuration"
+
+config MAX_TASKS
+    int "Maximum number of tasks"
+    default 16
+    range 2 256
+    help
+      Maximum number of tasks that can be created.
+      Each task consumes one TCB slot from a statically
+      allocated array.
+
+config NUM_PRIORITIES
+    int "Number of priority levels"
+    default 8
+    range 2 32
+    help
+      Number of distinct priority levels (0 = highest).
+      The idle task always runs at the lowest priority.
+
+config DEFAULT_STACK_SIZE
+    int "Default task stack size (bytes)"
+    default 1024
+    range 128 65536
+    help
+      Default stack size for tasks when not specified
+      at creation time. Also used for the idle task.
+
+config TICKLESS
+    bool "Enable tickless operation"
+    default y
+    help
+      When enabled, the kernel uses one-shot hardware
+      timer alarms instead of periodic ticks. Reduces
+      power consumption and improves timing accuracy.
+
+menu "Hardware"
+
+choice ARCH
+    prompt "Target architecture"
+    default ARCH_ARM_CORTEX_M
+
+config ARCH_ARM_CORTEX_M
+    bool "ARM Cortex-M"
+
+endchoice
+
+config SYS_CLOCK_HZ
+    int "System clock frequency (Hz)"
+    default 16000000
+    help
+      The core clock frequency of the target MCU.
+      Used by the HAL timer to compute microsecond timestamps.
+
+endmenu

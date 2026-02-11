@@ -1,0 +1,74 @@
+variables:
+  CC: "arm-none-eabi-gcc"
+  AR: "arm-none-eabi-ar"
+  OBJCOPY: "arm-none-eabi-objcopy"
+  CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib -DCONFIG_MAX_TASKS=16 -DCONFIG_NUM_PRIORITIES=8 -DCONFIG_DEFAULT_STACK_SIZE=1024 -DCONFIG_TICKLESS=1 -DBR_HAL_SYS_CLOCK_HZ=16000000"
+  LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/qemu-cortex-m3/linker.ld -mcpu=cortex-m3 -mthumb"
+
+targets:
+  all:
+    deps: [bedrock_example.elf]
+
+  br_sched.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_sched.c -o ${@}"
+
+  br_time.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_time.c -o ${@}"
+
+  br_task.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_task.c -o ${@}"
+
+  br_ipc.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_ipc.c -o ${@}"
+
+  br_hal_timer.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_timer.c -o ${@}"
+
+  br_hal_context.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  br_hal_uart.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_uart.c -o ${@}"
+
+  startup.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/startup.c -o ${@}"
+
+  br_pool.o:
+    cmds:
+      - "${CC} ${CFLAGS} lib/br_pool.c -o ${@}"
+
+  main.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/main.c -o ${@}"
+
+  libbedrock_kernel.a:
+    deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  libbedrock_hal.a:
+    deps: [br_hal_timer.o, br_hal_context.o, br_hal_uart.o, startup.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  libbedrock_lib.a:
+    deps: [br_pool.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  bedrock_example.elf:
+    deps: [main.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} main.o -L. -lbedrock_kernel -lbedrock_hal -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
+  clean:
+    cmds:
+      - "rm -f *.o *.a *.elf *.bin"

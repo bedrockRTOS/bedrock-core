@@ -1,0 +1,24 @@
+# Build artifacts
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+
+# Chorus build system
+build/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.ccls-cache/
+compile_commands.json
+
+# OS junk
+.DS_Store
+Thumbs.db
