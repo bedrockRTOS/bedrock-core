@@ -21,6 +21,9 @@
 volatile void **br_hal_old_sp_ptr;
 volatile void **br_hal_new_sp_ptr;
 
+/* Pointer to first task's SP for SVC_Handler */
+static void *br_hal_first_task_sp __attribute__((used));
+
 /*
  * Stack frame layout for Cortex-M (initial frame)
  *
@@ -73,21 +76,17 @@ void br_hal_context_switch(void **old_sp, void **new_sp)
 
 void br_hal_start_first_task(void *sp)
 {
+    /* We need to trigger an exception return to properly enter thread mode with PSP.
+     * The cleanest way is to use SVC (supervisor call) exception. */
     __asm volatile (
-        "msr psp, %0        \n"
-        "mov r0, #2          \n"
-        "msr control, r0     \n"
-        "isb                 \n"
-        /* Restore software-saved R4-R11 from initial stack frame */
-        "mrs r0, psp         \n"
-        "ldmia r0!, {r4-r11} \n"
-        "msr psp, r0         \n"
-        /* Hardware will pop R0-R3,R12,LR,PC,xPSR on exception return */
-        "ldr lr, =0xFFFFFFFD \n"  /* EXC_RETURN: thread mode, PSP */
-        "bx lr               \n"
+        /* Save the initial SP pointer */
+        "ldr r0, =br_hal_first_task_sp \n"
+        "str %0, [r0]                   \n"
+        /* Trigger SVC exception which will do the actual switch */
+        "svc 0                          \n"
         :
         : "r" (sp)
-        : "memory"
+        : "r0", "memory"
     );
 
     while (1) { }
@@ -133,5 +132,38 @@ void PendSV_Handler(void)
         /* Return to thread mode using PSP */
         "ldr   lr, =0xFFFFFFFD      \n"
         "bx    lr                    \n"
+    );
+}
+
+/*
+ * SVC handler (start first task)
+ *
+ * This is called by br_hal_start_first_task via "svc 0" instruction.
+ * It switches from handler mode (MSP) to thread mode (PSP) and starts
+ * the first task.
+ */
+
+__attribute__((naked))
+void SVC_Handler(void)
+{
+    __asm volatile (
+        /* Load the first task's SP */
+        "ldr r0, =br_hal_first_task_sp \n"
+        "ldr r0, [r0]                  \n"
+        
+        /* Restore R4-R11 from the stack frame */
+        "ldmia r0!, {r4-r11}           \n"
+        
+        /* Set PSP to the adjusted stack pointer */
+        "msr psp, r0                   \n"
+        
+        /* Switch to unprivileged thread mode using PSP */
+        "mov r0, #2                    \n"
+        "msr control, r0               \n"
+        "isb                           \n"
+        
+        /* Return to thread mode with PSP - hardware will pop remaining registers */
+        "ldr lr, =0xFFFFFFFD           \n"
+        "bx lr                         \n"
     );
 }

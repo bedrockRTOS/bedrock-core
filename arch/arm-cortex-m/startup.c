@@ -17,6 +17,7 @@ extern uint32_t _sbss, _ebss;
 extern int main(void);
 extern void SysTick_Handler(void);
 extern void PendSV_Handler(void);
+extern void SVC_Handler(void);
 
 void Reset_Handler(void)
 {
@@ -50,7 +51,7 @@ const uint32_t vectors[] = {
     (uint32_t)Default_Handler,  /* BusFault */
     (uint32_t)Default_Handler,  /* UsageFault */
     0, 0, 0, 0,                 /* Reserved */
-    (uint32_t)Default_Handler,  /* SVCall */
+    (uint32_t)SVC_Handler,      /* SVCall */
     (uint32_t)Default_Handler,  /* Debug */
     0,                          /* Reserved */
     (uint32_t)PendSV_Handler,

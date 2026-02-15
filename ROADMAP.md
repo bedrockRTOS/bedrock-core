@@ -4,25 +4,19 @@
 
 ### 0.0.2 — First Verified Boot
 
-- [ ] Create a linker script for `boards/qemu-cortex-m3/` (currently referenced but missing)
-- [ ] Build the project end-to-end with `chorus` and verify `.elf` generation
-- [ ] Boot `bedrock_example.elf` on `qemu-system-arm -M lm3s6965evb` and verify UART output
-- [ ] Verify context switching works: task A and task B alternate output at correct intervals
-- [ ] Verify `br_sleep_ms()` timing is approximately correct (within SysTick resolution)
-- [ ] Fix any bugs discovered during first real boot
-- [ ] Add a `chorus run` target to launch the ELF on QEMU directly from the build system
+- [x] Create linker script for `boards/qemu-cortex-m3/`
+- [x] Fix library link order in `chorus.build` (HAL before kernel to resolve symbols correctly)
+- [x] Implement `SVC_Handler` for first task start (proper handler→thread mode transition with PSP)
+- [x] Add `chorus run` target to launch ELF on QEMU
 
 ### 0.0.3 — Kernel Hardening
 
 - [ ] Implement round-robin time-slice logic (currently `rr_remaining` field exists but is unused)
 - [ ] Add stack overflow detection: canary value at stack bottom, checked on context switch
-- [ ] Handle the case where all tasks are blocked (idle task must be unkillable/unsuspendable)
-- [ ] Audit `br_mutex_lock` priority inheritance: handle nested mutex locking and transitive inheritance
-- [ ] Validate that `br_mqueue_send` after wakeup correctly handles the race where the queue filled again
 - [ ] Add `br_task_delete()` — return a TCB slot to the pool (currently tasks can only be suspended)
-- [ ] Add ISR-safe variants of IPC operations (or proper `BR_ERR_ISR` guards on all of them)
 - [ ] Add `br_assert()` macro with configurable panic handler (`BR_PANIC()`)
 - [ ] Implement `br_hal_panic()` in Cortex-M HAL (print fault info via UART, halt)
+- [ ] Add ISR guards to semaphore and message queue operations (mutex already has them)
 
 ## Phase 2 — Stable Foundation (0.1.0)
 

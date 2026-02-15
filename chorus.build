@@ -67,7 +67,12 @@ targets:
   bedrock_example.elf:
     deps: [main.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} main.o -L. -lbedrock_kernel -lbedrock_hal -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} main.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
+  run:
+    deps: [bedrock_example.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel bedrock_example.elf -nographic"
 
   clean:
     cmds:
