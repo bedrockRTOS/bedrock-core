@@ -35,7 +35,6 @@ extern br_tcb_t *br_sched_current(void);
 
 /* Static TCB pool (zero dynamic memory) */
 static br_tcb_t tcb_pool[CONFIG_MAX_TASKS];
-static uint8_t  tcb_used;
 
 static uint8_t idle_stack[CONFIG_DEFAULT_STACK_SIZE];
 
@@ -51,7 +50,6 @@ void br_kernel_init(void)
         tcb_pool[i].state = BR_TASK_INACTIVE;
         tcb_pool[i].id    = (br_tid_t)i;
     }
-    tcb_used = 0;
 
     br_hal_board_init();
     br_hal_timer_init();
@@ -89,13 +87,19 @@ br_err_t br_task_create(br_tid_t *tid,
 
     uint32_t key = br_hal_irq_disable();
 
-    if (tcb_used >= CONFIG_MAX_TASKS) {
+    /* Find first free TCB slot */
+    br_tcb_t *tcb = NULL;
+    for (int i = 0; i < CONFIG_MAX_TASKS; i++) {
+        if (tcb_pool[i].state == BR_TASK_INACTIVE) {
+            tcb = &tcb_pool[i];
+            break;
+        }
+    }
+
+    if (tcb == NULL) {
         br_hal_irq_restore(key);
         return BR_ERR_NOMEM;
     }
-
-    br_tcb_t *tcb    = &tcb_pool[tcb_used];
-    tcb->id          = tcb_used;
     tcb->name        = name;
     tcb->entry       = entry;
     tcb->arg         = arg;
@@ -113,8 +117,6 @@ br_err_t br_task_create(br_tid_t *tid,
     void *stack_top = (uint8_t *)stack + stack_size;
     tcb->sp = br_hal_stack_init(stack_top, entry, arg);
 
-    tcb_used++;
-
     if (tid != NULL) {
         *tid = tcb->id;
     }
@@ -127,13 +129,18 @@ br_err_t br_task_create(br_tid_t *tid,
 
 br_err_t br_task_suspend(br_tid_t tid)
 {
-    if (tid >= tcb_used) {
+    if (tid >= CONFIG_MAX_TASKS) {
         return BR_ERR_INVALID;
     }
 
     uint32_t key = br_hal_irq_disable();
 
     br_tcb_t *tcb = &tcb_pool[tid];
+
+    if (tcb->state == BR_TASK_INACTIVE) {
+        br_hal_irq_restore(key);
+        return BR_ERR_INVALID;
+    }
 
     if (tcb->state == BR_TASK_READY) {
         br_sched_unready(tcb);
@@ -152,18 +159,61 @@ br_err_t br_task_suspend(br_tid_t tid)
 
 br_err_t br_task_resume(br_tid_t tid)
 {
-    if (tid >= tcb_used) {
+    if (tid >= CONFIG_MAX_TASKS) {
         return BR_ERR_INVALID;
     }
 
     br_tcb_t *tcb = &tcb_pool[tid];
 
-    if (tcb->state != BR_TASK_SUSPENDED) {
+    if (tcb->state == BR_TASK_INACTIVE || tcb->state != BR_TASK_SUSPENDED) {
         return BR_ERR_INVALID;
     }
 
     br_sched_ready(tcb);
     br_sched_reschedule();
+
+    return BR_OK;
+}
+
+br_err_t br_task_delete(br_tid_t tid)
+{
+    if (tid >= CONFIG_MAX_TASKS) {
+        return BR_ERR_INVALID;
+    }
+
+    uint32_t key = br_hal_irq_disable();
+
+    br_tcb_t *tcb = &tcb_pool[tid];
+
+    /* Cannot delete inactive task */
+    if (tcb->state == BR_TASK_INACTIVE) {
+        br_hal_irq_restore(key);
+        return BR_ERR_INVALID;
+    }
+
+    /* Cannot delete currently running task (use br_task_yield + delete from another task) */
+    if (tcb == br_sched_current()) {
+        br_hal_irq_restore(key);
+        return BR_ERR_INVALID;
+    }
+
+    /* Remove from ready queue if present */
+    if (tcb->state == BR_TASK_READY) {
+        br_sched_unready(tcb);
+    }
+
+    /* Clear TCB and mark as inactive (returns slot to pool) */
+    tcb->state = BR_TASK_INACTIVE;
+    tcb->name = NULL;
+    tcb->entry = NULL;
+    tcb->arg = NULL;
+    tcb->stack_base = NULL;
+    tcb->stack_size = 0;
+    tcb->stack_canary = NULL;
+    tcb->sp = NULL;
+    tcb->next = NULL;
+
+    br_hal_irq_restore(key);
 
     return BR_OK;
 }

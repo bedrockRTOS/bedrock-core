@@ -30,6 +30,7 @@ br_err_t br_task_create(br_tid_t *tid,
 
 br_err_t br_task_suspend(br_tid_t tid);
 br_err_t br_task_resume(br_tid_t tid);
+br_err_t br_task_delete(br_tid_t tid);
 void br_task_yield(void);
 br_tid_t br_task_self(void);
 

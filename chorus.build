@@ -49,6 +49,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/main.c -o ${@}"
 
+  test_task_delete.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_task_delete.c -o ${@}"
+
   libbedrock_kernel.a:
     deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o]
     cmds:
@@ -69,10 +73,20 @@ targets:
     cmds:
       - "${CC} ${LDFLAGS} main.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
 
+  test_task_delete.elf:
+    deps: [test_task_delete.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_task_delete.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
   run:
     deps: [bedrock_example.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel bedrock_example.elf -nographic"
+
+  test:
+    deps: [test_task_delete.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_task_delete.elf -nographic"
 
   clean:
     cmds:
