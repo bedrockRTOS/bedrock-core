@@ -98,6 +98,39 @@ void br_hal_board_init(void)
 }
 
 /*
+ * Stack overflow detection
+ *
+ * Checks if the canary value at the bottom of the stack has been corrupted.
+ * If corrupted, triggers a kernel panic.
+ */
+
+__attribute__((noreturn))
+static void br_kernel_panic(const char *msg, br_tcb_t *tcb)
+{
+    (void)msg;
+    (void)tcb;
+    
+    /* Disable all interrupts */
+    __asm volatile ("cpsid i" ::: "memory");
+    
+    /* Halt the system */
+    while (1) {
+        __asm volatile ("wfi");
+    }
+}
+
+void br_hal_check_stack_overflow(br_tcb_t *tcb)
+{
+    if (tcb == NULL || tcb->stack_canary == NULL) {
+        return;
+    }
+    
+    if (*(tcb->stack_canary) != BR_STACK_CANARY) {
+        br_kernel_panic("Stack overflow detected", tcb);
+    }
+}
+
+/*
  * PendSV handler (context switch)
  *
  * Saves R4-R11 + PSP into the old task's TCB->sp,

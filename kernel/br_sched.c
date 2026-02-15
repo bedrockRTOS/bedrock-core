@@ -152,6 +152,11 @@ void br_sched_reschedule(void)
 
     br_tcb_t *prev = current_task;
 
+    /* Check stack overflow on outgoing task before context switch */
+    if (prev != NULL) {
+        br_hal_check_stack_overflow(prev);
+    }
+
     if (prev != NULL && prev->state == BR_TASK_RUNNING) {
         prev->state = BR_TASK_READY;
         prev->rr_remaining = 0;  /* Reset time slice when preempted */

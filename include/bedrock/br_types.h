@@ -22,6 +22,9 @@ typedef uint64_t br_time_t;
 #define BR_MSEC(ms)       ((br_time_t)(ms) * 1000U)
 #define BR_SEC(s)         ((br_time_t)(s)  * 1000000U)
 
+/* Stack overflow detection canary value */
+#define BR_STACK_CANARY   0xDEADBEEF
+
 /* Error codes */
 typedef enum {
     BR_OK            =  0,
@@ -30,7 +33,8 @@ typedef enum {
     BR_ERR_TIMEOUT   = -3,
     BR_ERR_BUSY      = -4,
     BR_ERR_ISR       = -5,
-    BR_ERR_OVERFLOW  = -6
+    BR_ERR_OVERFLOW  = -6,
+    BR_ERR_STACK_OVF = -7
 } br_err_t;
 
 /* Task states */
@@ -59,6 +63,7 @@ typedef struct br_tcb {
     /* Stack region */
     void               *stack_base;
     size_t              stack_size;
+    uint32_t           *stack_canary;   /* Pointer to canary at stack bottom */
 
     /* Entry point */
     br_task_entry_t     entry;

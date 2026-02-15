@@ -36,6 +36,7 @@ bool br_hal_in_isr(void);
 void *br_hal_stack_init(void *stack_top, br_task_entry_t entry, void *arg);
 void br_hal_context_switch(void **old_sp, void **new_sp);
 void br_hal_start_first_task(void *sp) __attribute__((noreturn));
+void br_hal_check_stack_overflow(br_tcb_t *tcb);
 
 /* Board / early init HAL */
 

@@ -106,6 +106,10 @@ br_err_t br_task_create(br_tid_t *tid,
     tcb->rr_remaining = 0;
     tcb->next        = NULL;
 
+    /* Place canary at the bottom of the stack (lowest address) */
+    tcb->stack_canary = (uint32_t *)stack;
+    *(tcb->stack_canary) = BR_STACK_CANARY;
+
     void *stack_top = (uint8_t *)stack + stack_size;
     tcb->sp = br_hal_stack_init(stack_top, entry, arg);
 
