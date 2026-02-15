@@ -39,8 +39,10 @@ static volatile uint32_t systick_reload;
 
 static volatile br_time_t alarm_target;
 static volatile bool      alarm_pending;
+static volatile br_time_t last_tick_time;
 
 extern void br_time_alarm_handler(void);
+extern void br_sched_tick(br_time_t elapsed_us);
 
 void br_hal_timer_init(void)
 {
@@ -52,6 +54,7 @@ void br_hal_timer_init(void)
     timer_overflow_us = 0;
     alarm_target  = 0;
     alarm_pending = false;
+    last_tick_time = 0;
 }
 
 br_time_t br_hal_timer_get_us(void)
@@ -80,10 +83,17 @@ void br_hal_timer_cancel_alarm(void)
 
 void SysTick_Handler(void)
 {
-    timer_overflow_us += (uint64_t)(systick_reload + 1) / TICKS_PER_US;
+    br_time_t tick_period_us = (uint64_t)(systick_reload + 1) / TICKS_PER_US;
+    timer_overflow_us += tick_period_us;
 
+    /* Handle round-robin time slicing */
+    br_time_t now = timer_overflow_us;
+    br_time_t elapsed = now - last_tick_time;
+    last_tick_time = now;
+    br_sched_tick(elapsed);
+
+    /* Handle alarm for tickless sleep */
     if (alarm_pending) {
-        br_time_t now = timer_overflow_us;
         if (now >= alarm_target) {
             alarm_pending = false;
             br_time_alarm_handler();

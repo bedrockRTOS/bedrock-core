@@ -26,4 +26,8 @@
 #define CONFIG_TICKLESS         1
 #endif
 
+#ifndef CONFIG_RR_TIME_SLICE_US
+#define CONFIG_RR_TIME_SLICE_US 10000  /* 10ms default time slice */
+#endif
+
 #endif /* BR_CONFIG_H */

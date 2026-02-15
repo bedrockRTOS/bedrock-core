@@ -154,10 +154,12 @@ void br_sched_reschedule(void)
 
     if (prev != NULL && prev->state == BR_TASK_RUNNING) {
         prev->state = BR_TASK_READY;
+        prev->rr_remaining = 0;  /* Reset time slice when preempted */
         br_sched_ready(prev);
     }
 
     next->state  = BR_TASK_RUNNING;
+    next->rr_remaining = CONFIG_RR_TIME_SLICE_US;  /* Initialize time slice */
     current_task = next;
 
     if (prev != NULL) {
@@ -183,7 +185,33 @@ void br_sched_start(void)
     }
 
     first->state = BR_TASK_RUNNING;
+    first->rr_remaining = CONFIG_RR_TIME_SLICE_US;
     current_task = first;
 
     br_hal_start_first_task(first->sp);
+}
+
+/* Called from timer ISR to handle round-robin time slicing */
+void br_sched_tick(br_time_t elapsed_us)
+{
+    if (current_task == NULL) {
+        return;
+    }
+
+    /* Decrement remaining time slice */
+    if (current_task->rr_remaining > elapsed_us) {
+        current_task->rr_remaining -= elapsed_us;
+    } else {
+        current_task->rr_remaining = 0;
+        
+        /* Time slice expired - check if there are other tasks at same priority */
+        uint8_t prio = current_task->priority;
+        if (ready_queue[prio] != NULL) {
+            /* There are other ready tasks at this priority - preempt */
+            br_sched_reschedule();
+        } else {
+            /* No other tasks at this priority - renew time slice */
+            current_task->rr_remaining = CONFIG_RR_TIME_SLICE_US;
+        }
+    }
 }

@@ -40,6 +40,16 @@ config TICKLESS
       timer alarms instead of periodic ticks. Reduces
       power consumption and improves timing accuracy.
 
+config RR_TIME_SLICE_US
+    int "Round-robin time slice (microseconds)"
+    default 10000
+    range 100 1000000
+    help
+      Time slice duration for round-robin scheduling among
+      tasks of the same priority. When a task runs for this
+      duration, it will be preempted and moved to the end
+      of its priority queue. Set to 10000 (10ms) by default.
+
 menu "Hardware"
 
 choice ARCH
