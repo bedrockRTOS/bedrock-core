@@ -13,7 +13,7 @@
 
 - [x] Implement round-robin time-slice logic (currently `rr_remaining` field exists but is unused)
 - [x] Add stack overflow detection: canary value at stack bottom, checked on context switch
-- [ ] Add `br_task_delete()` — return a TCB slot to the pool (currently tasks can only be suspended)
+- [x] Add `br_task_delete()` — return a TCB slot to the pool (currently tasks can only be suspended)
 - [ ] Add `br_assert()` macro with configurable panic handler (`BR_PANIC()`)
 - [ ] Implement `br_hal_panic()` in Cortex-M HAL (print fault info via UART, halt)
 - [ ] Add ISR guards to semaphore and message queue operations (mutex already has them)
