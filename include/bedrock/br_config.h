@@ -30,4 +30,8 @@
 #define CONFIG_RR_TIME_SLICE_US 10000  /* 10ms default time slice */
 #endif
 
+#ifndef CONFIG_ASSERT
+#define CONFIG_ASSERT           1      /* 1 = br_assert() checks enabled */
+#endif
+
 #endif /* BR_CONFIG_H */

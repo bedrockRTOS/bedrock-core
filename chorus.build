@@ -25,6 +25,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} kernel/br_ipc.c -o ${@}"
 
+  br_panic.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_panic.c -o ${@}"
+
   br_hal_timer.o:
     cmds:
       - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_timer.c -o ${@}"
@@ -54,7 +58,7 @@ targets:
       - "${CC} ${CFLAGS} examples/test_task_delete.c -o ${@}"
 
   libbedrock_kernel.a:
-    deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o]
+    deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 

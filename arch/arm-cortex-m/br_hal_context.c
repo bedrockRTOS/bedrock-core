@@ -105,14 +105,15 @@ void br_hal_board_init(void)
  */
 
 __attribute__((noreturn))
-static void br_kernel_panic(const char *msg, br_tcb_t *tcb)
+void br_hal_panic(const char *msg, const char *file, int line)
 {
     (void)msg;
-    (void)tcb;
-    
+    (void)file;
+    (void)line;
+
     /* Disable all interrupts */
     __asm volatile ("cpsid i" ::: "memory");
-    
+
     /* Halt the system */
     while (1) {
         __asm volatile ("wfi");
@@ -124,9 +125,9 @@ void br_hal_check_stack_overflow(br_tcb_t *tcb)
     if (tcb == NULL || tcb->stack_canary == NULL) {
         return;
     }
-    
+
     if (*(tcb->stack_canary) != BR_STACK_CANARY) {
-        br_kernel_panic("Stack overflow detected", tcb);
+        br_hal_panic("Stack overflow detected", __FILE__, __LINE__);
     }
 }
 

@@ -10,6 +10,7 @@
 
 #include "br_types.h"
 #include "br_hal.h"
+#include "br_assert.h"
 
 /* bedrock[RTOS] Public API */
 

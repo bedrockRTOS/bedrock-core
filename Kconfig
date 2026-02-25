@@ -50,6 +50,15 @@ config RR_TIME_SLICE_US
       duration, it will be preempted and moved to the end
       of its priority queue. Set to 10000 (10ms) by default.
 
+config ASSERT
+    bool "Enable br_assert() checks"
+    default y
+    help
+      When enabled, br_assert(expr) evaluates the expression
+      and calls BR_PANIC() if it is false, halting the system.
+      Disable to eliminate assertion overhead in production
+      builds (the expression is still evaluated for side-effects).
+
 menu "Hardware"
 
 choice ARCH

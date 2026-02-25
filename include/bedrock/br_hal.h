@@ -42,4 +42,9 @@ void br_hal_check_stack_overflow(br_tcb_t *tcb);
 
 void br_hal_board_init(void);
 
+/* Panic HAL -- architecture-level unrecoverable halt */
+
+void br_hal_panic(const char *msg, const char *file, int line)
+    __attribute__((noreturn));
+
 #endif /* BR_HAL_H */
