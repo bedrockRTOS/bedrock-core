@@ -15,7 +15,7 @@
 - [x] Add stack overflow detection: canary value at stack bottom, checked on context switch
 - [x] Add `br_task_delete()` — return a TCB slot to the pool (currently tasks can only be suspended)
 - [x] Add `br_assert()` macro with configurable panic handler (`BR_PANIC()`)
-- [ ] Implement `br_hal_panic()` in Cortex-M HAL (print fault info via UART, halt)
+- [x] Implement `br_hal_panic()` in Cortex-M HAL (print fault info via UART, halt)
 - [ ] Add ISR guards to semaphore and message queue operations (mutex already has them)
 
 ## Phase 2 — Stable Foundation (0.1.0)
