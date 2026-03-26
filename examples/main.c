@@ -2,18 +2,15 @@
  * Project: bedrock[RTOS]
  * Version: 0.0.1
  * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: GPL-3.0
+ * License: GPL-3.0-only WITH runtime exception
  *
  * SPDX-License-Identifier: GPL-3.0-only
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * This file is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3.
+ * Applications that link against or run on bedrock[RTOS] are NOT required
+ * to be GPL-licensed — only changes to bedrock[RTOS] itself must remain GPL.
+ * See LICENSE-GPL-3.0.md for the full terms and runtime exception.
  */
 
 #include "bedrock/bedrock.h"
