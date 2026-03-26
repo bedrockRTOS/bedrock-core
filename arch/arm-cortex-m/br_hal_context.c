@@ -2,9 +2,15 @@
  * Project: bedrock[RTOS]
  * Version: 0.0.1
  * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: BSD 3-Clause
+ * License: GPL-3.0-only WITH runtime exception
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This file is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3.
+ * Applications that link against or run on bedrock[RTOS] are NOT required
+ * to be GPL-licensed — only changes to bedrock[RTOS] itself must remain GPL.
+ * See LICENSE-GPL-3.0.md for the full terms and runtime exception.
  *
  * ARM Cortex-M context switch HAL implementation.
  * Uses PendSV for context switching (standard Cortex-M pattern).
@@ -97,6 +103,26 @@ void br_hal_board_init(void)
 {
 }
 
+extern void br_uart_puts(const char *s);
+extern void br_uart_putc(char c);
+
+/* Helper to print decimal numbers without printf */
+static void br_uart_putu(uint32_t val)
+{
+    char buf[11];
+    int i = 10;
+    buf[i] = '\0';
+    if (val == 0) {
+        br_uart_putc('0');
+        return;
+    }
+    while (val > 0 && i > 0) {
+        buf[--i] = (char)('0' + (val % 10));
+        val /= 10;
+    }
+    br_uart_puts(&buf[i]);
+}
+
 /*
  * Stack overflow detection
  *
@@ -107,12 +133,23 @@ void br_hal_board_init(void)
 __attribute__((noreturn))
 void br_hal_panic(const char *msg, const char *file, int line)
 {
-    (void)msg;
-    (void)file;
-    (void)line;
-
     /* Disable all interrupts */
     __asm volatile ("cpsid i" ::: "memory");
+
+    br_uart_puts("\n*** KERNEL PANIC ***\n");
+    if (msg) {
+        br_uart_puts("Reason: ");
+        br_uart_puts(msg);
+        br_uart_puts("\n");
+    }
+    if (file) {
+        br_uart_puts("File:   ");
+        br_uart_puts(file);
+        br_uart_puts(":");
+        br_uart_putu((uint32_t)line);
+        br_uart_puts("\n");
+    }
+    br_uart_puts("********************\n");
 
     /* Halt the system */
     while (1) {
