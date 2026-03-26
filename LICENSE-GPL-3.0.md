@@ -673,3 +673,36 @@ library, you may consider it more useful to permit linking proprietary
 applications with the library. If this is what you want to do, use the
 GNU Lesser General Public License instead of this License. But first,
 please read <https://www.gnu.org/licenses/why-not-lgpl.html>.
+
+---
+
+## bedrock\[RTOS\] Runtime Exception — Version 1.0
+
+_This exception is an additional permission under Section 7 of the GNU
+General Public License, version 3._
+
+As a special exception, the copyright holders of bedrock\[RTOS\] give you
+permission to **link** bedrock\[RTOS\] source code (including `/kernel`,
+`/arch`, `/boards`, `/include`, `/lib`, and `/examples`) **with independent
+application modules** and to distribute the resulting binary under the terms
+of your choice, subject to the following conditions:
+
+1. **Source availability.** The bedrock\[RTOS\] source files themselves must
+   remain available under GPL-3.0 (this License). You may not relicense or
+   sublicense the bedrock\[RTOS\] source.
+
+2. **Modifications stay GPL.** If you modify any bedrock\[RTOS\] source file
+   and distribute those modifications — whether as source or as part of a
+   binary — the modifications must be distributed under GPL-3.0.
+
+3. **Application freedom.** Your own application code that merely uses
+   bedrock\[RTOS\] APIs, links against the compiled bedrock\[RTOS\] objects,
+   or runs on top of the bedrock\[RTOS\] kernel is **not** covered by this
+   License and may be distributed under any license you choose.
+
+4. **No misrepresentation.** You may not represent your application as being
+   part of or derived from bedrock\[RTOS\] itself.
+
+This exception does not affect any other rights or obligations under
+GPL-3.0. If you are uncertain whether this exception applies to your use
+case, consult the full GPL-3.0 text above or contact the project maintainer.
