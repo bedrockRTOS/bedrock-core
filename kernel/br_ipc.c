@@ -128,6 +128,11 @@ br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout)
         return BR_ERR_TIMEOUT;
     }
 
+    if (br_hal_in_isr()) {
+        br_hal_irq_restore(key);
+        return BR_ERR_ISR;
+    }
+
     br_tcb_t *tcb = br_sched_current();
     block_on_wq(&sem->wait_queue, tcb, timeout);
 
@@ -318,6 +323,11 @@ br_err_t br_mqueue_send(br_mqueue_t *mq, const void *msg, br_time_t timeout)
         return BR_ERR_TIMEOUT;
     }
 
+    if (br_hal_in_isr()) {
+        br_hal_irq_restore(key);
+        return BR_ERR_ISR;
+    }
+
     br_tcb_t *tcb = br_sched_current();
     block_on_wq(&mq->send_wait, tcb, timeout);
 
@@ -374,6 +384,11 @@ br_err_t br_mqueue_recv(br_mqueue_t *mq, void *msg, br_time_t timeout)
     if (timeout == 0) {
         br_hal_irq_restore(key);
         return BR_ERR_TIMEOUT;
+    }
+
+    if (br_hal_in_isr()) {
+        br_hal_irq_restore(key);
+        return BR_ERR_ISR;
     }
 
     br_tcb_t *tcb = br_sched_current();
