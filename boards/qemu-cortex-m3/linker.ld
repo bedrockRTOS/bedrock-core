@@ -2,7 +2,15 @@
  * Project: bedrock[RTOS]
  * Version: 0.0.1
  * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: BSD 3-Clause
+ * License: GPL-3.0-only WITH runtime exception
+ *
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This file is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3.
+ * Applications that link against or run on bedrock[RTOS] are NOT required
+ * to be GPL-licensed — only changes to bedrock[RTOS] itself must remain GPL.
+ * See LICENSE-GPL-3.0.md for the full terms and runtime exception.
  *
  * Linker script for QEMU LM3S6965 (Cortex-M3)
  * Flash: 256K at 0x00000000
