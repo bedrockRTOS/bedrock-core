@@ -12,37 +12,6 @@ bedrock[RTOS] is designed around three core principles:
 2. **Tickless by design** — No periodic timer interrupts. The kernel programs one-shot hardware alarms only when needed, minimizing power consumption and interrupt overhead.
 3. **Clean separation** — Hardware details are strictly isolated in `/arch` and `/boards`. The kernel source code has zero platform-specific code. Adding a new architecture requires zero kernel changes.
 
-## Architecture Overview
-
-```
-bedrock-core/
-├── kernel/          BSD 3-Clause — scheduler, tasks, time, IPC
-├── lib/             LGPL 2.1    — static pool allocator, utilities
-├── arch/            BSD 3-Clause — HAL implementations per architecture
-│   └── arm-cortex-m/
-├── boards/          BSD 3-Clause — board-specific configs and linker scripts
-│   └── qemu-cortex-m3/
-├── include/bedrock/ BSD 3-Clause — public API headers
-├── examples/        GPL 3.0     — application templates
-├── docs/            CC BY-SA 4.0 — documentation
-├── scripts/                     — build and utility scripts
-├── Kconfig                      — kernel configuration
-└── chorus.build                 — build configuration (chorus)
-```
-
-## Key Technical Specs
-
-| Feature | Details |
-|---------|---------|
-| Language | Pure C (C11/C17) |
-| Time | 64-bit microseconds (`br_time_t` = `uint64_t`), ~584,000 years range |
-| Scheduler | Priority-based preemptive + round-robin at equal priority |
-| Max tasks | Configurable via `CONFIG_MAX_TASKS` (default 16) |
-| Priorities | Configurable via `CONFIG_NUM_PRIORITIES` (default 8) |
-| IPC | Semaphores, Mutexes (priority inheritance), Message Queues |
-| Memory | Zero malloc in kernel; static pools only |
-| Timer | Tickless — one-shot alarms via HAL |
-
 ## HAL Interface
 
 The kernel accesses hardware exclusively through three timer functions:
@@ -89,11 +58,7 @@ Edit `Kconfig` values or pass them as `-D` flags in `chorus.build` CFLAGS.
 
 bedrock[RTOS] uses a per-directory licensing approach to maximize flexibility:
 
-- **`/kernel`, `/arch`, `/boards`, `/include`** — BSD 3-Clause (use freely in any project)
-- **`/lib`** — LGPL 2.1 (link freely, share modifications to lib itself)
-- **`/examples`** — GPL 3.0 (reference templates, replace with your own code)
+- **`/kernel`, `/arch`, `/boards`, `/include`** — GNU GPL 3.0 (Runtime exception)
+- **`/lib`** — GNU GPL 3.0 (Runtime exception)
+- **`/examples`** — GNU GPL 3.0 (Runtime exception)
 - **`/docs`** — CC BY-SA 4.0
-
-## Author
-
-**AnmiTaliDev** — <anmitalidev@nuros.org>
