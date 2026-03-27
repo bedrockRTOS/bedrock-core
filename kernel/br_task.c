@@ -21,6 +21,7 @@ extern void     br_sched_unready(br_tcb_t *tcb);
 extern void     br_sched_reschedule(void);
 extern void     br_sched_start(void);
 extern br_tcb_t *br_sched_current(void);
+extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
 
 /* Static TCB pool (zero dynamic memory) */
 static br_tcb_t tcb_pool[CONFIG_MAX_TASKS];
@@ -186,9 +187,10 @@ br_err_t br_task_delete(br_tid_t tid)
         return BR_ERR_INVALID;
     }
 
-    /* Remove from ready queue if present */
     if (tcb->state == BR_TASK_READY) {
         br_sched_unready(tcb);
+    } else if (tcb->state == BR_TASK_BLOCKED) {
+        br_time_sleep_list_remove(tcb);
     }
 
     /* Clear TCB and mark as inactive (returns slot to pool) */

@@ -4,6 +4,9 @@ variables:
   OBJCOPY: "arm-none-eabi-objcopy"
   CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib"
   LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/qemu-cortex-m3/linker.ld -mcpu=cortex-m3 -mthumb"
+  HOST_CC: "gcc"
+  HOST_CFLAGS: "-c -Wall -Wextra -Werror -Os -std=c11 -D_DEFAULT_SOURCE -Iinclude"
+  HOST_LDFLAGS: ""
 
 targets:
   all:
@@ -108,7 +111,81 @@ targets:
     cmds:
       - "3rd/tools/kconfig/target/release/menuconfig 0</dev/tty"
 
+  host-br_sched.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_sched.c -o ${@}"
+
+  host-br_time.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_time.c -o ${@}"
+
+  host-br_task.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_task.c -o ${@}"
+
+  host-br_ipc.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_ipc.c -o ${@}"
+
+  host-br_panic.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_panic.c -o ${@}"
+
+  host-br_hal_context.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_context.c -o ${@}"
+
+  host-br_hal_timer.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_timer.c -o ${@}"
+
+  host-br_hal_uart.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_uart.c -o ${@}"
+
+  host-main.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/main.c -o ${@}"
+
+  host-test_task_delete.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_task_delete.c -o ${@}"
+
+  libbedrock_kernel_host.a:
+    deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  libbedrock_hal_host.a:
+    deps: [host-br_hal_context.o, host-br_hal_timer.o, host-br_hal_uart.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  bedrock_example_host:
+    deps: [host-main.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-main.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
+  test_task_delete_host:
+    deps: [host-test_task_delete.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_task_delete.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
+  host:
+    deps: [bedrock_example_host, test_task_delete_host]
+
+  run-host:
+    deps: [bedrock_example_host]
+    cmds:
+      - "timeout 5 ./bedrock_example_host; true"
+
+  test-host:
+    deps: [test_task_delete_host]
+    cmds:
+      - "timeout 5 ./test_task_delete_host; true"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin"
+      - "rm -f bedrock_example_host test_task_delete_host"
       - "rm -rf include/generated"

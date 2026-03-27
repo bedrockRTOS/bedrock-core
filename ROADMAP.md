@@ -23,9 +23,9 @@
 ### 0.1.0 — Stable Kernel API & Test Infrastructure
 
 - [x] Define the public API contract in `include/bedrock/bedrock.h` — mark stable vs. experimental
-- [ ] Create a host-native test harness: mock HAL for x86-64 Linux so kernel code compiles and runs as a Linux process
-- [ ] Write unit tests for:
-  - [ ] Task creation, suspension, resumption, deletion
+- [x] Create a host-native test harness: mock HAL for x86-64 Linux so kernel code compiles and runs as a Linux process
+- [x] Write unit tests for:
+  - [x] Task creation, suspension, resumption, deletion
   - [ ] Scheduler: priority ordering, round-robin, preemption
   - [ ] Semaphore: basic take/give, timeout, overflow
   - [ ] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection

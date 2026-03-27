@@ -7,6 +7,10 @@
 *.map
 *.d
 
+# Host/native executables
+bedrock_example_host
+/test_*
+
 # Chorus build system
 build/
 
