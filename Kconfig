@@ -2,7 +2,7 @@
  * Project: bedrock[RTOS]
  * Version: 0.0.3
  * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: BSD 3-Clause
+ * License: GPL-3.0-only WITH runtime exception
  */
 
 mainmenu "bedrock[RTOS] Configuration"

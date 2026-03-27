@@ -1,0 +1,24 @@
+[package]
+name = "kconfig-tools"
+version = "0.1.0"
+edition = "2021"
+license = "Unlicense"
+
+[lib]
+name = "kconfig_tools"
+path = "src/lib.rs"
+
+[[bin]]
+name = "genconfig"
+path = "src/bin/genconfig.rs"
+
+[[bin]]
+name = "defconfig"
+path = "src/bin/defconfig.rs"
+
+[[bin]]
+name = "menuconfig"
+path = "src/bin/menuconfig.rs"
+
+[dependencies]
+crossterm = "0.28"

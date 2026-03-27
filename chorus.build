@@ -2,7 +2,7 @@ variables:
   CC: "arm-none-eabi-gcc"
   AR: "arm-none-eabi-ar"
   OBJCOPY: "arm-none-eabi-objcopy"
-  CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib -DCONFIG_MAX_TASKS=16 -DCONFIG_NUM_PRIORITIES=8 -DCONFIG_DEFAULT_STACK_SIZE=1024 -DCONFIG_TICKLESS=1 -DBR_HAL_SYS_CLOCK_HZ=16000000"
+  CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib"
   LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/qemu-cortex-m3/linker.ld -mcpu=cortex-m3 -mthumb"
 
 targets:
@@ -92,6 +92,23 @@ targets:
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_task_delete.elf -nographic"
 
+  build-tools:
+    cmds:
+      - "cargo build --release --manifest-path 3rd/tools/kconfig/Cargo.toml"
+
+  configure:
+    cmds:
+      - "3rd/tools/kconfig/target/release/genconfig"
+
+  defconfig:
+    cmds:
+      - "3rd/tools/kconfig/target/release/defconfig boards/qemu-cortex-m3/defconfig"
+
+  menuconfig:
+    cmds:
+      - "3rd/tools/kconfig/target/release/menuconfig 0</dev/tty"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin"
+      - "rm -rf include/generated"

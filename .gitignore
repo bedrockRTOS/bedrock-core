@@ -10,6 +10,14 @@
 # Chorus build system
 build/
 
+# Kconfig generated files
+include/generated/
+.config
+.config.old
+
+# kconfig tools (Rust build output)
+3rd/tools/kconfig/target/
+
 # Editor / IDE
 .vscode/
 .idea/
