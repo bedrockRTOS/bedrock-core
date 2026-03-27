@@ -34,8 +34,6 @@
   - [ ] Memory pool: alloc, free, exhaustion, double-free guard
 - [ ] Add CI pipeline (GitHub Actions): build for Cortex-M + run host-native tests
 - [ ] Write `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH` macros
-- [ ] Formalize coding style and document it in `docs/en/contributing.md`
-- [ ] Add `CHANGELOG.md`
 
 ## Phase 3 — Portability Proven (0.2.0)
 
