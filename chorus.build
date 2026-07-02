@@ -97,19 +97,19 @@ targets:
 
   build-tools:
     cmds:
-      - "cargo build --release --manifest-path 3rd/tools/kconfig/Cargo.toml"
+      - "zig build --build-file 3rd/tools/kconfig/build.zig --prefix 3rd/tools/kconfig/zig-out -Doptimize=ReleaseFast"
 
   configure:
     cmds:
-      - "3rd/tools/kconfig/target/release/genconfig"
+      - "3rd/tools/kconfig/zig-out/bin/genconfig"
 
   defconfig:
     cmds:
-      - "3rd/tools/kconfig/target/release/defconfig boards/qemu-cortex-m3/defconfig"
+      - "3rd/tools/kconfig/zig-out/bin/defconfig boards/qemu-cortex-m3/defconfig"
 
   menuconfig:
     cmds:
-      - "3rd/tools/kconfig/target/release/menuconfig 0</dev/tty"
+      - "3rd/tools/kconfig/zig-out/bin/menuconfig 0</dev/tty"
 
   host-br_sched.o:
     cmds:

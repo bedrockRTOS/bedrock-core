@@ -1,3 +1,6 @@
 [submodule "3rd/tools/chorus"]
 	path = 3rd/tools/chorus
 	url = https://github.com/z3nnix/chorus
+[submodule "3rd/tools/kconfig"]
+	path = 3rd/tools/kconfig
+	url = https://github.com/bedrockRTOS/kconfig-tools.git
