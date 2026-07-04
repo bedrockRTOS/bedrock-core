@@ -60,6 +60,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/test_task_delete.c -o ${@}"
 
+  test_scheduler.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_scheduler.c -o ${@}"
+
   libbedrock_kernel.a:
     deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o]
     cmds:
@@ -85,6 +89,11 @@ targets:
     cmds:
       - "${CC} ${LDFLAGS} test_task_delete.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
 
+  test_scheduler.elf:
+    deps: [test_scheduler.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_scheduler.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
   run:
     deps: [bedrock_example.elf]
     cmds:
@@ -94,6 +103,11 @@ targets:
     deps: [test_task_delete.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_task_delete.elf -nographic"
+
+  test-scheduler:
+    deps: [test_scheduler.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_scheduler.elf -nographic"
 
   build-tools:
     cmds:
@@ -151,6 +165,10 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_task_delete.c -o ${@}"
 
+  host-test_scheduler.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_scheduler.c -o ${@}"
+
   libbedrock_kernel_host.a:
     deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o]
     cmds:
@@ -171,8 +189,13 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_task_delete.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
 
+  test_scheduler_host:
+    deps: [host-test_scheduler.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_scheduler.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
   host:
-    deps: [bedrock_example_host, test_task_delete_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -184,8 +207,13 @@ targets:
     cmds:
       - "timeout 5 ./test_task_delete_host; true"
 
+  test-scheduler-host:
+    deps: [test_scheduler_host]
+    cmds:
+      - "timeout 5 ./test_scheduler_host; true"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin"
-      - "rm -f bedrock_example_host test_task_delete_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host"
       - "rm -rf include/generated"

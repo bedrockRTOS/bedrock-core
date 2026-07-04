@@ -26,7 +26,7 @@
 - [x] Create a host-native test harness: mock HAL for x86-64 Linux so kernel code compiles and runs as a Linux process
 - [x] Write unit tests for:
   - [x] Task creation, suspension, resumption, deletion
-  - [ ] Scheduler: priority ordering, round-robin, preemption
+  - [x] Scheduler: priority ordering, round-robin, preemption
   - [ ] Semaphore: basic take/give, timeout, overflow
   - [ ] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection
   - [ ] Message queue: send/recv, full/empty blocking, timeout
