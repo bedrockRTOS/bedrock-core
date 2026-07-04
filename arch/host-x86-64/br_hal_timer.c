@@ -50,6 +50,7 @@ static volatile br_time_t g_last_tick_us;
 static struct timespec    g_start_time;
 static sigset_t           g_alarm_sigset;
 
+
 static void sigalrm_handler(int sig)
 {
     (void)sig;
@@ -59,15 +60,16 @@ static void sigalrm_handler(int sig)
 
     if (g_alarm_pending && now >= g_alarm_target) {
         g_alarm_pending = false;
+        g_in_isr = false;
         br_time_alarm_handler();
         now = br_hal_timer_get_us();
+        g_in_isr = true;
     }
 
     br_time_t elapsed = now - g_last_tick_us;
     g_last_tick_us = now;
-    br_sched_tick(elapsed);
-
     g_in_isr = false;
+    br_sched_tick(elapsed);
 }
 
 void br_hal_timer_init(void)

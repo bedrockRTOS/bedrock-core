@@ -64,6 +64,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/test_scheduler.c -o ${@}"
 
+  test_semaphore.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_semaphore.c -o ${@}"
+
   libbedrock_kernel.a:
     deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o]
     cmds:
@@ -94,6 +98,11 @@ targets:
     cmds:
       - "${CC} ${LDFLAGS} test_scheduler.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
 
+  test_semaphore.elf:
+    deps: [test_semaphore.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_semaphore.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
   run:
     deps: [bedrock_example.elf]
     cmds:
@@ -108,6 +117,11 @@ targets:
     deps: [test_scheduler.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_scheduler.elf -nographic"
+
+  test-semaphore:
+    deps: [test_semaphore.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_semaphore.elf -nographic"
 
   build-tools:
     cmds:
@@ -169,6 +183,10 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_scheduler.c -o ${@}"
 
+  host-test_semaphore.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_semaphore.c -o ${@}"
+
   libbedrock_kernel_host.a:
     deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o]
     cmds:
@@ -194,8 +212,13 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_scheduler.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
 
+  test_semaphore_host:
+    deps: [host-test_semaphore.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_semaphore.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -212,8 +235,13 @@ targets:
     cmds:
       - "timeout 5 ./test_scheduler_host; true"
 
+  test-semaphore-host:
+    deps: [test_semaphore_host]
+    cmds:
+      - "timeout 5 ./test_semaphore_host; true"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host"
       - "rm -rf include/generated"

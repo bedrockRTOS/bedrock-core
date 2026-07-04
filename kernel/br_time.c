@@ -55,6 +55,11 @@ static void reprogram_alarm(void)
     }
 }
 
+void br_time_reprogram_alarm(void)
+{
+    reprogram_alarm();
+}
+
 br_time_t br_uptime_us(void)
 {
     return br_hal_timer_get_us();

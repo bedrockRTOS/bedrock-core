@@ -21,6 +21,7 @@ extern void     br_sched_reschedule(void);
 extern br_tcb_t *br_sched_current(void);
 extern void     br_time_sleep_list_insert(br_tcb_t *tcb);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
+extern void     br_time_reprogram_alarm(void);
 
 /* Wait queue helpers */
 
@@ -81,6 +82,7 @@ static void block_on_wq(br_tcb_t **wq, br_tcb_t *tcb, br_time_t timeout)
     if (timeout != BR_TIME_INFINITE) {
         tcb->wake_time = br_hal_timer_get_us() + timeout;
         br_time_sleep_list_insert(tcb);
+        br_time_reprogram_alarm();
     }
 }
 
