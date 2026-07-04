@@ -27,7 +27,7 @@
 - [x] Write unit tests for:
   - [x] Task creation, suspension, resumption, deletion
   - [x] Scheduler: priority ordering, round-robin, preemption
-  - [ ] Semaphore: basic take/give, timeout, overflow
+  - [x] Semaphore: basic take/give, timeout, overflow
   - [ ] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection
   - [ ] Message queue: send/recv, full/empty blocking, timeout
   - [ ] Sleep list: correct ordering, alarm handler wakeup
