@@ -136,3 +136,10 @@ bool br_hal_in_isr(void)
 {
     return g_in_isr;
 }
+
+#ifdef BR_HOST_TEST
+void br_hal_test_force_isr(bool v)
+{
+    g_in_isr = v;
+}
+#endif

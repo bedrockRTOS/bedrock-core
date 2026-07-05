@@ -36,7 +36,22 @@ struct br_pool {
     size_t    used;
     void     *free_head;
     bool      initialized;
+    uint8_t   free_bitmap[(BR_POOL_MAX_BLOCKS + 7) / 8];
 };
+
+static bool bitmap_test(const struct br_pool *pool, size_t idx)
+{
+    return (pool->free_bitmap[idx / 8] & (1u << (idx % 8))) != 0;
+}
+
+static void bitmap_set(struct br_pool *pool, size_t idx, bool free)
+{
+    if (free) {
+        pool->free_bitmap[idx / 8] |= (uint8_t)(1u << (idx % 8));
+    } else {
+        pool->free_bitmap[idx / 8] &= (uint8_t)~(1u << (idx % 8));
+    }
+}
 
 #ifndef BR_POOL_MAX_POOLS
 #define BR_POOL_MAX_POOLS 8
@@ -58,7 +73,7 @@ br_pool_handle_t br_pool_create(void *buffer, size_t buf_size,
     }
 
     size_t count = buf_size / aligned;
-    if (count == 0) {
+    if (count == 0 || count > BR_POOL_MAX_BLOCKS) {
         return NULL;
     }
 
@@ -74,6 +89,7 @@ br_pool_handle_t br_pool_create(void *buffer, size_t buf_size,
         void *block = pool->buffer + (i * aligned);
         *(void **)block = pool->free_head;
         pool->free_head = block;
+        bitmap_set(pool, i, true);
     }
 
     return (br_pool_handle_t)pool;
@@ -89,6 +105,9 @@ void *br_pool_alloc(br_pool_handle_t handle)
     void *block = pool->free_head;
     pool->free_head = *(void **)block;
     pool->used++;
+
+    size_t idx = ((uint8_t *)block - pool->buffer) / pool->block_size;
+    bitmap_set(pool, idx, false);
 
     memset(block, 0, pool->block_size);
     return block;
@@ -106,6 +125,12 @@ void br_pool_free(br_pool_handle_t handle, void *block)
         return;
     }
 
+    size_t idx = (size_t)(b - pool->buffer) / pool->block_size;
+    if (bitmap_test(pool, idx)) {
+        return;
+    }
+
+    bitmap_set(pool, idx, true);
     *(void **)block = pool->free_head;
     pool->free_head = block;
     if (pool->used > 0) {

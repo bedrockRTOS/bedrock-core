@@ -1,23 +1,5 @@
 # bedrock[RTOS] Roadmap
 
-## Phase 1 — Bring the Kernel to Life (0.0.x)
-
-### 0.0.2 — First Verified Boot
-
-- [x] Create linker script for `boards/qemu-cortex-m3/`
-- [x] Fix library link order in `chorus.build` (HAL before kernel to resolve symbols correctly)
-- [x] Implement `SVC_Handler` for first task start (proper handler→thread mode transition with PSP)
-- [x] Add `chorus run` target to launch ELF on QEMU
-
-### 0.0.3 — Kernel Hardening
-
-- [x] Implement round-robin time-slice logic (currently `rr_remaining` field exists but is unused)
-- [x] Add stack overflow detection: canary value at stack bottom, checked on context switch
-- [x] Add `br_task_delete()` — return a TCB slot to the pool (currently tasks can only be suspended)
-- [x] Add `br_assert()` macro with configurable panic handler (`BR_PANIC()`)
-- [x] Implement `br_hal_panic()` in Cortex-M HAL (print fault info via UART, halt)
-- [x] Add ISR guards to semaphore and message queue operations (mutex already has them)
-
 ## Phase 2 — Stable Foundation (0.1.0)
 
 ### 0.1.0 — Stable Kernel API & Test Infrastructure
@@ -28,10 +10,10 @@
   - [x] Task creation, suspension, resumption, deletion
   - [x] Scheduler: priority ordering, round-robin, preemption
   - [x] Semaphore: basic take/give, timeout, overflow
-  - [ ] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection
-  - [ ] Message queue: send/recv, full/empty blocking, timeout
-  - [ ] Sleep list: correct ordering, alarm handler wakeup
-  - [ ] Memory pool: alloc, free, exhaustion, double-free guard
+  - [x] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection
+  - [x] Message queue: send/recv, full/empty blocking, timeout
+  - [x] Sleep list: correct ordering, alarm handler wakeup
+  - [x] Memory pool: alloc, free, exhaustion, double-free guard
 - [ ] Add CI pipeline (GitHub Actions): build for Cortex-M + run host-native tests
 - [ ] Write `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH` macros
 
