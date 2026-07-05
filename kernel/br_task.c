@@ -99,8 +99,8 @@ br_err_t br_task_create(br_tid_t *tid,
     tcb->wake_time   = 0;
     tcb->rr_remaining = 0;
     tcb->next        = NULL;
+    tcb->sleep_next  = NULL;
 
-    /* Place canary at the bottom of the stack (lowest address) */
     tcb->stack_canary = (uint32_t *)stack;
     *(tcb->stack_canary) = BR_STACK_CANARY;
 
@@ -203,6 +203,7 @@ br_err_t br_task_delete(br_tid_t tid)
     tcb->stack_canary = NULL;
     tcb->sp = NULL;
     tcb->next = NULL;
+    tcb->sleep_next = NULL;
 
     br_hal_irq_restore(key);
 

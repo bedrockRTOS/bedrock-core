@@ -5,7 +5,7 @@ variables:
   CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib"
   LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/qemu-cortex-m3/linker.ld -mcpu=cortex-m3 -mthumb"
   HOST_CC: "gcc"
-  HOST_CFLAGS: "-c -Wall -Wextra -Werror -Os -std=c11 -D_DEFAULT_SOURCE -Iinclude"
+  HOST_CFLAGS: "-c -Wall -Wextra -Werror -Os -std=c11 -D_DEFAULT_SOURCE -DBR_HOST_TEST -Iinclude -Ilib"
   HOST_LDFLAGS: ""
 
 targets:
@@ -68,6 +68,22 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/test_semaphore.c -o ${@}"
 
+  test_mutex.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_mutex.c -o ${@}"
+
+  test_mqueue.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  test_sleep_list.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_sleep_list.c -o ${@}"
+
+  test_pool.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_pool.c -o ${@}"
+
   libbedrock_kernel.a:
     deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o]
     cmds:
@@ -103,6 +119,26 @@ targets:
     cmds:
       - "${CC} ${LDFLAGS} test_semaphore.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
 
+  test_mutex.elf:
+    deps: [test_mutex.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_mutex.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
+  test_mqueue.elf:
+    deps: [test_mqueue.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_mqueue.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
+  test_sleep_list.elf:
+    deps: [test_sleep_list.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_sleep_list.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
+  test_pool.elf:
+    deps: [test_pool.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_pool.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+
   run:
     deps: [bedrock_example.elf]
     cmds:
@@ -122,6 +158,26 @@ targets:
     deps: [test_semaphore.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_semaphore.elf -nographic"
+
+  test-mutex:
+    deps: [test_mutex.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_mutex.elf -nographic"
+
+  test-mqueue:
+    deps: [test_mqueue.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_mqueue.elf -nographic"
+
+  test-sleep-list:
+    deps: [test_sleep_list.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_sleep_list.elf -nographic"
+
+  test-pool:
+    deps: [test_pool.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_pool.elf -nographic"
 
   build-tools:
     cmds:
@@ -187,6 +243,22 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_semaphore.c -o ${@}"
 
+  host-test_mutex.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_mutex.c -o ${@}"
+
+  host-test_mqueue.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  host-test_sleep_list.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_sleep_list.c -o ${@}"
+
+  host-test_pool.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_pool.c -o ${@}"
+
   libbedrock_kernel_host.a:
     deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o]
     cmds:
@@ -217,8 +289,32 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_semaphore.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
 
+  test_mutex_host:
+    deps: [host-test_mutex.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_mutex.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
+  test_mqueue_host:
+    deps: [host-test_mqueue.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_mqueue.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
+  test_sleep_list_host:
+    deps: [host-test_sleep_list.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_sleep_list.o -L. -lbedrock_kernel_host -lbedrock_hal_host -o ${@}"
+
+  host-br_pool.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} lib/br_pool.c -o ${@}"
+
+  test_pool_host:
+    deps: [host-test_pool.o, host-br_pool.o, host-br_hal_uart.o]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_pool.o host-br_pool.o host-br_hal_uart.o -o ${@}"
+
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -240,8 +336,28 @@ targets:
     cmds:
       - "timeout 5 ./test_semaphore_host; true"
 
+  test-mutex-host:
+    deps: [test_mutex_host]
+    cmds:
+      - "timeout 5 ./test_mutex_host; true"
+
+  test-mqueue-host:
+    deps: [test_mqueue_host]
+    cmds:
+      - "timeout 5 ./test_mqueue_host; true"
+
+  test-sleep-list-host:
+    deps: [test_sleep_list_host]
+    cmds:
+      - "timeout 5 ./test_sleep_list_host; true"
+
+  test-pool-host:
+    deps: [test_pool_host]
+    cmds:
+      - "timeout 5 ./test_pool_host; true"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host"
       - "rm -rf include/generated"

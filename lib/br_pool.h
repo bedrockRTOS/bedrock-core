@@ -18,7 +18,10 @@
 
 #include <stddef.h>
 
-/* Opaque handle to a memory pool */
+#ifndef BR_POOL_MAX_BLOCKS
+#define BR_POOL_MAX_BLOCKS 128
+#endif
+
 typedef void *br_pool_handle_t;
 
 /* Create a pool from a caller-provided buffer.

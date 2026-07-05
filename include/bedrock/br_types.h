@@ -82,8 +82,16 @@ typedef struct br_tcb {
     uint16_t            rr_remaining;  /* Round-robin time-slice ticks */
     br_err_t            wait_result;   /* Result after waking from block */
 
-    /* Simple linked-list pointers for ready / wait queues */
+    /* Simple linked-list pointer for ready queues / IPC wait queues.
+     * A task is in at most one of these at a time, so they can share
+     * this field. */
     struct br_tcb      *next;
+
+    /* Separate link for the global sleep list. A timed wait on a
+     * semaphore/mutex/queue puts a task in *both* its wait queue (via
+     * `next` above) and the sleep list at once -- they need independent
+     * storage or inserting into one corrupts the other. */
+    struct br_tcb      *sleep_next;
 } br_tcb_t;
 
 /* Semaphore */

@@ -19,6 +19,7 @@
 extern void     br_sched_ready(br_tcb_t *tcb);
 extern void     br_sched_reschedule(void);
 extern br_tcb_t *br_sched_current(void);
+extern void     br_sched_change_priority(br_tcb_t *tcb, uint8_t new_priority);
 extern void     br_time_sleep_list_insert(br_tcb_t *tcb);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
 extern void     br_time_reprogram_alarm(void);
@@ -220,7 +221,7 @@ br_err_t br_mutex_lock(br_mutex_t *mtx, br_time_t timeout)
     br_tcb_t *tcb = br_sched_current();
 
     if (tcb->priority < mtx->owner->priority) {
-        mtx->owner->priority = tcb->priority;
+        br_sched_change_priority(mtx->owner, tcb->priority);
     }
 
     block_on_wq(&mtx->wait_queue, tcb, timeout);
@@ -255,7 +256,7 @@ br_err_t br_mutex_unlock(br_mutex_t *mtx)
         return BR_ERR_INVALID;
     }
 
-    cur->priority = mtx->owner_orig_prio;
+    br_sched_change_priority(cur, mtx->owner_orig_prio);
 
     br_tcb_t *waiter = wq_pop(&mtx->wait_queue);
     if (waiter != NULL) {

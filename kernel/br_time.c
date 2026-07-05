@@ -27,9 +27,9 @@ void br_time_sleep_list_insert(br_tcb_t *tcb)
 {
     br_tcb_t **pp = &sleep_list;
     while (*pp != NULL && (*pp)->wake_time <= tcb->wake_time) {
-        pp = &((*pp)->next);
+        pp = &((*pp)->sleep_next);
     }
-    tcb->next = *pp;
+    tcb->sleep_next = *pp;
     *pp = tcb;
 }
 
@@ -38,11 +38,11 @@ void br_time_sleep_list_remove(br_tcb_t *tcb)
     br_tcb_t **pp = &sleep_list;
     while (*pp != NULL) {
         if (*pp == tcb) {
-            *pp = tcb->next;
-            tcb->next = NULL;
+            *pp = tcb->sleep_next;
+            tcb->sleep_next = NULL;
             break;
         }
-        pp = &((*pp)->next);
+        pp = &((*pp)->sleep_next);
     }
 }
 
@@ -91,8 +91,8 @@ void br_time_alarm_handler(void)
 
     while (sleep_list != NULL && sleep_list->wake_time <= now) {
         br_tcb_t *tcb = sleep_list;
-        sleep_list = tcb->next;
-        tcb->next = NULL;
+        sleep_list = tcb->sleep_next;
+        tcb->sleep_next = NULL;
         tcb->wake_time = 0;
         tcb->wait_result = BR_ERR_TIMEOUT;
         br_sched_ready(tcb);

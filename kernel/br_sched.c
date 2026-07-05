@@ -76,7 +76,26 @@ void br_sched_unready(br_tcb_t *tcb)
     br_hal_irq_restore(key);
 }
 
-/* Find the highest-priority ready task */
+void br_sched_change_priority(br_tcb_t *tcb, uint8_t new_priority)
+{
+    uint32_t key = br_hal_irq_disable();
+
+    if (tcb->priority == new_priority) {
+        br_hal_irq_restore(key);
+        return;
+    }
+
+    if (tcb->state == BR_TASK_READY) {
+        br_sched_unready(tcb);
+        tcb->priority = new_priority;
+        br_sched_ready(tcb);
+    } else {
+        tcb->priority = new_priority;
+    }
+
+    br_hal_irq_restore(key);
+}
+
 static br_tcb_t *pick_next(void)
 {
     for (int prio = 0; prio < CONFIG_NUM_PRIORITIES; prio++) {
@@ -197,8 +216,7 @@ void br_sched_tick(br_time_t elapsed_us)
         current_task->rr_remaining -= elapsed_us;
     } else {
         current_task->rr_remaining = 0;
-        
-        /* Time slice expired - check if there are other tasks at same priority */
+
         uint8_t prio = current_task->priority;
         if (ready_queue[prio] != NULL) {
             /* There are other ready tasks at this priority - preempt */
