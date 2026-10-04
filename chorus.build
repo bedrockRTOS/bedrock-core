@@ -2,14 +2,14 @@ variables:
   CC: "arm-none-eabi-gcc"
   AR: "arm-none-eabi-ar"
   OBJCOPY: "arm-none-eabi-objcopy"
-  CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib"
+  CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -Iinclude -Ilib"
   LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/qemu-cortex-m3/linker.ld -mcpu=cortex-m3 -mthumb"
   HOST_CC: "gcc"
   HOST_CFLAGS: "-c -Wall -Wextra -Werror -Os -std=c11 -D_DEFAULT_SOURCE -DBR_HOST_TEST -Iinclude -Ilib"
   HOST_LDFLAGS: ""
   RV_CC: "riscv64-elf-gcc"
   RV_AR: "riscv64-elf-ar"
-  RV_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffunction-sections -fdata-sections -std=c11 -march=rv32imac_zicsr -mabi=ilp32 -DBR_HAL_SYS_CLOCK_HZ=10000000 -Iinclude -Ilib"
+  RV_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -march=rv32imac_zicsr -mabi=ilp32 -DBR_HAL_SYS_CLOCK_HZ=10000000 -Iinclude -Ilib"
   RV_LDFLAGS: "-nostdlib -Wl,--gc-sections -Wl,--no-warn-rwx-segments -Tboards/qemu-riscv32-virt/linker.ld -march=rv32imac_zicsr -mabi=ilp32"
 
 targets:
@@ -56,6 +56,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} lib/br_pool.c -o ${@}"
 
+  br_string.o:
+    cmds:
+      - "${CC} ${CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
   main.o:
     cmds:
       - "${CC} ${CFLAGS} examples/main.c -o ${@}"
@@ -99,49 +103,49 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_lib.a:
-    deps: [br_pool.o]
+    deps: [br_pool.o, br_string.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   bedrock_example.elf:
     deps: [main.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} main.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} main.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_task_delete.elf:
     deps: [test_task_delete.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_task_delete.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_task_delete.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_scheduler.elf:
     deps: [test_scheduler.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_scheduler.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_scheduler.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_semaphore.elf:
     deps: [test_semaphore.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_semaphore.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_semaphore.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_mutex.elf:
     deps: [test_mutex.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_mutex.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_mutex.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_mqueue.elf:
     deps: [test_mqueue.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_mqueue.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_mqueue.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_sleep_list.elf:
     deps: [test_sleep_list.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_sleep_list.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_sleep_list.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   test_pool.elf:
     deps: [test_pool.o, libbedrock_kernel.a, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
-      - "${CC} ${LDFLAGS} test_pool.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lc -lnosys -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} test_pool.o -L. -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
 
   run:
     deps: [bedrock_example.elf]
@@ -400,6 +404,10 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} lib/br_pool.c -o ${@}"
 
+  riscv32-br_string.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
   riscv32-main.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} examples/main.c -o ${@}"
@@ -443,49 +451,49 @@ targets:
       - "${RV_AR} rcs ${@} ${^}"
 
   libbedrock_lib_riscv32.a:
-    deps: [riscv32-br_pool.o]
+    deps: [riscv32-br_pool.o, riscv32-br_string.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
   bedrock_example_riscv32.elf:
     deps: [riscv32-main.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-main.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-main.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_task_delete_riscv32.elf:
     deps: [riscv32-test_task_delete.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_task_delete.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_task_delete.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_scheduler_riscv32.elf:
     deps: [riscv32-test_scheduler.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_scheduler.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_scheduler.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_semaphore_riscv32.elf:
     deps: [riscv32-test_semaphore.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_semaphore.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_semaphore.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_mutex_riscv32.elf:
     deps: [riscv32-test_mutex.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_mutex.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_mutex.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_mqueue_riscv32.elf:
     deps: [riscv32-test_mqueue.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_mqueue.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_mqueue.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_sleep_list_riscv32.elf:
     deps: [riscv32-test_sleep_list.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_sleep_list.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_sleep_list.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   test_pool_riscv32.elf:
     deps: [riscv32-test_pool.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lc -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o -L. -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -lgcc -o ${@}"
 
   riscv32:
     deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf]

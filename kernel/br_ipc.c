@@ -3,7 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
-#include <string.h>
+#include "br_string.h"
 
 extern void     br_sched_ready(br_tcb_t *tcb);
 extern void     br_sched_reschedule(void);
@@ -12,8 +12,6 @@ extern void     br_sched_change_priority(br_tcb_t *tcb, uint8_t new_priority);
 extern void     br_time_sleep_list_insert(br_tcb_t *tcb);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
 extern void     br_time_reprogram_alarm(void);
-
-/* Wait queue helpers */
 
 static void wq_insert(br_tcb_t **head, br_tcb_t *tcb)
 {
@@ -54,15 +52,6 @@ static void wq_remove(br_tcb_t **head, br_tcb_t *tcb)
     }
 }
 
-/*
- * Block the current task on a wait queue with optional timeout.
- * If timeout == BR_TIME_INFINITE, wait forever.
- * Otherwise, also insert into the sleep list so the alarm handler
- * can wake us with BR_ERR_TIMEOUT.
- *
- * Must be called with IRQs disabled. Caller must call
- * br_hal_irq_restore + br_sched_reschedule after this returns.
- */
 static void block_on_wq(br_tcb_t **wq, br_tcb_t *tcb, br_time_t timeout)
 {
     tcb->state       = BR_TASK_BLOCKED;
@@ -76,10 +65,6 @@ static void block_on_wq(br_tcb_t **wq, br_tcb_t *tcb, br_time_t timeout)
     }
 }
 
-/*
- * Wake a waiter from a wait queue (called by give/unlock/send/recv).
- * Removes from sleep list if it was there, sets wait_result = BR_OK.
- */
 static void wake_waiter(br_tcb_t *tcb)
 {
     tcb->wait_result = BR_OK;
@@ -87,8 +72,6 @@ static void wake_waiter(br_tcb_t *tcb)
     tcb->wake_time = 0;
     br_sched_ready(tcb);
 }
-
-/* Semaphore */
 
 br_err_t br_sem_init(br_sem_t *sem, int32_t initial, int32_t max)
 {
@@ -131,9 +114,7 @@ br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout)
     br_hal_irq_restore(key);
     br_sched_reschedule();
 
-    /* Back from block: check why we woke up */
     if (tcb->wait_result == BR_ERR_TIMEOUT) {
-        /* Woken by timer — remove ourselves from the wait queue */
         uint32_t k2 = br_hal_irq_disable();
         wq_remove(&sem->wait_queue, tcb);
         br_hal_irq_restore(k2);
@@ -168,8 +149,6 @@ br_err_t br_sem_give(br_sem_t *sem)
     br_hal_irq_restore(key);
     return BR_ERR_OVERFLOW;
 }
-
-/* Mutex (with priority inheritance) */
 
 br_err_t br_mutex_init(br_mutex_t *mtx)
 {
@@ -264,8 +243,6 @@ br_err_t br_mutex_unlock(br_mutex_t *mtx)
     return BR_OK;
 }
 
-/* Message Queue */
-
 br_err_t br_mqueue_init(br_mqueue_t *mq, void *buffer,
                         size_t msg_size, size_t max_msgs)
 {
@@ -297,7 +274,6 @@ br_err_t br_mqueue_send(br_mqueue_t *mq, const void *msg, br_time_t timeout)
         mq->tail = (mq->tail + 1) % mq->max_msgs;
         mq->count++;
 
-        /* Wake one receiver if any */
         br_tcb_t *waiter = wq_pop(&mq->recv_wait);
         if (waiter != NULL) {
             wake_waiter(waiter);
@@ -333,7 +309,6 @@ br_err_t br_mqueue_send(br_mqueue_t *mq, const void *msg, br_time_t timeout)
         return BR_ERR_TIMEOUT;
     }
 
-    /* Woken by recv — now enqueue the message */
     key = br_hal_irq_disable();
     if (mq->count < mq->max_msgs) {
         uint8_t *dst = mq->buffer + (mq->tail * mq->msg_size);
@@ -360,7 +335,6 @@ br_err_t br_mqueue_recv(br_mqueue_t *mq, void *msg, br_time_t timeout)
         mq->head = (mq->head + 1) % mq->max_msgs;
         mq->count--;
 
-        /* Wake one sender if any */
         br_tcb_t *sender = wq_pop(&mq->send_wait);
         if (sender != NULL) {
             wake_waiter(sender);
@@ -396,7 +370,6 @@ br_err_t br_mqueue_recv(br_mqueue_t *mq, void *msg, br_time_t timeout)
         return BR_ERR_TIMEOUT;
     }
 
-    /* Woken by send — now dequeue the message */
     key = br_hal_irq_disable();
     if (mq->count > 0) {
         uint8_t *src = mq->buffer + (mq->head * mq->msg_size);

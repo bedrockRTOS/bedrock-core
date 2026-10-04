@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `chorus riscv32`, `chorus run-riscv32`, `chorus test-*-riscv32` and `chorus defconfig-riscv32` targets.
 - `ARCH_RISCV32` Kconfig option.
 - CI job that builds the RISC-V port and runs the tests on QEMU.
+- `lib/br_string.c` with `memcpy` and `memset`.
+
+### Changed
+- The kernel, the Cortex-M and RISC-V HALs and `lib` no longer depend on libc. Targets are built with `-ffreestanding` and linked with `-lgcc` only. newlib is no longer needed.
 
 ## [0.1.0] - 2026-10-04
 

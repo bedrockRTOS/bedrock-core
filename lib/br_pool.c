@@ -5,15 +5,7 @@
 #include "br_pool.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-
-/*
- * Static memory pool allocator
- *
- * Manages a caller-provided buffer as a pool of fixed-size
- * blocks. Zero dynamic allocation -- the buffer, block size,
- * and count are all determined at init time.
- */
+#include "br_string.h"
 
 #define POOL_ALIGN       (sizeof(void *))
 #define POOL_ALIGN_UP(x) (((x) + POOL_ALIGN - 1) & ~(POOL_ALIGN - 1))
