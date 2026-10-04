@@ -1,34 +1,5 @@
 /*
- * Project: bedrock[RTOS]
- * Version: 0.0.3
- * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: GPL-3.0-only WITH runtime exception
- *
  * SPDX-License-Identifier: GPL-3.0-only
- *
- * Host x86-64 timer and interrupt-control HAL.
- *
- * Time source  : CLOCK_MONOTONIC via clock_gettime(3).
- * Tick / alarm : SIGALRM delivered by setitimer(ITIMER_REAL) at the
- *                round-robin quantum rate.  The signal handler checks
- *                whether a sleep alarm is due and calls the appropriate
- *                kernel handlers.
- *
- * IRQ disable/restore maps to sigprocmask(2) on SIGALRM so that the
- *   kernel's critical-section protocol (irq_disable / irq_restore) works
- *   identically to the ARM PRIMASK scheme:
- *     irq_disable() returns 0 if SIGALRM was unblocked, 1 if already blocked.
- *     irq_restore(0) unblocks; irq_restore(1) is a no-op.
- *
- * Signal-mask invariant after context switches
- * --------------------------------------------
- * swapcontext(3) saves and restores uc_sigmask.  Every new task context
- * is created with an empty mask (SIGALRM unblocked).  After resuming from
- * a voluntary switch, the caller always follows with irq_restore(key) which
- * explicitly sets the mask to the correct state, overriding whatever
- * swapcontext restored.  After resuming from an involuntary (signal)
- * switch, sigreturn(2) restores the pre-signal mask (SIGALRM unblocked),
- * also leaving the mask correct.
  */
 
 #include "bedrock/br_hal.h"

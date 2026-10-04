@@ -1,20 +1,5 @@
 /*
- * Project: bedrock[RTOS]
- * Version: 0.0.3
- * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: GPL-3.0-only WITH runtime exception
- *
  * SPDX-License-Identifier: GPL-3.0-only
- *
- * Host x86-64 context switch HAL.
- *
- * Uses POSIX ucontext_t for task context switching.  Each task gets an
- * execution stack in a statically allocated host_slot_t; the stack buffer
- * passed by the caller is only used for the stack-canary check.
- *
- * Slot association is keyed on stack_top so that deleted-and-recreated
- * tasks that reuse the same stack buffer reuse the same slot (necessary
- * for br_task_delete + recreate semantics in tests).
  */
 
 #include "bedrock/br_hal.h"

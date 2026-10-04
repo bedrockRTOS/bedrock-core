@@ -1,23 +1,5 @@
 /*
- * Project: bedrock[RTOS]
- * Version: 0.0.3
- * Author:  AnmiTaliDev <anmitalidev@nuros.org>
- * License: GPL-3.0-only WITH runtime exception
- *
  * SPDX-License-Identifier: GPL-3.0-only
- *
- * This file is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 3.
- * Applications that link against or run on bedrock[RTOS] are NOT required
- * to be GPL-licensed — only changes to bedrock[RTOS] itself must remain GPL.
- * See LICENSE-GPL-3.0.md for the full terms and runtime exception.
- *
- * ARM Cortex-M timer HAL implementation.
- * Uses SysTick as the time source and a free-running counter
- * to provide 64-bit microsecond timestamps.
- *
- * This is a minimal reference implementation suitable for
- * QEMU cortex-m3 emulation.
  */
 
 #include "bedrock/br_hal.h"
