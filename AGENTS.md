@@ -26,7 +26,7 @@ bedrock[RTOS] is a **nanokernel** RTOS with strict architectural principles:
 - **Language:** Pure C (C11/C17), no C++
 - **Build system:** [Chorus](https://github.com/z3nnix/chorus)
 - **Configuration:** Kconfig
-- **Target architectures:** ARM Cortex-M (primary), RISC-V (planned)
+- **Target architectures:** ARM Cortex-M (primary), RISC-V RV32 (`arch/riscv32`)
 
 ---
 
