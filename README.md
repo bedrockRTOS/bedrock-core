@@ -5,15 +5,16 @@
 
 ## About
 
-bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. It is for microcontroller firmware. Supported architectures: ARM Cortex-M and RISC-V (RV32).
+bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. It is for microcontroller firmware. Supported targets: ARM Cortex-M3 (QEMU LM3S6965), ARM Cortex-M0+ (RP2040, Raspberry Pi Pico) and RISC-V RV32 (QEMU `virt`).
 
 ## Dependencies
 
-- `arm-none-eabi-gcc` for Cortex-M
+- `arm-none-eabi-gcc` for Cortex-M3 and RP2040
 - `riscv64-elf-gcc` for RISC-V
 - [chorus](https://github.com/z3nnix/chorus) 1.1.0 or newer
 - `qemu-system-arm` and `qemu-system-riscv32` to run on QEMU
-- `gcc` for host tests
+- `gcc` for host tests and for the RP2040 image tools
+- [Renode](https://renode.io/) 1.16.1 and [Renode_RP2040](https://github.com/matgla/Renode_RP2040), only to run RP2040 tests without hardware
 - [kconfig-tools](https://github.com/bedrockRTOS/kconfig-tools) and `zig`, only for Kconfig
 
 Arch Linux:
@@ -51,6 +52,14 @@ chorus riscv32
 
 The result is `bedrock_example_riscv32.elf`, the `test_*_riscv32.elf` tests and the `libbedrock_*_riscv32.a` libraries.
 
+RP2040:
+
+```bash
+chorus rp2040
+```
+
+The result is `bedrock_example_rp2040.uf2`, `bedrock_example_rp2040.elf`, the `test_*_rp2040.elf` tests and the `libbedrock_*_rp2040.a` libraries.
+
 Clean:
 
 ```bash
@@ -73,6 +82,17 @@ chorus run-riscv32
 
 Exit QEMU with `Ctrl+A`, then `X`.
 
+## Running on RP2040
+
+Hold BOOTSEL, connect the Pico over USB and copy `bedrock_example_rp2040.uf2` to the `RPI-RP2` drive. Output goes to UART0: TX on GP0, RX on GP1, 115200 8N1. The port has been tested in Renode only, not on hardware yet.
+
+In Renode, with Renode_RP2040 cloned to `<path>`:
+
+```bash
+renode --disable-gui --console -e '$rp2040=@<path>; $fw=@'"$PWD"'/test_scheduler_rp2040.elf; $out=@/tmp/uart.txt; $time="2"; include @'"$PWD"'/boards/rpi-pico/renode.resc'
+cat /tmp/uart.txt
+```
+
 ## Tests
 
 The tests run on Linux x86-64 with a mock HAL:
@@ -84,7 +104,7 @@ chorus host
 
 The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore_host`, `test_mutex_host`, `test_mqueue_host`, `test_sleep_list_host` and `test_pool_host`. Each one prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end.
 
-The same tests under QEMU: `chorus test-scheduler`, `chorus test-semaphore` and so on for Cortex-M, `chorus test-scheduler-riscv32` and so on for RISC-V.
+The same tests under QEMU: `chorus test-scheduler`, `chorus test-semaphore` and so on for Cortex-M, `chorus test-scheduler-riscv32` and so on for RISC-V. RP2040 tests run in Renode, see above.
 
 ## Configuration
 
@@ -96,7 +116,7 @@ chorus defconfig
 chorus menuconfig
 ```
 
-For RISC-V use `chorus defconfig-riscv32` instead of `chorus defconfig`.
+For RISC-V use `chorus defconfig-riscv32`, for RP2040 `chorus defconfig-rp2040` instead of `chorus defconfig`.
 
 This generates `include/generated/autoconf.h`, which takes precedence over the defaults.
 
@@ -104,6 +124,7 @@ This generates `include/generated/autoconf.h`, which takes precedence over the d
 
 - [chorus](https://github.com/z3nnix/chorus): build system
 - [QEMU](https://www.qemu.org/): Cortex-M and RISC-V emulation
+- [Renode](https://renode.io/) and [Renode_RP2040](https://github.com/matgla/Renode_RP2040): RP2040 emulation
 
 ## Documentation
 

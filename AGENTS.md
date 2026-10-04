@@ -26,7 +26,7 @@ bedrock[RTOS] is a **nanokernel** RTOS with strict architectural principles:
 - **Language:** Pure C (C11/C17), no C++
 - **Build system:** [Chorus](https://github.com/z3nnix/chorus)
 - **Configuration:** Kconfig
-- **Target architectures:** ARM Cortex-M (primary), RISC-V RV32 (`arch/riscv32`)
+- **Target architectures:** ARM Cortex-M3 (`arch/arm-cortex-m`), ARM Cortex-M0+ / RP2040 (`arch/arm-cortex-m0plus`), RISC-V RV32 (`arch/riscv32`)
 
 ---
 
@@ -140,7 +140,7 @@ When modifying scheduler, IPC, or time logic:
 
 - **Host tests:** `examples/test_*.c` built against the mock HAL in `arch/host-x86-64` with `chorus host`. Each binary prints `PASS`/`FAIL` per case and `=== All Tests Complete ===` at the end. All except `test_pool_host` loop forever after that, so run them under `timeout 5`.
 - **QEMU:** the same tests for Cortex-M via `chorus test-scheduler`, `chorus test-semaphore`, etc. The example runs with `chorus run`.
-- **CI:** `.github/workflows/ci.yml` builds and runs every test on QEMU for Cortex-M and RISC-V, and builds and runs every host test. A test fails if `=== All Tests Complete ===` is missing or `FAIL` appears.
+- **CI:** `.github/workflows/ci.yml` builds and runs every test on QEMU for Cortex-M3 and RISC-V, in Renode for RP2040, and builds and runs every host test. A test fails if `=== All Tests Complete ===` is missing or `FAIL` appears.
 
 The `test-*-host` targets in `chorus.build` end with `; true` and always succeed. Do not use their exit code as a test result.
 

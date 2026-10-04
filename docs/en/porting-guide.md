@@ -145,3 +145,4 @@ Add compile and link targets for the new architecture in `chorus.build`, an `ARC
 
 - `arch/arm-cortex-m/` and `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
 - `arch/riscv32/` and `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, machine mode only)
+- `arch/arm-cortex-m0plus/` and `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), with boot2 and UF2 tools

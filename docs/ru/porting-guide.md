@@ -145,3 +145,4 @@ RISC-V:
 
 - `arch/arm-cortex-m/` и `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
 - `arch/riscv32/` и `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, только machine mode)
+- `arch/arm-cortex-m0plus/` и `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), с boot2 и утилитами для UF2
