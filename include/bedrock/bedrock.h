@@ -8,20 +8,7 @@
 #include "br_types.h"
 #include "br_hal.h"
 #include "br_assert.h"
-
-/*
- * API stability annotations
- *
- * BR_STABLE      — signature will not change within a minor version series.
- *                  Safe to use in application code.
- *
- * BR_EXPERIMENTAL — may change or be removed in a future minor version.
- *                   Compiles cleanly by default; define BR_WARN_EXPERIMENTAL
- *                   at build time to turn usage into compiler warnings.
- *
- * BR_INTERNAL    — not part of the application-facing API.
- *                  Called by the kernel or HAL layer only.
- */
+#include "br_version.h"
 
 #define BR_STABLE
 
@@ -39,23 +26,9 @@
 #  define BR_INTERNAL
 #endif
 
-/* Kernel version */
-
-#define BEDROCK_VERSION_MAJOR  0
-#define BEDROCK_VERSION_MINOR  0
-#define BEDROCK_VERSION_PATCH  3
-
-#define BEDROCK_VERSION \
-    ((BEDROCK_VERSION_MAJOR << 16) | \
-     (BEDROCK_VERSION_MINOR <<  8) | \
-      BEDROCK_VERSION_PATCH)
-
-/* Kernel lifecycle */
 
 BR_STABLE void br_kernel_init(void);
 BR_STABLE void br_kernel_start(void) __attribute__((noreturn));
-
-/* Task management */
 
 BR_STABLE br_err_t br_task_create(br_tid_t *tid,
                                    const char *name,

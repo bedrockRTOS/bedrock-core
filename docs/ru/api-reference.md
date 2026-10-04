@@ -56,6 +56,22 @@ typedef void (*br_task_entry_t)(void *arg);
 
 Сигнатура точки входа задачи. Функция получает указатель `arg`, переданный в `br_task_create()`.
 
+## Версия
+
+Объявлена в `include/bedrock/br_version.h`, подключается через `bedrock.h`.
+
+| Макрос | Значение |
+|--------|----------|
+| `BR_VERSION_MAJOR` | Мажорная версия |
+| `BR_VERSION_MINOR` | Минорная версия |
+| `BR_VERSION_PATCH` | Патч-версия |
+| `BR_VERSION` | `(MAJOR << 16) \| (MINOR << 8) \| PATCH`, для сравнения в `#if` |
+
+```c
+#if BR_VERSION >= ((0 << 16) | (1 << 8) | 0)
+#endif
+```
+
 ## Жизненный цикл ядра
 
 ### `br_kernel_init`

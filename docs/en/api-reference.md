@@ -56,6 +56,22 @@ typedef void (*br_task_entry_t)(void *arg);
 
 Task entry point signature. The function receives the `arg` pointer passed to `br_task_create()`.
 
+## Version
+
+Declared in `include/bedrock/br_version.h`, included by `bedrock.h`.
+
+| Macro | Value |
+|-------|-------|
+| `BR_VERSION_MAJOR` | Major version |
+| `BR_VERSION_MINOR` | Minor version |
+| `BR_VERSION_PATCH` | Patch version |
+| `BR_VERSION` | `(MAJOR << 16) \| (MINOR << 8) \| PATCH`, for comparisons in `#if` |
+
+```c
+#if BR_VERSION >= ((0 << 16) | (1 << 8) | 0)
+#endif
+```
+
 ## Kernel Lifecycle
 
 ### `br_kernel_init`

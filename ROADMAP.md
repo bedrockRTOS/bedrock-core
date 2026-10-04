@@ -13,7 +13,7 @@
   - [x] Sleep list: ordering, wakeup from the alarm handler
   - [x] Memory pool: alloc, free, exhaustion, double free
 - [x] GitHub Actions: Cortex-M build and host test run
-- [ ] `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH`
+- [x] `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH`
 
 ## 0.2.0: RISC-V port
 
