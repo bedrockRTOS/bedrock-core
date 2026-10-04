@@ -23,6 +23,8 @@ arch/<arch_name>/
 └── startup.c           Reset entry, .bss init, trap or vector setup
 ```
 
+Chip and board code that does not belong to the core, such as the UART driver and clock setup, can live in `boards/<board_name>/` instead (`br_hal_uart.c`, `board.c` with `br_hal_board_init()`). `arch/arm-cortex-m/` and `boards/stm32f103c8-bluepill/` are laid out this way.
+
 ## Step 2: Implement Timer HAL
 
 ```c
@@ -106,7 +108,7 @@ Start executing the first task. Load the stack pointer `sp`, restore the context
 void br_hal_board_init(void);
 ```
 
-Perform any early board-level initialization (clock setup, GPIO, peripheral enables). This is called before the timer is initialized. Can be a no-op if nothing is needed.
+Perform any early board-level initialization (clock setup, GPIO, peripheral enables, UART). The startup code calls it after `.data` and `.bss` are initialized and before `main()`, so `br_uart_puts()` works from the first line of `main()`. The kernel does not call it. Can be a no-op if nothing is needed. The arch layer provides a weak empty version, a board overrides it with its own `board.c` linked as an object file, not from an archive.
 
 ## Step 6: Startup Code
 
@@ -144,5 +146,6 @@ Add compile and link targets for the new architecture in `chorus.build`, an `ARC
 ## Reference
 
 - `arch/arm-cortex-m/` and `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
+- `arch/arm-cortex-m/` and `boards/stm32f103c8-bluepill/`: STM32F103C8 (Cortex-M3), board code in `board.c`
 - `arch/riscv32/` and `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, machine mode only)
 - `arch/arm-cortex-m0plus/` and `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), with boot2 and UF2 tools

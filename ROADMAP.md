@@ -29,13 +29,16 @@
 - [x] Build and test both architectures in CI
 - [x] Porting guide update
 
-## RP2040 port
+## Extra boards
 
-- [x] `arch/arm-cortex-m0plus/`: ARMv6-M PendSV/SVC, timer on the RP2040 TIMER alarm, PL011 UART
-- [x] `boards/rpi-pico/`: linker script, own boot2, defconfig
-- [x] ELF to UF2 and boot2 CRC tools in `tools/`
-- [x] Tests in Renode in CI
-- [ ] Check on a real Raspberry Pi Pico
+- [x] RP2040: `arch/arm-cortex-m0plus/` with ARMv6-M PendSV/SVC, RP2040 TIMER alarm, PL011 UART
+- [x] RP2040: `boards/rpi-pico/` with linker script, own boot2, defconfig
+- [x] RP2040: ELF to UF2 and boot2 CRC tools in `tools/`
+- [x] RP2040: tests in Renode in CI
+- [ ] RP2040: check on a real Raspberry Pi Pico
+- [x] STM32F103C8: `boards/stm32f103c8-bluepill/` with clocks, USART1, linker script, defconfig
+- [x] STM32F103C8: tests in Renode in CI
+- [ ] STM32F103C8: check on a real Blue Pill
 
 ## 0.3.0: Shell and debugging
 

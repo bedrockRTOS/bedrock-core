@@ -23,6 +23,8 @@ arch/<arch_name>/
 └── startup.c           Точка входа после сброса, обнуление .bss, установка trap или таблицы векторов
 ```
 
+Код чипа и платы, не относящийся к ядру процессора, например драйвер UART и настройка тактирования, можно класть в `boards/<board_name>/` (`br_hal_uart.c`, `board.c` с `br_hal_board_init()`). Так устроены `arch/arm-cortex-m/` и `boards/stm32f103c8-bluepill/`.
+
 ## Шаг 2: Реализовать HAL таймера
 
 ```c
@@ -106,7 +108,7 @@ void br_hal_start_first_task(void *sp) __attribute__((noreturn));
 void br_hal_board_init(void);
 ```
 
-Ранняя инициализация платы (настройка тактирования, GPIO, периферия). Вызывается до инициализации таймера. Может быть пустой, если ничего не требуется.
+Ранняя инициализация платы (тактирование, GPIO, периферия, UART). Стартовый код вызывает её после инициализации `.data` и `.bss` и до `main()`, поэтому `br_uart_puts()` работает с первой строки `main()`. Ядро её не вызывает. Может быть пустой, если ничего не требуется. В arch-слое есть слабая пустая версия, плата переопределяет её своим `board.c`, который линкуется объектным файлом, а не из архива.
 
 ## Шаг 6: Стартовый код
 
@@ -144,5 +146,6 @@ RISC-V:
 ## Справочная реализация
 
 - `arch/arm-cortex-m/` и `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
+- `arch/arm-cortex-m/` и `boards/stm32f103c8-bluepill/`: STM32F103C8 (Cortex-M3), код платы в `board.c`
 - `arch/riscv32/` и `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, только machine mode)
 - `arch/arm-cortex-m0plus/` и `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), с boot2 и утилитами для UF2
