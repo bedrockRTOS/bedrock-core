@@ -10,6 +10,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `tools/bootcrc.c` adds the boot2 CRC32, `tools/bin2uf2.c` builds the UF2 image.
 - `chorus rp2040` and `chorus defconfig-rp2040` targets, `ARCH_ARM_CORTEX_M0PLUS` Kconfig option.
 - CI job that builds the RP2040 port, runs the tests in Renode and uploads the example UF2.
+- `boards/stm32f103c8-bluepill`: STM32F103C8 at 72 MHz from HSE, USART1 on PA9/PA10, linker script, defconfig and Renode script. Reuses the Cortex-M3 context switch and SysTick timer. Tested in Renode, not on hardware.
+- `chorus stm32f103` and `chorus defconfig-stm32f103` targets.
+- CI job that builds the STM32F103 port, runs the tests in Renode and uploads the example binary.
+
+### Changed
+- `br_hal_board_init()` is called by the startup code before `main()` instead of by `br_kernel_init()`. Board code can now set up clocks and the UART before the first output.
+- The LM3S6965 UART driver moved from `arch/arm-cortex-m/` to `boards/qemu-cortex-m3/`. `arch/` holds core code, `boards/` holds chip and board code.
 
 ## [0.2.1] - 2026-10-04
 
