@@ -17,17 +17,17 @@
 
 ## 0.2.0: RISC-V port
 
-- [ ] `arch/riscv32/` with the same layout as `arch/arm-cortex-m/`
-- [ ] Timer HAL on CLINT `mtime`/`mtimecmp`
-- [ ] RV32I context switch in `br_hal_context.c`: stack frame layout, switching through `mscratch`
-- [ ] `br_hal_irq_disable`/`br_hal_irq_restore` on `mstatus.MIE`
-- [ ] `boards/qemu-riscv32-virt/`: linker script and startup code for the QEMU `virt` machine
-- [ ] UART output for QEMU `virt` (16550)
-- [ ] `examples/main.c` runs on both architectures without changes
-- [ ] RISC-V target in `chorus.build`
-- [ ] `ARCH_RISCV32` in Kconfig
-- [ ] Build and test both architectures in CI
-- [ ] Porting guide update
+- [x] `arch/riscv32/` with the same layout as `arch/arm-cortex-m/`
+- [x] Timer HAL on CLINT `mtime`/`mtimecmp`
+- [x] RV32I context switch in `br_hal_context.c`: stack frame layout, switching on trap exit via the CLINT software interrupt
+- [x] `br_hal_irq_disable`/`br_hal_irq_restore` on `mstatus.MIE`
+- [x] `boards/qemu-riscv32-virt/`: linker script and startup code for the QEMU `virt` machine
+- [x] UART output for QEMU `virt` (16550)
+- [x] `examples/main.c` runs on both architectures without changes
+- [x] RISC-V target in `chorus.build`
+- [x] `ARCH_RISCV32` in Kconfig
+- [x] Build and test both architectures in CI
+- [x] Porting guide update
 
 ## 0.3.0: Shell and debugging
 
