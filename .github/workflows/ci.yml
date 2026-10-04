@@ -17,7 +17,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi
 
       - name: Install chorus
         run: |
@@ -66,7 +66,7 @@ jobs:
     container: archlinux:latest
     steps:
       - name: Install toolchain
-        run: pacman -Syu --noconfirm riscv64-elf-gcc riscv64-elf-newlib qemu-system-riscv
+        run: pacman -Syu --noconfirm riscv64-elf-gcc qemu-system-riscv
 
       - uses: actions/checkout@v4
 
