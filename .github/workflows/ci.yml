@@ -17,7 +17,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi qemu-system-arm
 
       - name: Install chorus
         run: |
@@ -29,6 +29,24 @@ jobs:
           chorus all
           test_task_delete.elf test_scheduler.elf test_semaphore.elf test_mutex.elf
           test_mqueue.elf test_sleep_list.elf test_pool.elf
+
+      - name: Run tests on QEMU
+        run: |
+          failed=0
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+            echo "::group::test_${t}"
+            out=$(timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel "test_${t}.elf" < /dev/null || true)
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t} did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t} reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
 
   host-tests:
     runs-on: ubuntu-24.04
