@@ -4,6 +4,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 
 ## [Unreleased]
 
+### Added
+- RISC-V port in `arch/riscv32` for RV32IMAC in machine mode: CLINT timer, context switch through a common trap handler and the CLINT software interrupt, `mstatus.MIE` interrupt control, 16550 UART.
+- `boards/qemu-riscv32-virt` with linker script and defconfig for QEMU `virt`.
+- `chorus riscv32`, `chorus run-riscv32`, `chorus test-*-riscv32` and `chorus defconfig-riscv32` targets.
+- `ARCH_RISCV32` Kconfig option.
+- CI job that builds the RISC-V port and runs the tests on QEMU.
+
 ## [0.1.0] - 2026-10-04
 
 ### Added

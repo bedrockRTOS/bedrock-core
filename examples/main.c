@@ -4,7 +4,6 @@
 
 #include "bedrock/bedrock.h"
 
-/* UART output (defined in arch/arm-cortex-m/br_hal_uart.c) */
 extern void br_uart_puts(const char *s);
 
 static uint8_t stack_task_a[1024];

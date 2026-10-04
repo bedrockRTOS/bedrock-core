@@ -61,6 +61,9 @@ choice ARCH
 config ARCH_ARM_CORTEX_M
     bool "ARM Cortex-M"
 
+config ARCH_RISCV32
+    bool "RISC-V (RV32)"
+
 endchoice
 
 config SYS_CLOCK_HZ
@@ -69,5 +72,6 @@ config SYS_CLOCK_HZ
     help
       The core clock frequency of the target MCU.
       Used by the HAL timer to compute microsecond timestamps.
+      On RISC-V this is the mtime frequency (10 MHz on QEMU virt).
 
 endmenu
