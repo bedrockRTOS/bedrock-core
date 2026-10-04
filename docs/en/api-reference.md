@@ -299,3 +299,31 @@ br_err_t br_mqueue_recv(br_mqueue_t *mq, void *msg, br_time_t timeout);
 ```
 
 Receive a message. If the queue is empty, block until a message arrives or timeout expires.
+
+## UART
+
+Experimental. Declared in `include/bedrock/bedrock.h`.
+
+### `br_uart_putc` / `br_uart_puts`
+
+```c
+void br_uart_putc(char c);
+void br_uart_puts(const char *s);
+```
+
+Write a character or a string to the board console UART. Polled, blocks until the transmitter accepts the data. `br_uart_puts` sends `\r` before every `\n`.
+
+### `br_uart_getc`
+
+```c
+br_err_t br_uart_getc(char *c, br_time_t timeout);
+```
+
+Read one received character. The UART receive interrupt puts incoming bytes into a ring buffer of `CONFIG_UART_RX_BUF_SIZE` bytes. If the buffer is empty, block until a byte arrives or `timeout` expires. Bytes that arrive while the buffer is full are dropped.
+
+| Return | Meaning |
+|--------|---------|
+| `BR_OK` | `*c` holds the character |
+| `BR_ERR_TIMEOUT` | No data within `timeout` |
+| `BR_ERR_INVALID` | `c` is `NULL` |
+| `BR_ERR_ISR` | Called from an ISR with a non-zero timeout |

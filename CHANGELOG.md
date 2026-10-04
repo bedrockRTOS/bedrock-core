@@ -5,6 +5,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 ## [Unreleased]
 
 ### Added
+- Interrupt-driven UART receive on all targets: `br_uart_getc(char *c, br_time_t timeout)` reads from a ring buffer that the UART RX interrupt fills (`kernel/br_uart.c`). `br_uart_putc`, `br_uart_puts` and `br_uart_getc` are declared in `bedrock.h` as experimental API.
+- `CONFIG_UART_RX_BUF_SIZE` (default 64).
+- Cortex-M3 vector table has weak `IRQ0_Handler` to `IRQ63_Handler` that boards override.
+- RISC-V: machine external interrupts through the QEMU `virt` PLIC.
+- `test_uart_rx` on every target, run in CI with input fed to the console.
+- `boards/qemu-cortex-m3/board.c` and `boards/qemu-riscv32-virt/board.c`.
+
+### Changed
+- The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.
+- Libraries are linked inside `--start-group`/`--end-group` because the kernel and HAL now reference each other both ways.
+- `boards/*/renode.resc` only set up the machine. The caller runs `emulation RunFor` and `quit`, and can feed UART input in between.
+
+### Added
 - RP2040 port in `arch/arm-cortex-m0plus`: ARMv6-M context switch, RP2040 timer with alarm 0, PL011 UART0 on GP0/GP1, XOSC clock setup. Tested in Renode, not on hardware.
 - `boards/rpi-pico` with linker script, defconfig, a boot2 that sets up XIP with the 03h read command, and a Renode script.
 - `tools/bootcrc.c` adds the boot2 CRC32, `tools/bin2uf2.c` builds the UF2 image.

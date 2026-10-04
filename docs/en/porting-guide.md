@@ -25,6 +25,8 @@ arch/<arch_name>/
 
 Chip and board code that does not belong to the core, such as the UART driver and clock setup, can live in `boards/<board_name>/` instead (`br_hal_uart.c`, `board.c` with `br_hal_board_init()`). `arch/arm-cortex-m/` and `boards/stm32f103c8-bluepill/` are laid out this way.
 
+The UART driver provides `br_uart_putc()`, `br_uart_puts()` and `br_uart_init()`. `br_uart_init()` is called from `br_hal_board_init()` and enables the receive interrupt. The receive ISR passes every byte to `br_uart_rx_push(char c)` from `kernel/br_uart.c`, which buffers it for `br_uart_getc()`. On Cortex-M3 the ISR overrides the weak `IRQ<n>_Handler` from `arch/arm-cortex-m/startup.c`.
+
 ## Step 2: Implement Timer HAL
 
 ```c

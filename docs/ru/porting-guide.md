@@ -25,6 +25,8 @@ arch/<arch_name>/
 
 Код чипа и платы, не относящийся к ядру процессора, например драйвер UART и настройка тактирования, можно класть в `boards/<board_name>/` (`br_hal_uart.c`, `board.c` с `br_hal_board_init()`). Так устроены `arch/arm-cortex-m/` и `boards/stm32f103c8-bluepill/`.
 
+Драйвер UART предоставляет `br_uart_putc()`, `br_uart_puts()` и `br_uart_init()`. `br_uart_init()` вызывается из `br_hal_board_init()` и включает прерывание приёма. Обработчик приёма передаёт каждый байт в `br_uart_rx_push(char c)` из `kernel/br_uart.c`, который буферизует его для `br_uart_getc()`. На Cortex-M3 обработчик переопределяет слабый `IRQ<n>_Handler` из `arch/arm-cortex-m/startup.c`.
+
 ## Шаг 2: Реализовать HAL таймера
 
 ```c
