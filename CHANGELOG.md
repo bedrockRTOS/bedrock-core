@@ -4,6 +4,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-04
+
 ### Added
 - RISC-V port in `arch/riscv32` for RV32IMAC in machine mode: CLINT timer, context switch through a common trap handler and the CLINT software interrupt, `mstatus.MIE` interrupt control, 16550 UART.
 - `boards/qemu-riscv32-virt` with linker script and defconfig for QEMU `virt`.
@@ -38,5 +40,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `br_pool_free()` called twice on the same block made two later allocations return the same block.
 - On the host HAL, a task switched in from the SIGALRM handler could see the ISR flag set and get `BR_ERR_ISR` from IPC calls.
 
-[Unreleased]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.0.3...v0.1.0
