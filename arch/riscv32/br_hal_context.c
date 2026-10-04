@@ -13,6 +13,7 @@
 #define MCAUSE_IRQ       (1UL << 31)
 #define IRQ_M_SOFT       3
 #define IRQ_M_TIMER      7
+#define IRQ_M_EXT        11
 
 #define FRAME_WORDS      32
 #define FRAME_RA         0
@@ -21,6 +22,7 @@
 #define FRAME_MSTATUS    29
 
 extern void br_hal_timer_isr(void);
+extern void br_hal_external_isr(void);
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
 
@@ -121,6 +123,8 @@ void *br_hal_trap(void *sp, uint32_t mcause)
             br_hal_timer_isr();
         } else if (code == IRQ_M_SOFT) {
             CLINT_MSIP = 0;
+        } else if (code == IRQ_M_EXT) {
+            br_hal_external_isr();
         }
     } else {
         br_hal_panic("Unhandled exception", __FILE__, __LINE__);

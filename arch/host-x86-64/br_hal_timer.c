@@ -13,6 +13,7 @@
 
 extern void br_time_alarm_handler(void);
 extern void br_sched_tick(br_time_t elapsed_us);
+extern void br_host_uart_poll(void);
 
 static volatile bool      g_in_isr;
 static volatile br_time_t g_alarm_target;
@@ -25,6 +26,7 @@ static sigset_t           g_alarm_sigset;
 static void sigalrm_handler(int sig)
 {
     (void)sig;
+    br_host_uart_poll();
     g_in_isr = true;
 
     br_time_t now = br_hal_timer_get_us();

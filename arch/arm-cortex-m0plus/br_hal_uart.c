@@ -10,17 +10,26 @@
 #define UART0_FBRD      (*(volatile uint32_t *)0x40034028UL)
 #define UART0_LCR_H     (*(volatile uint32_t *)0x4003402CUL)
 #define UART0_CR        (*(volatile uint32_t *)0x40034030UL)
+#define UART0_IMSC      (*(volatile uint32_t *)0x40034038UL)
+#define UART0_ICR       (*(volatile uint32_t *)0x40034044UL)
+#define NVIC_ISER       (*(volatile uint32_t *)0xE000E100UL)
 
 #define IO_BANK0_GPIO0_CTRL  (*(volatile uint32_t *)0x40014004UL)
 #define IO_BANK0_GPIO1_CTRL  (*(volatile uint32_t *)0x4001400CUL)
 
 #define GPIO_FUNC_UART  2
+#define UART_FR_RXFE    (1UL << 4)
 #define UART_FR_TXFF    (1UL << 5)
+#define UART_INT_RX     (1UL << 4)
+#define UART_INT_RT     (1UL << 6)
+#define UART0_IRQ       20
 #define UART_LCR_H_FEN  (1UL << 4)
 #define UART_LCR_H_8BIT (3UL << 5)
 #define UART_CR_UARTEN  (1UL << 0)
 #define UART_CR_TXE     (1UL << 8)
 #define UART_CR_RXE     (1UL << 9)
+
+extern void br_uart_rx_push(char c);
 
 void br_uart_init(void)
 {
@@ -31,6 +40,16 @@ void br_uart_init(void)
     UART0_FBRD  = 33;
     UART0_LCR_H = UART_LCR_H_8BIT | UART_LCR_H_FEN;
     UART0_CR    = UART_CR_UARTEN | UART_CR_TXE | UART_CR_RXE;
+    UART0_IMSC  = UART_INT_RX | UART_INT_RT;
+    NVIC_ISER   = 1UL << UART0_IRQ;
+}
+
+void UART0_IRQ_Handler(void)
+{
+    while (!(UART0_FR & UART_FR_RXFE)) {
+        br_uart_rx_push((char)(UART0_DR & 0xFF));
+    }
+    UART0_ICR = UART_INT_RX | UART_INT_RT;
 }
 
 void br_uart_putc(char c)

@@ -47,6 +47,7 @@ extern void br_hal_board_init(void);
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void TIMER_IRQ_0_Handler(void);
+extern void UART0_IRQ_Handler(void);
 
 static void clocks_init(void)
 {
@@ -112,4 +113,5 @@ const uint32_t vectors[] = {
     (uint32_t)PendSV_Handler,
     (uint32_t)Default_Handler,
     (uint32_t)TIMER_IRQ_0_Handler,
+    [16 + 20] = (uint32_t)UART0_IRQ_Handler,
 };
