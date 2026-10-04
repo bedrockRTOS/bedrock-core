@@ -4,6 +4,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 
 ## [Unreleased]
 
+### Added
+- RP2040 port in `arch/arm-cortex-m0plus`: ARMv6-M context switch, RP2040 timer with alarm 0, PL011 UART0 on GP0/GP1, XOSC clock setup. Tested in Renode, not on hardware.
+- `boards/rpi-pico` with linker script, defconfig, a boot2 that sets up XIP with the 03h read command, and a Renode script.
+- `tools/bootcrc.c` adds the boot2 CRC32, `tools/bin2uf2.c` builds the UF2 image.
+- `chorus rp2040` and `chorus defconfig-rp2040` targets, `ARCH_ARM_CORTEX_M0PLUS` Kconfig option.
+- CI job that builds the RP2040 port, runs the tests in Renode and uploads the example UF2.
+
 ## [0.2.1] - 2026-10-04
 
 ### Fixed

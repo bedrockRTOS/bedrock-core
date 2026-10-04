@@ -61,6 +61,9 @@ choice ARCH
 config ARCH_ARM_CORTEX_M
     bool "ARM Cortex-M"
 
+config ARCH_ARM_CORTEX_M0PLUS
+    bool "ARM Cortex-M0+ (RP2040)"
+
 config ARCH_RISCV32
     bool "RISC-V (RV32)"
 
