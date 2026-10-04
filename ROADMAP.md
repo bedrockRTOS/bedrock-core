@@ -29,6 +29,14 @@
 - [x] Build and test both architectures in CI
 - [x] Porting guide update
 
+## RP2040 port
+
+- [x] `arch/arm-cortex-m0plus/`: ARMv6-M PendSV/SVC, timer on the RP2040 TIMER alarm, PL011 UART
+- [x] `boards/rpi-pico/`: linker script, own boot2, defconfig
+- [x] ELF to UF2 and boot2 CRC tools in `tools/`
+- [x] Tests in Renode in CI
+- [ ] Check on a real Raspberry Pi Pico
+
 ## 0.3.0: Shell and debugging
 
 - [ ] UART RX on interrupts instead of the polled TX-only driver
