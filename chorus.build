@@ -7,6 +7,7 @@ variables:
   HOST_CC: "gcc"
   HOST_CFLAGS: "-c -Wall -Wextra -Werror -Os -std=c11 -D_DEFAULT_SOURCE -DBR_HOST_TEST -Iinclude -Ilib"
   HOST_LDFLAGS: ""
+  STM32F1_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/stm32f103c8-bluepill/linker.ld -mcpu=cortex-m3 -mthumb"
   M0_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft -Iinclude -Ilib"
   M0_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/rpi-pico/linker.ld -mcpu=cortex-m0plus -mthumb"
   TOOL_CFLAGS: "-Wall -Wextra -Werror -Os -std=c11"
@@ -49,7 +50,7 @@ targets:
 
   br_hal_uart.o:
     cmds:
-      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_uart.c -o ${@}"
+      - "${CC} ${CFLAGS} boards/qemu-cortex-m3/br_hal_uart.c -o ${@}"
 
   startup.o:
     cmds:
@@ -715,6 +716,75 @@ targets:
   defconfig-rp2040:
     cmds:
       - "3rd/tools/kconfig/zig-out/bin/defconfig boards/rpi-pico/defconfig"
+
+  stm32f103-br_hal_timer.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DBR_HAL_SYS_CLOCK_HZ=72000000 arch/arm-cortex-m/br_hal_timer.c -o ${@}"
+
+  stm32f103-br_hal_uart.o:
+    cmds:
+      - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/br_hal_uart.c -o ${@}"
+
+  stm32f103-board.o:
+    cmds:
+      - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/board.c -o ${@}"
+
+  libbedrock_hal_stm32f103.a:
+    deps: [stm32f103-br_hal_timer.o, br_hal_context.o, stm32f103-br_hal_uart.o, startup.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  bedrock_example_stm32f103.elf:
+    deps: [main.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} main.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_task_delete_stm32f103.elf:
+    deps: [test_task_delete.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_task_delete.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_scheduler_stm32f103.elf:
+    deps: [test_scheduler.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_scheduler.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_semaphore_stm32f103.elf:
+    deps: [test_semaphore.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_semaphore.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_mutex_stm32f103.elf:
+    deps: [test_mutex.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_mutex.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_mqueue_stm32f103.elf:
+    deps: [test_mqueue.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_mqueue.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_sleep_list_stm32f103.elf:
+    deps: [test_sleep_list.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_sleep_list.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  test_pool_stm32f103.elf:
+    deps: [test_pool.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_pool.o stm32f103-board.o -L. -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -lgcc -o ${@}"
+
+  bedrock_example_stm32f103.bin:
+    deps: [bedrock_example_stm32f103.elf]
+    cmds:
+      - "${OBJCOPY} -O binary bedrock_example_stm32f103.elf ${@}"
+
+  stm32f103:
+    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf]
+
+  defconfig-stm32f103:
+    cmds:
+      - "3rd/tools/kconfig/zig-out/bin/defconfig boards/stm32f103c8-bluepill/defconfig"
 
   clean:
     cmds:
