@@ -32,7 +32,7 @@ int main(void)
 {
     br_kernel_init();
 
-    br_uart_puts("bedrock[RTOS] v0.0.1 booting...\n");
+    br_uart_puts("bedrock[RTOS] v0.1.0 booting...\n");
 
     br_tid_t tid_a, tid_b;
 
