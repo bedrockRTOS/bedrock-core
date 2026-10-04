@@ -124,6 +124,7 @@ br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout)
 ### Rules
 
 - No `malloc`, `calloc`, `realloc` or `free` in `/kernel`, `/arch` or `/lib`. Objects live in static pools or in user memory.
+- No libc in `/kernel`, `/lib` and the target HALs in `/arch`. Only freestanding headers (`stdint.h`, `stddef.h`, `stdbool.h`) and `lib/br_string.h`. `arch/host-x86-64` is the exception.
 - No hardware access and no architecture `#ifdef` in `/kernel`. Hardware is reached only through `include/bedrock/br_hal.h`.
 - A new HAL function must be implemented for every architecture in `/arch`, including `arch/host-x86-64`.
 - Time is `br_time_t` in microseconds. No ticks.

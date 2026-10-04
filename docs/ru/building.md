@@ -11,7 +11,7 @@ bedrock[RTOS] использует [chorus](https://github.com/z3nnix/chorus) в
 ### Установка на Arch Linux
 
 ```bash
-sudo pacman -S arm-none-eabi-gcc arm-none-eabi-newlib qemu-system-arm
+sudo pacman -S arm-none-eabi-gcc qemu-system-arm
 ```
 
 ### Сборка Chorus
@@ -85,10 +85,10 @@ qemu-system-arm -M lm3s6965evb -nographic -kernel bedrock_example.elf
 
 ## Порядок линковки
 
-Линкер обрабатывает библиотеки слева направо. Команда линковки размещает библиотеки проекта перед системными:
+Линкер обрабатывает библиотеки слева направо:
 
 ```
-main.o -lbedrock_kernel -lbedrock_hal -lbedrock_lib -lc -lnosys -lgcc
+main.o -lbedrock_hal -lbedrock_kernel -lbedrock_lib -lgcc
 ```
 
-Это обеспечивает разрешение ссылок из кода ядра/HAL на `memcpy`, `memset` и т.д. через `-lc`.
+Ядро не использует libc. `memcpy` и `memset`, в том числе вызовы, которые генерирует компилятор, берутся из `lib/br_string.c` в `libbedrock_lib.a`, поэтому эта библиотека идёт после ядра и HAL. `-lgcc` даёт вспомогательные функции компилятора, например 64-битное деление.

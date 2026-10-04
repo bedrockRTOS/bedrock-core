@@ -9,8 +9,8 @@ bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. I
 
 ## Dependencies
 
-- `arm-none-eabi-gcc` and newlib for Cortex-M
-- `riscv64-elf-gcc` and newlib for RISC-V
+- `arm-none-eabi-gcc` for Cortex-M
+- `riscv64-elf-gcc` for RISC-V
 - [chorus](https://github.com/z3nnix/chorus) 1.1.0 or newer
 - `qemu-system-arm` and `qemu-system-riscv32` to run on QEMU
 - `gcc` for host tests
@@ -19,13 +19,13 @@ bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. I
 Arch Linux:
 
 ```bash
-sudo pacman -S arm-none-eabi-gcc arm-none-eabi-newlib qemu-system-arm riscv64-elf-gcc riscv64-elf-newlib qemu-system-riscv
+sudo pacman -S arm-none-eabi-gcc qemu-system-arm riscv64-elf-gcc qemu-system-riscv
 ```
 
 Ubuntu (Cortex-M only):
 
 ```bash
-sudo apt install gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+sudo apt install gcc-arm-none-eabi qemu-system-arm
 ```
 
 Chorus:
