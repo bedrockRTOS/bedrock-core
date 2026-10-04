@@ -30,7 +30,6 @@ void br_kernel_init(void)
         tcb_pool[i].id    = (br_tid_t)i;
     }
 
-    br_hal_board_init();
     br_hal_timer_init();
     br_sched_init();
 

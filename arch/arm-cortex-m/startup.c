@@ -10,6 +10,7 @@ extern uint32_t _sdata, _edata;
 extern uint32_t _sbss, _ebss;
 
 extern int main(void);
+extern void br_hal_board_init(void);
 extern void SysTick_Handler(void);
 extern void PendSV_Handler(void);
 extern void SVC_Handler(void);
@@ -27,6 +28,7 @@ void Reset_Handler(void)
         *dst++ = 0;
     }
 
+    br_hal_board_init();
     main();
     while (1) { }
 }

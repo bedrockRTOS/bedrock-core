@@ -7,6 +7,7 @@
 extern uint32_t _sbss, _ebss;
 
 extern int main(void);
+extern void br_hal_board_init(void);
 extern void br_hal_trap_entry(void);
 
 void reset_handler(void);
@@ -20,6 +21,7 @@ void reset_handler(void)
 
     __asm volatile ("csrw mtvec, %0" :: "r" (br_hal_trap_entry));
 
+    br_hal_board_init();
     main();
     while (1) { }
 }

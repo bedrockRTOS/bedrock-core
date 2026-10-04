@@ -43,6 +43,7 @@ extern uint32_t _sbss, _ebss;
 
 extern int main(void);
 extern void br_uart_init(void);
+extern void br_hal_board_init(void);
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void TIMER_IRQ_0_Handler(void);
@@ -88,6 +89,7 @@ void Reset_Handler(void)
     clocks_init();
     resets_release();
     br_uart_init();
+    br_hal_board_init();
 
     main();
     while (1) { }

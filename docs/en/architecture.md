@@ -88,10 +88,10 @@ Adding a new architecture requires implementing these functions in `arch/<arch_n
 
 ## Boot Sequence
 
-1. `Reset_Handler` — copies `.data`, zeros `.bss`, calls `main()`
+1. `Reset_Handler` — copies `.data`, zeros `.bss`, calls `br_hal_board_init()`, then `main()`
 2. `main()` calls `br_kernel_init()`:
    - Zeros TCB pool
-   - Calls `br_hal_board_init()` and `br_hal_timer_init()`
+   - Calls `br_hal_timer_init()`
    - Initializes scheduler
    - Creates idle task
 3. Application creates tasks via `br_task_create()`

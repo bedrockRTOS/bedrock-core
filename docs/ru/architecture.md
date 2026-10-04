@@ -88,10 +88,10 @@ bedrock-core/
 
 ## Последовательность загрузки
 
-1. `Reset_Handler` — копирует `.data`, обнуляет `.bss`, вызывает `main()`
+1. `Reset_Handler` — копирует `.data`, обнуляет `.bss`, вызывает `br_hal_board_init()`, затем `main()`
 2. `main()` вызывает `br_kernel_init()`:
    - Обнуляет пул TCB
-   - Вызывает `br_hal_board_init()` и `br_hal_timer_init()`
+   - Вызывает `br_hal_timer_init()`
    - Инициализирует планировщик
    - Создаёт idle-задачу
 3. Приложение создаёт задачи через `br_task_create()`
