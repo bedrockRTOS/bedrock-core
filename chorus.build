@@ -68,6 +68,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} lib/br_pool.c -o ${@}"
 
+  br_shell.o:
+    cmds:
+      - "${CC} ${CFLAGS} lib/br_shell.c -o ${@}"
+
   br_string.o:
     cmds:
       - "${CC} ${CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -96,6 +100,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/test_mqueue.c -o ${@}"
 
+  test_shell.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_shell.c -o ${@}"
+
   test_uart_rx.o:
     cmds:
       - "${CC} ${CFLAGS} examples/test_uart_rx.c -o ${@}"
@@ -119,7 +127,7 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_lib.a:
-    deps: [br_pool.o, br_string.o]
+    deps: [br_pool.o, br_string.o, br_shell.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -152,6 +160,11 @@ targets:
     deps: [test_mqueue.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
       - "${CC} ${LDFLAGS} test_mqueue.o lm3s-board.o -L. -Wl,--start-group -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell.elf:
+    deps: [test_shell.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_shell.o lm3s-board.o -L. -Wl,--start-group -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
 
   test_uart_rx.elf:
     deps: [test_uart_rx.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
@@ -197,6 +210,11 @@ targets:
     deps: [test_mqueue.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_mqueue.elf -nographic"
+
+  test-shell:
+    deps: [test_shell.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_shell.elf -nographic"
 
   test-uart-rx:
     deps: [test_uart_rx.elf]
@@ -289,6 +307,10 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_mqueue.c -o ${@}"
 
+  host-test_shell.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_shell.c -o ${@}"
+
   host-test_uart_rx.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_uart_rx.c -o ${@}"
@@ -341,6 +363,11 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_mqueue.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
+  test_shell_host:
+    deps: [host-test_shell.o, host-br_shell.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_shell.o host-br_shell.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
+
   test_uart_rx_host:
     deps: [host-test_uart_rx.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
     cmds:
@@ -355,13 +382,17 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} lib/br_pool.c -o ${@}"
 
+  host-br_shell.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} lib/br_shell.c -o ${@}"
+
   test_pool_host:
     deps: [host-test_pool.o, host-br_pool.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_pool.o host-br_pool.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -392,6 +423,11 @@ targets:
     deps: [test_mqueue_host]
     cmds:
       - "timeout 5 ./test_mqueue_host; true"
+
+  test-shell-host:
+    deps: [test_shell_host]
+    cmds:
+      - "timeout 5 ./test_shell_host; true"
 
   test-uart-rx-host:
     deps: [test_uart_rx_host]
@@ -456,6 +492,10 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} lib/br_pool.c -o ${@}"
 
+  riscv32-br_shell.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} lib/br_shell.c -o ${@}"
+
   riscv32-br_string.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -484,6 +524,10 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} examples/test_mqueue.c -o ${@}"
 
+  riscv32-test_shell.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} examples/test_shell.c -o ${@}"
+
   riscv32-test_uart_rx.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} examples/test_uart_rx.c -o ${@}"
@@ -507,7 +551,7 @@ targets:
       - "${RV_AR} rcs ${@} ${^}"
 
   libbedrock_lib_riscv32.a:
-    deps: [riscv32-br_pool.o, riscv32-br_string.o]
+    deps: [riscv32-br_pool.o, riscv32-br_string.o, riscv32-br_shell.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
@@ -541,6 +585,11 @@ targets:
     cmds:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_mqueue.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
+  test_shell_riscv32.elf:
+    deps: [riscv32-test_shell.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_shell.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
   test_uart_rx_riscv32.elf:
     deps: [riscv32-test_uart_rx.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
@@ -557,7 +606,7 @@ targets:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
   riscv32:
-    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf]
+    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf]
 
   run-riscv32:
     deps: [bedrock_example_riscv32.elf]
@@ -588,6 +637,11 @@ targets:
     deps: [test_mqueue_riscv32.elf]
     cmds:
       - "qemu-system-riscv32 -M virt -bios none -nographic -kernel test_mqueue_riscv32.elf"
+
+  test-shell-riscv32:
+    deps: [test_shell_riscv32.elf]
+    cmds:
+      - "qemu-system-riscv32 -M virt -bios none -nographic -kernel test_shell_riscv32.elf"
 
   test-uart-rx-riscv32:
     deps: [test_uart_rx_riscv32.elf]
@@ -660,6 +714,10 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} lib/br_pool.c -o ${@}"
 
+  rp2040-br_shell.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} lib/br_shell.c -o ${@}"
+
   rp2040-boot2.o:
     cmds:
       - "${CC} ${M0_CFLAGS} boards/rpi-pico/boot2.c -o ${@}"
@@ -687,6 +745,10 @@ targets:
   rp2040-test_mqueue.o:
     cmds:
       - "${CC} ${M0_CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  rp2040-test_shell.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} examples/test_shell.c -o ${@}"
 
   rp2040-test_uart_rx.o:
     cmds:
@@ -730,7 +792,7 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_lib_rp2040.a:
-    deps: [rp2040-br_pool.o, rp2040-br_string.o]
+    deps: [rp2040-br_pool.o, rp2040-br_string.o, rp2040-br_shell.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -764,6 +826,11 @@ targets:
     cmds:
       - "${CC} ${M0_LDFLAGS} rp2040-test_mqueue.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
 
+  test_shell_rp2040.elf:
+    deps: [rp2040-test_shell.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} rp2040-test_shell.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
+
   test_uart_rx_rp2040.elf:
     deps: [rp2040-test_uart_rx.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
     cmds:
@@ -786,7 +853,7 @@ targets:
       - "./bin2uf2 bedrock_example_rp2040.bin ${@} 0x10000000 0xe48bff56"
 
   rp2040:
-    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf]
+    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf]
 
   defconfig-rp2040:
     cmds:
@@ -839,6 +906,11 @@ targets:
     cmds:
       - "${CC} ${STM32F1_LDFLAGS} test_mqueue.o stm32f103-board.o -L. -Wl,--start-group -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
 
+  test_shell_stm32f103.elf:
+    deps: [test_shell.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_shell.o stm32f103-board.o -L. -Wl,--start-group -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
   test_uart_rx_stm32f103.elf:
     deps: [test_uart_rx.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
     cmds:
@@ -860,7 +932,7 @@ targets:
       - "${OBJCOPY} -O binary bedrock_example_stm32f103.elf ${@}"
 
   stm32f103:
-    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf]
+    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf, test_shell_stm32f103.elf]
 
   defconfig-stm32f103:
     cmds:
@@ -869,5 +941,5 @@ targets:
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin *.uf2 rp2040-boot2_crc.S bootcrc bin2uf2"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host"
       - "rm -rf include/generated"

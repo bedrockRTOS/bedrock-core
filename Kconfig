@@ -61,6 +61,23 @@ config UART_RX_BUF_SIZE
       and br_uart_getc() reads from. Bytes that arrive while the
       buffer is full are dropped.
 
+config SHELL_LINE_MAX
+    int "Shell line length (bytes)"
+    default 64
+    range 8 256
+    help
+      Size of the line buffer used by br_shell_run(), including the
+      terminating zero. Characters typed past the limit are ignored.
+
+config SHELL_MAX_ARGS
+    int "Shell maximum arguments"
+    default 8
+    range 1 32
+    help
+      Maximum number of words, including the command name, that
+      br_shell_execute() splits a line into. Longer lines are
+      rejected with "too many arguments".
+
 menu "Hardware"
 
 choice ARCH

@@ -5,12 +5,6 @@
 #ifndef BR_CONFIG_H
 #define BR_CONFIG_H
 
-/*
- * When the Kconfig toolchain is in use, run `chorus configure` (or
- * `chorus defconfig`) first.  That generates include/generated/autoconf.h
- * from the active .config.  The #ifndef guards below act as fallback
- * defaults when building without the Kconfig toolchain.
- */
 #ifdef __has_include
 #  if __has_include("generated/autoconf.h")
 #    include "generated/autoconf.h"
@@ -43,6 +37,14 @@
 
 #ifndef CONFIG_UART_RX_BUF_SIZE
 #  define CONFIG_UART_RX_BUF_SIZE   64
+#endif
+
+#ifndef CONFIG_SHELL_LINE_MAX
+#  define CONFIG_SHELL_LINE_MAX     64
+#endif
+
+#ifndef CONFIG_SHELL_MAX_ARGS
+#  define CONFIG_SHELL_MAX_ARGS     8
 #endif
 
 #ifndef BR_HAL_SYS_CLOCK_HZ
