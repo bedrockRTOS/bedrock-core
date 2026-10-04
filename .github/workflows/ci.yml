@@ -30,12 +30,12 @@ jobs:
         run: >
           chorus all
           test_task_delete.elf test_scheduler.elf test_semaphore.elf test_mutex.elf
-          test_mqueue.elf test_sleep_list.elf test_pool.elf test_uart_rx.elf
+          test_mqueue.elf test_sleep_list.elf test_pool.elf test_uart_rx.elf test_shell.elf
 
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell; do
             echo "::group::test_${t}"
             out=$(printf 'bedrock\n' | timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel "test_${t}.elf" || true)
             echo "$out"
@@ -66,7 +66,7 @@ jobs:
       - name: Run tests
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell; do
             echo "::group::test_${t}_host"
             out=$(printf 'bedrock\n' | timeout 5 "./test_${t}_host" || true)
             echo "$out"
@@ -101,7 +101,7 @@ jobs:
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell; do
             echo "::group::test_${t}_riscv32"
             out=$(printf 'bedrock\n' | timeout 10 qemu-system-riscv32 -M virt -bios none -nographic -kernel "test_${t}_riscv32.elf" || true)
             echo "$out"
@@ -144,7 +144,7 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell; do
             echo "::group::test_${t}_rp2040"
             out_file="$RUNNER_TEMP/test_${t}_rp2040.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
@@ -193,7 +193,7 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell; do
             echo "::group::test_${t}_stm32f103"
             out_file="$RUNNER_TEMP/test_${t}_stm32f103.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
