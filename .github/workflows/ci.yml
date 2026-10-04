@@ -60,3 +60,38 @@ jobs:
             fi
           done
           exit $failed
+
+  riscv32:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Install toolchain
+        run: pacman -Syu --noconfirm riscv64-elf-gcc riscv64-elf-newlib qemu-system-riscv
+
+      - uses: actions/checkout@v4
+
+      - name: Install chorus
+        run: |
+          curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          chmod +x /usr/local/bin/chorus
+
+      - name: Build
+        run: chorus riscv32
+
+      - name: Run tests on QEMU
+        run: |
+          failed=0
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+            echo "::group::test_${t}_riscv32"
+            out=$(timeout 10 qemu-system-riscv32 -M virt -bios none -nographic -kernel "test_${t}_riscv32.elf" < /dev/null || true)
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t}_riscv32 did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t}_riscv32 reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
