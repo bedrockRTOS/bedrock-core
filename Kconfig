@@ -52,6 +52,15 @@ config ASSERT
       Disable to eliminate assertion overhead in production
       builds (the expression is still evaluated for side-effects).
 
+config UART_RX_BUF_SIZE
+    int "UART receive buffer size (bytes)"
+    default 64
+    range 4 1024
+    help
+      Size of the ring buffer that the UART receive interrupt fills
+      and br_uart_getc() reads from. Bytes that arrive while the
+      buffer is full are dropped.
+
 menu "Hardware"
 
 choice ARCH

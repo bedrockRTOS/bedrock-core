@@ -41,7 +41,10 @@
 #  define CONFIG_ASSERT             1
 #endif
 
-/* Map Kconfig SYS_CLOCK_HZ to the name used by the HAL timer implementation */
+#ifndef CONFIG_UART_RX_BUF_SIZE
+#  define CONFIG_UART_RX_BUF_SIZE   64
+#endif
+
 #ifndef BR_HAL_SYS_CLOCK_HZ
 #  ifdef CONFIG_SYS_CLOCK_HZ
 #    define BR_HAL_SYS_CLOCK_HZ    CONFIG_SYS_CLOCK_HZ
