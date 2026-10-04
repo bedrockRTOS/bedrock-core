@@ -8,5 +8,3 @@ sysbus LoadELF $fw
 sysbus.cpu0 VectorTableOffset 0x00000000
 sysbus.cpu1 VectorTableOffset 0x00000000
 sysbus.uart0 CreateFileBackend $out true
-emulation RunFor $time
-quit

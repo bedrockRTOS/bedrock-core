@@ -30,14 +30,14 @@ jobs:
         run: >
           chorus all
           test_task_delete.elf test_scheduler.elf test_semaphore.elf test_mutex.elf
-          test_mqueue.elf test_sleep_list.elf test_pool.elf
+          test_mqueue.elf test_sleep_list.elf test_pool.elf test_uart_rx.elf
 
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
             echo "::group::test_${t}"
-            out=$(timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel "test_${t}.elf" < /dev/null || true)
+            out=$(printf 'bedrock\n' | timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel "test_${t}.elf" || true)
             echo "$out"
             echo "::endgroup::"
             if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
@@ -66,9 +66,9 @@ jobs:
       - name: Run tests
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
             echo "::group::test_${t}_host"
-            out=$(timeout 5 "./test_${t}_host" || true)
+            out=$(printf 'bedrock\n' | timeout 5 "./test_${t}_host" || true)
             echo "$out"
             echo "::endgroup::"
             if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
@@ -101,9 +101,9 @@ jobs:
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
             echo "::group::test_${t}_riscv32"
-            out=$(timeout 10 qemu-system-riscv32 -M virt -bios none -nographic -kernel "test_${t}_riscv32.elf" < /dev/null || true)
+            out=$(printf 'bedrock\n' | timeout 10 qemu-system-riscv32 -M virt -bios none -nographic -kernel "test_${t}_riscv32.elf" || true)
             echo "$out"
             echo "::endgroup::"
             if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
@@ -144,11 +144,11 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
             echo "::group::test_${t}_rp2040"
             out_file="$RUNNER_TEMP/test_${t}_rp2040.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
-              -e "\$rp2040=@$RUNNER_TEMP/Renode_RP2040; \$fw=@$PWD/test_${t}_rp2040.elf; \$out=@$out_file; \$time=\"2\"; include @$PWD/boards/rpi-pico/renode.resc" > /dev/null 2>&1 || true
+              -e "\$rp2040=@$RUNNER_TEMP/Renode_RP2040; \$fw=@$PWD/test_${t}_rp2040.elf; \$out=@$out_file; include @$PWD/boards/rpi-pico/renode.resc; emulation RunFor \"0.5\"; sysbus.uart0 WriteLine \"bedrock\"; emulation RunFor \"2\"; quit" > /dev/null 2>&1 || true
             out=$(cat "$out_file" 2>/dev/null || true)
             echo "$out"
             echo "::endgroup::"
@@ -193,11 +193,11 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx; do
             echo "::group::test_${t}_stm32f103"
             out_file="$RUNNER_TEMP/test_${t}_stm32f103.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
-              -e "\$fw=@$PWD/test_${t}_stm32f103.elf; \$out=@$out_file; \$time=\"2\"; include @$PWD/boards/stm32f103c8-bluepill/renode.resc" > /dev/null 2>&1 || true
+              -e "\$fw=@$PWD/test_${t}_stm32f103.elf; \$out=@$out_file; include @$PWD/boards/stm32f103c8-bluepill/renode.resc; emulation RunFor \"0.5\"; sysbus.usart1 WriteLine \"bedrock\"; emulation RunFor \"2\"; quit" > /dev/null 2>&1 || true
             out=$(cat "$out_file" 2>/dev/null || true)
             echo "$out"
             echo "::endgroup::"

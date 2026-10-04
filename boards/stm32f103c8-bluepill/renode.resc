@@ -3,5 +3,3 @@ machine LoadPlatformDescription @platforms/cpus/stm32f103.repl
 sysbus LoadELF $fw
 sysbus.cpu VectorTableOffset 0x08000000
 sysbus.usart1 CreateFileBackend $out true
-emulation RunFor $time
-quit
