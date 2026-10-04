@@ -14,7 +14,7 @@
   - [x] Message queue: send/recv, full/empty blocking, timeout
   - [x] Sleep list: correct ordering, alarm handler wakeup
   - [x] Memory pool: alloc, free, exhaustion, double-free guard
-- [ ] Add CI pipeline (GitHub Actions): build for Cortex-M + run host-native tests
+- [x] Add CI pipeline (GitHub Actions): build for Cortex-M + run host-native tests
 - [ ] Write `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH` macros
 
 ## Phase 3 — Portability Proven (0.2.0)

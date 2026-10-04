@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+env:
+  CHORUS_VERSION: 1.1.0
+
+jobs:
+  cortex-m:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Install chorus
+        run: |
+          sudo curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          sudo chmod +x /usr/local/bin/chorus
+
+      - name: Build
+        run: >
+          chorus all
+          test_task_delete.elf test_scheduler.elf test_semaphore.elf test_mutex.elf
+          test_mqueue.elf test_sleep_list.elf test_pool.elf
+
+  host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chorus
+        run: |
+          sudo curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          sudo chmod +x /usr/local/bin/chorus
+
+      - name: Build
+        run: chorus host
+
+      - name: Run tests
+        run: |
+          failed=0
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool; do
+            echo "::group::test_${t}_host"
+            out=$(timeout 5 "./test_${t}_host" || true)
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t}_host did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t}_host reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
