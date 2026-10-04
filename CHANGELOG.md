@@ -4,6 +4,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-04
+
+### Fixed
+- Cortex-M: SysTick ran with a fixed period of about 1 s, and alarms and round-robin were only checked on that interrupt. Sleeps and timeouts fired up to 1 s late and round-robin barely switched tasks. SysTick is now reprogrammed for the nearest alarm or time slice. The scheduler, semaphore timeout and sleep list tests now pass on QEMU.
+
+### Added
+- CI runs the Cortex-M tests on QEMU.
+
 ## [0.2.0] - 2026-10-04
 
 ### Added
@@ -40,6 +48,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `br_pool_free()` called twice on the same block made two later allocations return the same block.
 - On the host HAL, a task switched in from the SIGALRM handler could see the ISR flag set and get `BR_ERR_ISR` from IPC calls.
 
-[Unreleased]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bedrockRTOS/bedrock-core/compare/v0.0.3...v0.1.0
