@@ -136,27 +136,28 @@ When modifying scheduler, IPC, or time logic:
 
 ## Testing and Verification
 
-### Current Testing Strategy (as of 0.0.3)
+### Test Setup
 
-- **Manual testing:** Build and run on QEMU (`chorus && chorus run`)
-- **Static analysis:** Review diffs for obvious errors
-- **Behavioral testing:** Observe UART output for expected task scheduling
+- **Host tests:** `examples/test_*.c` built against the mock HAL in `arch/host-x86-64` with `chorus host`. Each binary prints `PASS`/`FAIL` per case and `=== All Tests Complete ===` at the end. All except `test_pool_host` loop forever after that, so run them under `timeout 5`.
+- **QEMU:** the same tests for Cortex-M via `chorus test-scheduler`, `chorus test-semaphore`, etc. The example runs with `chorus run`.
+- **CI:** `.github/workflows/ci.yml` builds `all` and every `test_*.elf` for Cortex-M, then builds and runs every host test. A test fails if `=== All Tests Complete ===` is missing or `FAIL` appears.
+
+The `test-*-host` targets in `chorus.build` end with `; true` and always succeed. Do not use their exit code as a test result.
 
 ### When to Test
 
 Before submitting a change:
 
-1. **Build:** `chorus`
-2. **Run on QEMU:** `chorus run` (if the target exists)
-3. **Check output:** Verify tasks are scheduled correctly, no crashes
+1. **Build for Cortex-M:** `chorus`
+2. **Build host tests:** `chorus host`
+3. **Run host tests:** every `test_*_host` under `timeout 5`, check for `=== All Tests Complete ===` and no `FAIL`
 4. **Review code:** Ensure no `malloc`, no naked hardware access in `/kernel`
 
-### Future Testing (0.1.0+)
+### Adding a Test
 
-Unit tests will be added with a host-native mock HAL. If your change is significant, prepare it for testability:
-- Avoid global state where possible
-- Keep functions small and focused
-- Separate policy (what to do) from mechanism (how to do it)
+1. Add `examples/test_<name>.c` with the same output format.
+2. Add Cortex-M (`test_<name>.o`, `test_<name>.elf`, `test-<name>`) and host (`host-test_<name>.o`, `test_<name>_host`, `test-<name>-host`) targets to `chorus.build`, and add `test_<name>_host` to the `host` target.
+3. Add the test to both lists in `.github/workflows/ci.yml`.
 
 ---
 
@@ -426,7 +427,7 @@ When working on bedrock[RTOS] as an AI agent:
 2. **Follow the HAL:** All hardware goes through `br_hal.h`.
 3. **Use `br_time_t`:** Always explicit microsecond units.
 4. **Respect the roadmap:** Implement features in the planned order.
-5. **Test on QEMU:** Build and run before submitting.
+5. **Run the tests:** Build for Cortex-M and run the host tests before submitting.
 6. **Write clear commits:** Follow Conventional Commits format.
 7. **Update `CHANGELOG.md`:** For every user-facing change.
 
