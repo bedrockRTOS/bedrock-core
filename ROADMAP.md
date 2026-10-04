@@ -43,7 +43,7 @@
 ## 0.3.0: Shell and debugging
 
 - [x] UART RX on interrupts instead of the polled TX-only driver
-- [ ] Shell core: line editing, command parsing, command registration
+- [x] Shell core: line editing, command parsing, command registration
 - [ ] Shell commands:
   - [ ] `tasks`: tasks with state, priority and stack usage
   - [ ] `mem`: memory pool usage

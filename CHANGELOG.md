@@ -11,6 +11,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - RISC-V: machine external interrupts through the QEMU `virt` PLIC.
 - `test_uart_rx` on every target, run in CI with input fed to the console.
 - `boards/qemu-cortex-m3/board.c` and `boards/qemu-riscv32-virt/board.c`.
+- Shell core in `lib/br_shell.c`: `br_shell_register`, `br_shell_readline` (echo, backspace, CRLF), `br_shell_execute`, `br_shell_run` and a built-in `help` command. `CONFIG_SHELL_LINE_MAX` (default 64) and `CONFIG_SHELL_MAX_ARGS` (default 8).
+- `test_shell` on every target.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

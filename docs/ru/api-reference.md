@@ -327,3 +327,50 @@ br_err_t br_uart_getc(char *c, br_time_t timeout);
 | `BR_ERR_TIMEOUT` | Данных нет в течение `timeout` |
 | `BR_ERR_INVALID` | `c` равен `NULL` |
 | `BR_ERR_ISR` | Вызов из ISR с ненулевым таймаутом |
+
+## Shell
+
+Объявлен в `lib/br_shell.h`. Без динамической памяти: команды — структуры, которыми владеет приложение.
+
+```c
+typedef int (*br_shell_handler_t)(int argc, char **argv);
+
+typedef struct br_shell_cmd {
+    const char          *name;
+    const char          *help;
+    br_shell_handler_t   handler;
+    struct br_shell_cmd *next;
+} br_shell_cmd_t;
+```
+
+### `br_shell_register`
+
+```c
+void br_shell_register(br_shell_cmd_t *cmd);
+```
+
+Добавить команду в конец списка. `cmd` должна жить всё время работы shell. Каждую структуру регистрировать один раз. Встроенная команда `help` выводит все команды с описанием.
+
+### `br_shell_readline`
+
+```c
+br_err_t br_shell_readline(char *buf, size_t size, br_time_t timeout);
+```
+
+Прочитать строку из UART с эхом. Backspace и DEL стирают последний символ, CR, LF или CRLF завершают строку, остальные управляющие символы игнорируются. Символы сверх `size - 1` отбрасываются. Возвращает `BR_OK` по концу строки или ошибку `br_uart_getc` (`BR_ERR_TIMEOUT`), если символ не пришёл за `timeout`. `buf` всегда заканчивается `\0`.
+
+### `br_shell_execute`
+
+```c
+int br_shell_execute(char *line);
+```
+
+Разбить `line` на месте по пробелам и табуляциям (без кавычек) и вызвать подходящий обработчик. Возвращает результат обработчика, `0` для пустой строки, `-1` для неизвестной команды или больше чем `CONFIG_SHELL_MAX_ARGS` слов.
+
+### `br_shell_run`
+
+```c
+void br_shell_run(void) __attribute__((noreturn));
+```
+
+Бесконечно выводит `> `, читает строку длиной до `CONFIG_SHELL_LINE_MAX - 1` символов и выполняет её. Вызывать из отдельной задачи.

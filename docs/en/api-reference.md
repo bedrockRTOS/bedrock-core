@@ -327,3 +327,50 @@ Read one received character. The UART receive interrupt puts incoming bytes into
 | `BR_ERR_TIMEOUT` | No data within `timeout` |
 | `BR_ERR_INVALID` | `c` is `NULL` |
 | `BR_ERR_ISR` | Called from an ISR with a non-zero timeout |
+
+## Shell
+
+Declared in `lib/br_shell.h`. No dynamic allocation: commands are structures owned by the application.
+
+```c
+typedef int (*br_shell_handler_t)(int argc, char **argv);
+
+typedef struct br_shell_cmd {
+    const char          *name;
+    const char          *help;
+    br_shell_handler_t   handler;
+    struct br_shell_cmd *next;
+} br_shell_cmd_t;
+```
+
+### `br_shell_register`
+
+```c
+void br_shell_register(br_shell_cmd_t *cmd);
+```
+
+Add a command to the end of the command list. `cmd` must stay valid for the lifetime of the shell. Register each structure once. The built-in `help` command prints every command with its help text.
+
+### `br_shell_readline`
+
+```c
+br_err_t br_shell_readline(char *buf, size_t size, br_time_t timeout);
+```
+
+Read a line from the UART with echo. Backspace and DEL erase the last character, CR, LF or CRLF end the line, other control characters are ignored. Characters past `size - 1` are dropped. Returns `BR_OK` when the line ends, or the `br_uart_getc` error (`BR_ERR_TIMEOUT`) if no character arrives within `timeout`. `buf` always ends with `\0`.
+
+### `br_shell_execute`
+
+```c
+int br_shell_execute(char *line);
+```
+
+Split `line` in place on spaces and tabs (no quoting) and call the matching handler. Returns the handler result, `0` for an empty line, `-1` for an unknown command or more than `CONFIG_SHELL_MAX_ARGS` words.
+
+### `br_shell_run`
+
+```c
+void br_shell_run(void) __attribute__((noreturn));
+```
+
+Print `> `, read a line of up to `CONFIG_SHELL_LINE_MAX - 1` characters and execute it, forever. Call it from a dedicated task.

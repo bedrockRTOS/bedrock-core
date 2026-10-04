@@ -121,9 +121,9 @@ chorus host
 ./test_scheduler_host
 ```
 
-The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore_host`, `test_mutex_host`, `test_mqueue_host`, `test_sleep_list_host`, `test_pool_host` and `test_uart_rx_host`. Each one prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end.
+The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore_host`, `test_mutex_host`, `test_mqueue_host`, `test_sleep_list_host`, `test_pool_host`, `test_uart_rx_host` and `test_shell_host`. Each one prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end.
 
-`test_uart_rx` waits for the line `bedrock` on the console: `printf 'bedrock\n' | ./test_uart_rx_host`, the same pipe into `qemu-system-*`, or `sysbus.uart0 WriteLine "bedrock"` (`sysbus.usart1` on STM32F103) in Renode after `emulation RunFor "0.5"`.
+`test_uart_rx` and `test_shell` wait for the line `bedrock` on the console: `printf 'bedrock\n' | ./test_uart_rx_host`, the same pipe into `qemu-system-*`, or `sysbus.uart0 WriteLine "bedrock"` (`sysbus.usart1` on STM32F103) in Renode after `emulation RunFor "0.5"`.
 
 The same tests under QEMU: `chorus test-scheduler`, `chorus test-semaphore` and so on for Cortex-M, `chorus test-scheduler-riscv32` and so on for RISC-V. RP2040 and STM32F103 tests run in Renode, see above.
 
