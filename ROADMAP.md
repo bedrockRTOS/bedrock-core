@@ -1,145 +1,127 @@
-# bedrock[RTOS] Roadmap
+# Roadmap
 
-## Phase 2 — Stable Foundation (0.1.0)
+## 0.1.0: Kernel API and tests
 
-### 0.1.0 — Stable Kernel API & Test Infrastructure
+- [x] Split the public API in `include/bedrock/bedrock.h` into stable and experimental parts
+- [x] Add a mock HAL for x86-64 Linux so the kernel builds and runs as a regular process
+- [x] Unit tests:
+  - [x] Tasks: create, suspend, resume, delete
+  - [x] Scheduler: priority order, round-robin, preemption
+  - [x] Semaphore: take and give, timeout, overflow
+  - [x] Mutex: lock and unlock, priority inheritance, timeout, calls from ISR
+  - [x] Message queue: send and receive, blocking on full and empty, timeout
+  - [x] Sleep list: ordering, wakeup from the alarm handler
+  - [x] Memory pool: alloc, free, exhaustion, double free
+- [x] GitHub Actions: Cortex-M build and host test run
+- [ ] `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH`
 
-- [x] Define the public API contract in `include/bedrock/bedrock.h` — mark stable vs. experimental
-- [x] Create a host-native test harness: mock HAL for x86-64 Linux so kernel code compiles and runs as a Linux process
-- [x] Write unit tests for:
-  - [x] Task creation, suspension, resumption, deletion
-  - [x] Scheduler: priority ordering, round-robin, preemption
-  - [x] Semaphore: basic take/give, timeout, overflow
-  - [x] Mutex: lock/unlock, priority inheritance, timeout, ISR rejection
-  - [x] Message queue: send/recv, full/empty blocking, timeout
-  - [x] Sleep list: correct ordering, alarm handler wakeup
-  - [x] Memory pool: alloc, free, exhaustion, double-free guard
-- [x] Add CI pipeline (GitHub Actions): build for Cortex-M + run host-native tests
-- [ ] Write `br_version.h` with `BR_VERSION_MAJOR`, `BR_VERSION_MINOR`, `BR_VERSION_PATCH` macros
+## 0.2.0: RISC-V port
 
-## Phase 3 — Portability Proven (0.2.0)
+- [ ] `arch/riscv32/` with the same layout as `arch/arm-cortex-m/`
+- [ ] Timer HAL on CLINT `mtime`/`mtimecmp`
+- [ ] RV32I context switch in `br_hal_context.c`: stack frame layout, switching through `mscratch`
+- [ ] `br_hal_irq_disable`/`br_hal_irq_restore` on `mstatus.MIE`
+- [ ] `boards/qemu-riscv32-virt/`: linker script and startup code for the QEMU `virt` machine
+- [ ] UART output for QEMU `virt` (16550)
+- [ ] `examples/main.c` runs on both architectures without changes
+- [ ] RISC-V target in `chorus.build`
+- [ ] `ARCH_RISCV32` in Kconfig
+- [ ] Build and test both architectures in CI
+- [ ] Porting guide update
 
-### 0.2.0 — RISC-V Port
+## 0.3.0: Shell and debugging
 
-- [ ] Create `arch/riscv32/` directory structure mirroring `arch/arm-cortex-m/`
-- [ ] Implement `br_hal_timer.h` for RISC-V (using `mtime`/`mtimecmp` on CLINT)
-- [ ] Implement `br_hal_context.c` for RV32I — stack frame layout, context switch via `mscratch`
-- [ ] Implement `br_hal_irq_disable/restore` using `mstatus.MIE`
-- [ ] Create `boards/qemu-riscv32-virt/` with linker script and startup code for QEMU `virt` machine
-- [ ] Implement minimal UART output for QEMU `virt` (16550-compatible)
-- [ ] Verify the same `examples/main.c` boots and runs on both architectures without changes
-- [ ] Add RISC-V build target to `chorus.build`
-- [ ] Add `ARCH_RISCV32` option to Kconfig
-- [ ] Update CI to build and test both architectures
-- [ ] Update porting guide documentation
+- [ ] UART RX on interrupts instead of the polled TX-only driver
+- [ ] Shell core: line editing, command parsing, command registration
+- [ ] Shell commands:
+  - [ ] `tasks`: tasks with state, priority and stack usage
+  - [ ] `mem`: memory pool usage
+  - [ ] `uptime`: time since boot
+  - [ ] `version`: kernel version
+  - [ ] `reboot`: system reset
+- [ ] `br_console` API for formatted output (`br_printf` or a smaller equivalent)
+- [ ] Stack high-water mark: fill the stack with a pattern and scan it
+- [ ] Per-task CPU usage under `CONFIG_TASK_STATS`
+- [ ] `br_hook_idle()` for user code in the idle task, for example power management
 
-## Phase 4 — Developer Experience (0.3.0)
+## 0.4.0: Drivers
 
-### 0.3.0 — Shell, Debug Console, Introspection
+- [ ] Driver model:
+  - `br_device_t` with a name, an ops table and private data
+  - `br_device_register()` and `br_device_find()`
+  - Ops: `open`, `close`, `read`, `write`, `ioctl`
+- [ ] GPIO HAL and driver
+- [ ] SPI HAL and driver
+- [ ] I2C HAL and driver
+- [ ] Interrupt-driven UART on the driver model
+- [ ] GPIO and UART implementations for Cortex-M and RISC-V
+- [ ] Timer/counter driver for user code: PWM, capture
+- [ ] Driver guide in `docs/en/driver-guide.md`
 
-- [ ] Implement interrupt-driven UART RX (replace polled TX-only driver)
-- [ ] Design a minimal shell framework: line editing, command parsing, command registration
-- [ ] Implement built-in shell commands:
-  - [ ] `tasks` — list all tasks with state, priority, stack usage
-  - [ ] `mem` — show memory pool usage
-  - [ ] `uptime` — display system uptime
-  - [ ] `version` — print kernel version
-  - [ ] `reboot` — trigger system reset
-- [ ] Add a `br_console` API for formatted output (`br_printf` or lightweight equivalent)
-- [ ] Add stack high-water-mark tracking (paint stack with pattern, scan for usage)
-- [ ] Add runtime statistics: per-task CPU usage (optional, behind `CONFIG_TASK_STATS`)
-- [ ] Implement `br_hook_idle()` — user-defined idle hook for power management
+## 0.5.0: Filesystem (optional module)
 
-## Phase 5 — Driver Model (0.4.0)
+- [ ] Block device HAL `br_blkdev_t`: read, write, erase, sync
+- [ ] littlefs in `3rd/lib/littlefs/` or a small FAT reader
+- [ ] Thin VFS layer: `br_fs_mount()`, `br_fs_open()`, `br_fs_read()`, `br_fs_write()`, `br_fs_close()`
+- [ ] RAM block device for tests under QEMU
+- [ ] Shell commands: `ls`, `cat`, `write`
+- [ ] Filesystem unit tests
 
-### 0.4.0 — Peripheral Driver Framework
+## 0.6.0: Networking (optional module)
 
-- [ ] Design a lightweight driver model:
-  - Device descriptor struct (`br_device_t`) with name, ops table, private data
-  - `br_device_register()` / `br_device_find()` API
-  - Operations: `open`, `close`, `read`, `write`, `ioctl`
-- [ ] Implement GPIO HAL interface and driver
-- [ ] Implement SPI HAL interface and driver
-- [ ] Implement I2C HAL interface and driver
-- [ ] Implement interrupt-driven UART as a proper driver (using the new driver model)
-- [ ] Provide Cortex-M and RISC-V reference implementations for at least GPIO and UART
-- [ ] Add timer/counter driver (beyond the kernel timer — for user-facing PWM, capture, etc.)
-- [ ] Document driver authoring guide in `docs/en/driver-guide.md`
-
-## Phase 6 — Storage (0.5.0)
-
-### 0.5.0 — Lightweight Filesystem (Optional Module)
-
-- [ ] Define a block device HAL interface (`br_blkdev_t`: read, write, erase, sync)
-- [ ] Integrate littlefs as a third-party library (in `3rd/lib/littlefs/`) or implement a minimal FAT reader
-- [ ] Create a VFS-like thin layer: `br_fs_mount()`, `br_fs_open()`, `br_fs_read()`, `br_fs_write()`, `br_fs_close()`
-- [ ] Implement a RAM-backed block device for testing on QEMU
-- [ ] Add shell commands: `ls`, `cat`, `write` (for testing)
-- [ ] Write unit tests for filesystem operations
-
-## Phase 7 — Networking (0.6.0)
-
-### 0.6.0 — Lightweight IP Networking (Optional Module)
-
-- [ ] Define a network interface HAL (`br_netif_t`: send, recv, link status)
-- [ ] Integrate lwIP or picoTCP as a third-party library, or implement a minimal UDP/IP stack
-- [ ] Create a network task that drives the stack from a dedicated thread
-- [ ] Implement socket-like API: `br_net_socket()`, `br_net_bind()`, `br_net_send()`, `br_net_recv()`
-- [ ] Provide a loopback interface for testing without hardware
-- [ ] Implement a QEMU network backend (e.g., `-netdev user` with SLIP or virtio-net)
-- [ ] Add an example: simple UDP echo server
+- [ ] Network interface HAL `br_netif_t`: send, receive, link status
+- [ ] lwIP, picoTCP or a small UDP/IP stack of our own
+- [ ] Dedicated task that runs the network stack
+- [ ] Socket-style API: `br_net_socket()`, `br_net_bind()`, `br_net_send()`, `br_net_recv()`
+- [ ] Loopback interface for tests without hardware
+- [ ] QEMU network backend: `-netdev user` with SLIP or virtio-net
+- [ ] Example: UDP echo server
 - [ ] Shell commands: `ifconfig`, `ping` (if ICMP is supported)
 
-## Phase 8 — Architecture Breadth (0.7.0)
+## 0.7.0: More architectures and boards
 
-### 0.7.0 — Third Architecture + Expanded Board Support
-
-- [ ] Port to a third architecture — candidates (pick one based on community interest):
-  - AVR (ATmega328P — Arduino Uno) — 8-bit, tests the lower end
-  - x86 (i386 or x86_64 bare-metal) — tests the upper end
-  - Xtensa (ESP32) — tests a real-world commercial target
-- [ ] Add at least one real hardware board target per existing architecture:
-  - ARM: STM32F4-Discovery or similar (real silicon, not just QEMU)
+- [ ] Third architecture, one of:
+  - AVR (ATmega328P, Arduino Uno): 8-bit
+  - x86 (i386 or x86_64 bare metal)
+  - Xtensa (ESP32)
+- [ ] At least one real board per architecture:
+  - ARM: STM32F4-Discovery or similar
   - RISC-V: Sipeed Longan Nano (GD32VF103) or similar
-- [ ] Create board support packages (`boards/<board>/`) with:
+- [ ] Board packages in `boards/<board>/`:
   - Linker script
-  - Clock and pin configuration
-  - Board-specific `br_hal_board_init()`
-- [ ] Validate all existing examples and tests on new targets
-- [ ] Document adding a new board in porting guide
+  - Clock and pin setup
+  - `br_hal_board_init()`
+- [ ] Run all examples and tests on the new targets
+- [ ] Porting guide section on adding a board
 
-## Phase 9 — Security & Isolation (0.8.0)
+## 0.8.0: Memory protection
 
-### 0.8.0 — MPU Support and Memory Protection
-
-- [ ] Implement MPU (Memory Protection Unit) HAL interface
-- [ ] Configure per-task MPU regions on Cortex-M (stack, peripheral access)
-- [ ] Implement PMP (Physical Memory Protection) support on RISC-V
-- [ ] Add `CONFIG_MPU` option — when enabled, tasks cannot corrupt each other's stacks
-- [ ] Implement privilege levels: kernel code runs privileged, tasks run unprivileged (Cortex-M: Handler/Thread mode)
-- [ ] Add system call interface (`svc`/`ecall`) for unprivileged task access to kernel services
-- [ ] Audit all kernel code for:
+- [ ] MPU HAL
+- [ ] Per-task MPU regions on Cortex-M: stack, peripherals
+- [ ] PMP on RISC-V
+- [ ] `CONFIG_MPU`: tasks cannot write to other tasks' stacks
+- [ ] Kernel runs privileged, tasks run unprivileged (Cortex-M Handler/Thread mode)
+- [ ] System calls (`svc`/`ecall`) for unprivileged tasks
+- [ ] Kernel code audit:
   - Buffer overflows
-  - Integer overflows in size calculations
+  - Integer overflows in size math
   - Unchecked pointer dereferences
-- [ ] Add fault handlers: HardFault (Cortex-M), trap handler (RISC-V) with diagnostic output
+- [ ] Fault handlers with diagnostic output: HardFault on Cortex-M, trap handler on RISC-V
 
-## Phase 10 — Release Preparation (0.9.0)
+## 0.9.0: API freeze, docs, performance
 
-### 0.9.0 — API Freeze, Docs, Performance
-
-- [ ] **API freeze** — no breaking changes to `include/bedrock/bedrock.h` after this version
-- [ ] Complete API reference documentation for every public function
-- [ ] Write a getting-started tutorial: from zero to blinking LED
-- [ ] Write architecture decision records (ADRs) for key design choices
-- [ ] Performance benchmarking:
-  - Context switch latency (cycles)
+- [ ] Freeze `include/bedrock/bedrock.h`: no breaking changes after this release
+- [ ] API reference for every public function
+- [ ] Getting started guide: from an empty project to a blinking LED
+- [ ] Architecture decision records for the main design choices
+- [ ] Benchmarks:
+  - Context switch latency in cycles
   - Interrupt latency
-  - IPC throughput (message queue send/recv per second)
-  - Memory footprint (kernel .text + .data + .bss)
-- [ ] Optimize critical paths identified by benchmarks
-- [ ] Publish benchmark results in `docs/en/benchmarks.md`
-- [ ] Run static analysis (cppcheck, Coverity scan, or similar)
-- [ ] Resolve all warnings and static analysis findings
-- [ ] Final review of all documentation (EN and RU)
-- [ ] Prepare release notes template
+  - Message queue send/receive per second
+  - Kernel size: `.text`, `.data`, `.bss`
+- [ ] Optimize the hot paths found by the benchmarks
+- [ ] Benchmark results in `docs/en/benchmarks.md`
+- [ ] Static analysis: cppcheck, Coverity Scan or similar
+- [ ] Fix all warnings and analyzer findings
+- [ ] Review all EN and RU docs
+- [ ] Release notes template
