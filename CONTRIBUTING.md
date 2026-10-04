@@ -1,212 +1,121 @@
-# Contributing to bedrock[RTOS]
+# Contributing
 
-Thank you for your interest in contributing to bedrock[RTOS]. This document describes the rules, conventions, and workflow that every contributor must follow.
+## Setup
 
-## Table of Contents
+1. Fork the repository and clone your fork.
+2. Install the dependencies from [README.md](README.md#dependencies).
+3. Build: `chorus`.
+4. Build and run the host tests: `chorus host`, then the `test_*_host` binaries.
+5. Run on QEMU: `chorus run`.
 
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Contribution Workflow](#contribution-workflow)
-- [Commit Message Format](#commit-message-format)
-- [Updating the Changelog](#updating-the-changelog)
-- [Coding Style](#coding-style)
-- [License Headers](#license-headers)
-- [Links](#links)
+## Workflow
 
----
+1. Create a branch from `master`:
+   - `feat/<name>`: new feature
+   - `fix/<name>`: bug fix
+   - `docs/<name>`: documentation
+   - `refactor/<name>`: refactoring
+   - `test/<name>`: tests
+2. Make the change. One commit is one logical change.
+3. For user-facing changes, add an entry to `CHANGELOG.md` (see below).
+4. Push the branch and open a pull request against `master`.
 
-## Project Structure
+### Pull requests
 
-| Directory | Purpose | License |
-|-----------|---------|---------|
-| `/kernel` | Scheduler, tasks, time, IPC | BSD 3-Clause |
-| `/arch` | HAL implementations per architecture | BSD 3-Clause |
-| `/boards` | Board-specific configs and linker scripts | BSD 3-Clause |
-| `/include/bedrock` | Public API headers | BSD 3-Clause |
-| `/lib` | Static pool allocator, utilities | LGPL 2.1 |
-| `/examples` | Application templates and demos | GPL 3.0 |
-| `/docs` | Documentation | CC BY-SA 4.0 |
-| `/3rd` | Third-party tools and libraries | Per-project |
+- One pull request is one task. Do not mix unrelated changes.
+- CI must pass. CI builds for Cortex-M and runs the host tests.
+- Smaller pull requests get reviewed faster.
+- The description says what changed and why.
 
----
+## Commit messages
 
-## Getting Started
-
-1. Fork the repository on GitHub.
-2. Clone your fork locally.
-3. Install the prerequisites:
-   - `arm-none-eabi-gcc` toolchain
-   - `qemu-system-arm` (for Cortex-M3 emulation)
-   - [Chorus](https://github.com/z3nnix/chorus) build system (included in `3rd/tools/chorus`)
-4. Build the project: `chorus`
-5. Run on QEMU: `chorus run`
-
----
-
-## Contribution Workflow
-
-1. **Fork** the repository.
-2. **Create a branch** from `master` with a descriptive name:
-   - `feat/short-description` — for new features
-   - `fix/short-description` — for bug fixes
-   - `docs/short-description` — for documentation changes
-   - `refactor/short-description` — for refactoring
-   - `test/short-description` — for test additions
-3. **Make your changes.** Keep each commit focused on a single logical change.
-4. **Update `CHANGELOG.md`** if the change is user-facing (see [below](#updating-the-changelog)).
-5. **Push** your branch to your fork.
-6. **Open a Pull Request** against `master`.
-
-### Pull Request Rules
-
-- **One PR = one logical task.** Do not combine unrelated changes.
-- **CI must pass.** A PR with failing CI will not be reviewed.
-- **Keep it small.** Smaller PRs are reviewed faster and merged sooner.
-- **Describe what and why.** The PR description should explain the motivation, not just list changed files.
-
----
-
-## Commit Message Format
-
-This project follows [Conventional Commits](https://www.conventionalcommits.org/).
-
-### Format
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-<type>[optional scope]: <description>
+<type>[(scope)]: <description>
 
-[optional body]
+[body]
 
-[optional footer(s)]
+[footer]
 ```
 
-### Types
+| Type | Use for |
+|------|---------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `refactor` | Code change with no new behavior and no fix |
+| `test` | Tests |
+| `perf` | Performance |
+| `style` | Formatting only |
+| `build` | Build system, dependencies |
+| `ci` | CI configuration |
+| `chore` | Everything else |
 
-| Type | When to use |
-|------|-------------|
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation only changes |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `test` | Adding or correcting tests |
-| `chore` | Build system, CI, dependencies, scripts |
-| `perf` | Performance improvement |
-| `style` | Formatting, whitespace, semicolons (not CSS) |
-| `ci` | CI pipeline changes |
-
-### Scope (Optional)
-
-The scope indicates the area of the codebase affected:
+The scope is the affected area: `sched`, `ipc`, `task`, `time`, `hal`, `pool`, `chorus` and so on.
 
 ```
-feat(sched): add round-robin time-slice support
-fix(ipc): handle semaphore overflow in ISR context
-docs(porting): update RISC-V porting guide
-chore(chorus): add QEMU run target
-```
-
-### Good Examples
-
-```
-feat(sched): add round-robin time-slice support
+feat(sched): add round-robin time slicing
 fix(mutex): restore original priority on nested unlock
-docs: add project roadmap (0.0.1 → 1.0.0)
-refactor(hal): extract common IRQ disable/restore pattern
-test(pool): add exhaustion and double-free test cases
-perf(sched): use bitmap for O(1) priority lookup
-chore: update chorus to v0.3.0
+test(pool): add exhaustion and double-free cases
 ```
 
-### Bad Examples
+Breaking changes to the public API need `!` after the type and a `BREAKING CHANGE:` footer:
 
 ```
-# Too vague
-fix: fixed stuff
-update code
-
-# Not conventional format
-Fixed the bug in scheduler
-FEAT - added new task API
-
-# Multiple unrelated changes in one commit
-feat: add shell + fix timer + update docs
-```
-
-### Breaking Changes
-
-For changes that break the public API, use `!` after the type or add a `BREAKING CHANGE:` footer:
-
-```
-feat(task)!: change br_task_create signature to accept config struct
+feat(task)!: take a config struct in br_task_create
 
 BREAKING CHANGE: br_task_create now takes a br_task_config_t pointer
-instead of individual parameters.
+instead of separate arguments.
 ```
 
----
+## Changelog
 
-## Updating the Changelog
-
-Every user-facing change **must** be recorded in `CHANGELOG.md` under the `[Unreleased]` section. We follow the [Keep a Changelog](https://keepachangelog.com/) format.
-
-### Categories
-
-- **Added** — new features
-- **Changed** — changes to existing functionality
-- **Deprecated** — features that will be removed in a future version
-- **Removed** — features that have been removed
-- **Fixed** — bug fixes
-- **Security** — vulnerability fixes
-
-### Example
+`CHANGELOG.md` uses the [Keep a Changelog](https://keepachangelog.com/) format. New entries go under `[Unreleased]`, in one of the sections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
 
 ```markdown
 ## [Unreleased]
 
 ### Added
-- Round-robin scheduling for equal-priority tasks.
-- `br_task_delete()` to reclaim TCB slots.
+- `br_task_delete()` to free TCB slots.
 
 ### Fixed
-- Mutex priority inheritance not restoring original priority on nested unlock.
+- Mutex priority inheritance did not restore the original priority on nested unlock.
 ```
 
----
-
-## Coding Style
+## Code
 
 ### Language
 
-- **C11/C17 only.** No C++ in any kernel, HAL, or library code.
-- Compile with `-std=c11` (or `-std=c17`).
+C11, built with `-std=c11 -Wall -Wextra -Werror`. No C++.
 
 ### Naming
 
-| Element | Convention | Example |
-|---------|-----------|---------|
+| Element | Rule | Example |
+|---------|------|---------|
 | Public functions | `br_` prefix, snake_case | `br_task_create()` |
 | Public types | `br_` prefix, snake_case, `_t` suffix | `br_tcb_t` |
-| Public macros/constants | `BR_` prefix, UPPER_SNAKE_CASE | `BR_TIME_INFINITE` |
+| Public macros | `BR_` prefix, UPPER_SNAKE_CASE | `BR_TIME_INFINITE` |
 | Config macros | `CONFIG_` prefix, UPPER_SNAKE_CASE | `CONFIG_MAX_TASKS` |
 | Static functions | snake_case, no prefix | `pick_next()` |
 | Local variables | snake_case | `stack_top` |
 
 ### Formatting
 
-- **Indentation:** 4 spaces. No tabs.
-- **Max line length:** 100 characters.
-- **Braces:** K&R style — opening brace on the same line.
-- **Single blank line** between function definitions.
-- **No trailing whitespace.**
+- 4 spaces, no tabs.
+- Lines up to 100 characters.
+- The opening brace of a function goes on its own line. For `if`, `for`, `while` and `switch` it stays on the same line.
+- One blank line between functions.
+- No trailing whitespace.
 
 ```c
-br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout) {
+br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout)
+{
     if (sem == NULL) {
         return BR_ERR_INVALID;
     }
 
     uint32_t key = br_hal_irq_disable();
-    /* ... */
     br_hal_irq_restore(key);
     return BR_OK;
 }
@@ -214,99 +123,34 @@ br_err_t br_sem_take(br_sem_t *sem, br_time_t timeout) {
 
 ### Rules
 
-- **No dynamic allocation in `/kernel`.** Never use `malloc`, `calloc`, `realloc`, or `free` in kernel code.
-- **No platform-specific code in `/kernel`.** All hardware access goes through the HAL interface in `include/bedrock/br_hal.h`.
-- **Minimize includes.** Only include what you use.
-- **Use `const` and `static` where appropriate.**
-- **Every `switch` must have a `default` case.**
+- No `malloc`, `calloc`, `realloc` or `free` in `/kernel`, `/arch` or `/lib`. Objects live in static pools or in user memory.
+- No hardware access and no architecture `#ifdef` in `/kernel`. Hardware is reached only through `include/bedrock/br_hal.h`.
+- A new HAL function must be implemented for every architecture in `/arch`, including `arch/host-x86-64`.
+- Time is `br_time_t` in microseconds. No ticks.
+- Critical sections go between `br_hal_irq_disable()` and `br_hal_irq_restore()`.
+- Functions that can be called from an ISR check `br_hal_in_isr()`. Mutexes return `BR_ERR_ISR` in an ISR.
+- A new config option goes into both `include/bedrock/br_config.h` and `Kconfig`, with a default value and help text.
+- Every `switch` has a `default`.
+- Include only what you use.
 
----
+## Tests
 
-## License Headers
+Tests are in `examples/test_*.c`. Each test prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end. A new test needs targets in `chorus.build` for both Cortex-M and host, and an entry in the test list in `.github/workflows/ci.yml`.
 
-Every new source file **must** begin with the correct license header matching its directory. Do not include the full license text — reference the SPDX identifier and a brief notice.
+## License headers
 
-### BSD 3-Clause (for `/kernel`, `/arch`, `/boards`, `/include`)
-
-```c
-/*
- * Project: bedrock[RTOS]
- * Author:  Your Name <your@email.com>
- * License: BSD 3-Clause
- *
- * SPDX-License-Identifier: BSD-3-Clause
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.
- */
-```
-
-### LGPL 2.1 (for `/lib`)
+Each source file in `/kernel`, `/arch`, `/boards`, `/include`, `/lib` and `/examples` starts with:
 
 ```c
 /*
- * Project: bedrock[RTOS]
- * Author:  Your Name <your@email.com>
- * License: LGPL-2.1
- *
- * SPDX-License-Identifier: LGPL-2.1-only
- *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; version 2.1 of the License.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
- * License for more details.
- */
-```
-
-### GPL 3.0 (for `/examples`)
-
-```c
-/*
- * Project: bedrock[RTOS]
- * Author:  Your Name <your@email.com>
- * License: GPL-3.0
- *
  * SPDX-License-Identifier: GPL-3.0-only
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
  */
 ```
 
-### Documentation (for `/docs`)
-
-```markdown
-<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
-```
-
----
+This code is under GPL-3.0 with the bedrock[RTOS] runtime exception, see [LICENSE.md](LICENSE.md). `/docs` is under CC BY-SA 4.0.
 
 ## Links
 
-- **Repository:** [github.com/bedrockRTOS/bedrock-core](https://github.com/bedrockRTOS/bedrock-core)
-- **Issues:** [github.com/bedrockRTOS/bedrock-core/issues](https://github.com/bedrockRTOS/bedrock-core/issues)
-- **Roadmap:** [ROADMAP.md](ROADMAP.md)
+- Issues: <https://github.com/bedrockRTOS/bedrock-core/issues>
+- [Roadmap](ROADMAP.md)
+- [Documentation](docs/en/)
