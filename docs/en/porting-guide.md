@@ -19,7 +19,8 @@ Zero kernel source changes are needed.
 arch/<arch_name>/
 ├── br_hal_timer.c      Timer and interrupt control
 ├── br_hal_context.c    Context switch and stack init
-└── startup.c           Vector table and Reset_Handler
+├── br_hal_uart.c       br_uart_putc() and br_uart_puts()
+└── startup.c           Reset entry, .bss init, trap or vector setup
 ```
 
 ## Step 2: Implement Timer HAL
@@ -47,6 +48,8 @@ void br_hal_timer_cancel_alarm(void);
 ```
 
 Cancel any pending alarm.
+
+The timer interrupt must also call `br_sched_tick(elapsed_us)` at least once per `CONFIG_RR_TIME_SLICE_US` so round-robin works.
 
 ## Step 3: Implement Interrupt Control HAL
 
@@ -87,7 +90,9 @@ void br_hal_context_switch(void **old_sp, void **new_sp);
 
 Trigger a context switch. Save the current context and store the stack pointer at `*old_sp`. Restore the context from `*new_sp`.
 
-On Cortex-M, this typically pends PendSV rather than switching immediately.
+This function is called with interrupts disabled, from a task or from an ISR. The switch itself can be deferred until interrupts are enabled again or the ISR returns. On Cortex-M it pends PendSV. On RISC-V it records the pointers, sets the CLINT software interrupt when called from a task, and the trap exit path swaps the stack.
+
+If the function is called a second time before the deferred switch happens, keep the first `old_sp` and take the new `new_sp`. The first `old_sp` belongs to the task that is actually running.
 
 ```c
 void br_hal_start_first_task(void *sp) __attribute__((noreturn));
@@ -105,12 +110,19 @@ Perform any early board-level initialization (clock setup, GPIO, peripheral enab
 
 ## Step 6: Startup Code
 
-Provide a `startup.c` (or `.s`) with:
+Provide a `startup.c` (or `.s`) that sets up the stack, initializes `.data` and `.bss`, installs the interrupt entry and calls `main()`.
+
+Cortex-M:
 
 - Vector table placed in `.isr_vector` section
 - `Reset_Handler`: copy `.data` from flash to SRAM, zero `.bss`, call `main()`
 - Default handlers for exceptions
-- Entries for `PendSV_Handler` and `SysTick_Handler` (or equivalent)
+- Entries for `PendSV_Handler` and `SysTick_Handler`
+
+RISC-V:
+
+- `_start` in `.text.start`: load `sp` from `_estack`, jump to `reset_handler`
+- `reset_handler`: zero `.bss`, write the trap entry to `mtvec`, call `main()`
 
 ## Step 7: Linker Script
 
@@ -123,10 +135,13 @@ Create `boards/<board_name>/linker.ld` with:
 - `.bss` section in RAM
 - Export symbols: `_sidata`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_estack`
 
+On QEMU RISC-V `virt` the image is loaded straight into RAM at `0x80000000`, so there is one `RAM` region, no `.data` copy, `ENTRY(_start)` and only `_sbss`, `_ebss`, `_estack` are needed.
+
 ## Step 8: Build Configuration
 
-Add compile and link targets for the new architecture in `chorus.build`.
+Add compile and link targets for the new architecture in `chorus.build`, an `ARCH_<NAME>` option to `Kconfig`, a `boards/<board_name>/defconfig`, and a job in `.github/workflows/ci.yml` that builds the port and runs the tests on QEMU.
 
 ## Reference
 
-See `arch/arm-cortex-m/` and `boards/qemu-cortex-m3/` for a complete working example targeting the QEMU LM3S6965 Cortex-M3.
+- `arch/arm-cortex-m/` and `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
+- `arch/riscv32/` and `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, machine mode only)

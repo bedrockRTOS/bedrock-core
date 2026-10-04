@@ -19,7 +19,8 @@ bedrock[RTOS] строго разделяет аппаратно-зависим�
 arch/<arch_name>/
 ├── br_hal_timer.c      Таймер и управление прерываниями
 ├── br_hal_context.c    Переключение контекста и инициализация стека
-└── startup.c           Таблица векторов и Reset_Handler
+├── br_hal_uart.c       br_uart_putc() и br_uart_puts()
+└── startup.c           Точка входа после сброса, обнуление .bss, установка trap или таблицы векторов
 ```
 
 ## Шаг 2: Реализовать HAL таймера
@@ -47,6 +48,8 @@ void br_hal_timer_cancel_alarm(void);
 ```
 
 Отменить ожидающий будильник.
+
+Прерывание таймера также должно вызывать `br_sched_tick(elapsed_us)` не реже одного раза за `CONFIG_RR_TIME_SLICE_US`, иначе round-robin не работает.
 
 ## Шаг 3: Реализовать HAL управления прерываниями
 
@@ -87,7 +90,9 @@ void br_hal_context_switch(void **old_sp, void **new_sp);
 
 Инициировать переключение контекста. Сохранить текущий контекст и записать указатель стека в `*old_sp`. Восстановить контекст из `*new_sp`.
 
-На Cortex-M обычно выставляется PendSV вместо немедленного переключения.
+Функция вызывается с выключенными прерываниями, из задачи или из ISR. Само переключение можно отложить до включения прерываний или до выхода из ISR. На Cortex-M выставляется PendSV. На RISC-V функция запоминает указатели, при вызове из задачи выставляет программное прерывание CLINT, а стек меняется на выходе из trap.
+
+Если функция вызвана второй раз до отложенного переключения, нужно оставить первый `old_sp` и взять новый `new_sp`. Первый `old_sp` принадлежит задаче, которая реально выполняется.
 
 ```c
 void br_hal_start_first_task(void *sp) __attribute__((noreturn));
@@ -105,12 +110,19 @@ void br_hal_board_init(void);
 
 ## Шаг 6: Стартовый код
 
-Предоставить `startup.c` (или `.s`) с:
+Предоставить `startup.c` (или `.s`), который настраивает стек, инициализирует `.data` и `.bss`, устанавливает точку входа прерываний и вызывает `main()`.
 
-- Таблицей векторов в секции `.isr_vector`
+Cortex-M:
+
+- Таблица векторов в секции `.isr_vector`
 - `Reset_Handler`: копирование `.data` из flash в SRAM, обнуление `.bss`, вызов `main()`
-- Обработчиками по умолчанию для исключений
-- Записями для `PendSV_Handler` и `SysTick_Handler` (или эквивалентных)
+- Обработчики по умолчанию для исключений
+- Записи для `PendSV_Handler` и `SysTick_Handler`
+
+RISC-V:
+
+- `_start` в `.text.start`: загрузить `sp` из `_estack`, перейти в `reset_handler`
+- `reset_handler`: обнулить `.bss`, записать точку входа trap в `mtvec`, вызвать `main()`
 
 ## Шаг 7: Скрипт линковки
 
@@ -123,10 +135,13 @@ void br_hal_board_init(void);
 - Секцией `.bss` в RAM
 - Экспортом символов: `_sidata`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_estack`
 
+На QEMU RISC-V `virt` образ загружается сразу в RAM по адресу `0x80000000`, поэтому нужна одна область `RAM`, `.data` не копируется, `ENTRY(_start)`, и нужны только `_sbss`, `_ebss`, `_estack`.
+
 ## Шаг 8: Конфигурация сборки
 
-Добавить цели компиляции и линковки для новой архитектуры в `chorus.build`.
+Добавить цели компиляции и линковки для новой архитектуры в `chorus.build`, опцию `ARCH_<NAME>` в `Kconfig`, файл `boards/<board_name>/defconfig` и джобу в `.github/workflows/ci.yml`, которая собирает порт и гоняет тесты на QEMU.
 
 ## Справочная реализация
 
-См. `arch/arm-cortex-m/` и `boards/qemu-cortex-m3/` — полный рабочий пример для QEMU LM3S6965 Cortex-M3.
+- `arch/arm-cortex-m/` и `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
+- `arch/riscv32/` и `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, только machine mode)
