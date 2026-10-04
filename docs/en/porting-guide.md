@@ -1,10 +1,3 @@
-<!--
-  Project: bedrock[RTOS]
-  Version: 0.0.3
-  Author:  AnmiTaliDev <anmitalidev@nuros.org>
-  License: CC BY-SA 4.0
--->
-
 # Porting Guide
 
 This guide describes how to add support for a new architecture or board to bedrock[RTOS].

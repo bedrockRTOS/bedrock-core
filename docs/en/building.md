@@ -1,10 +1,3 @@
-<!--
-  Project: bedrock[RTOS]
-  Version: 0.0.3
-  Author:  AnmiTaliDev <anmitalidev@nuros.org>
-  License: CC BY-SA 4.0
--->
-
 # Building
 
 bedrock[RTOS] uses [chorus](https://github.com/z3nnix/chorus) as its build system. Chorus is included as a git submodule at `3rd/tools/chorus`.

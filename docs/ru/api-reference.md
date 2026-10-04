@@ -1,10 +1,3 @@
-<!--
-  Project: bedrock[RTOS]
-  Version: 0.0.3
-  Author:  AnmiTaliDev <anmitalidev@nuros.org>
-  License: CC BY-SA 4.0
--->
-
 # Справочник API
 
 Все публичные функции и типы объявлены в `include/bedrock/bedrock.h`.

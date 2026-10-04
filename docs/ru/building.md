@@ -1,10 +1,3 @@
-<!--
-  Project: bedrock[RTOS]
-  Version: 0.0.3
-  Author:  AnmiTaliDev <anmitalidev@nuros.org>
-  License: CC BY-SA 4.0
--->
-
 # Сборка
 
 bedrock[RTOS] использует [chorus](https://github.com/z3nnix/chorus) в качестве системы сборки. Chorus включён как git-подмодуль в `3rd/tools/chorus`.
