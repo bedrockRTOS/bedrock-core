@@ -6,6 +6,7 @@
 #define BEDROCK_H
 
 #include "br_types.h"
+#include "br_device.h"
 #include "br_hal.h"
 #include "br_assert.h"
 #include "br_version.h"
@@ -75,5 +76,16 @@ BR_STABLE void br_set_panic_handler(br_panic_handler_t handler);
 BR_EXPERIMENTAL void     br_uart_putc(char c);
 BR_EXPERIMENTAL void     br_uart_puts(const char *s);
 BR_EXPERIMENTAL br_err_t br_uart_getc(char *c, br_time_t timeout);
+
+BR_EXPERIMENTAL br_err_t     br_device_register(br_device_t *dev, const char *name,
+                                                const br_device_ops_t *ops, void *priv);
+BR_EXPERIMENTAL br_device_t *br_device_find(const char *name);
+BR_EXPERIMENTAL br_err_t     br_device_open(br_device_t *dev);
+BR_EXPERIMENTAL br_err_t     br_device_close(br_device_t *dev);
+BR_EXPERIMENTAL int          br_device_read(br_device_t *dev, void *buf, size_t len,
+                                            br_time_t timeout);
+BR_EXPERIMENTAL int          br_device_write(br_device_t *dev, const void *buf, size_t len,
+                                             br_time_t timeout);
+BR_EXPERIMENTAL br_err_t     br_device_ioctl(br_device_t *dev, uint32_t cmd, void *arg);
 
 #endif /* BEDROCK_H */
