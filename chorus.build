@@ -13,7 +13,7 @@ variables:
   TOOL_CFLAGS: "-Wall -Wextra -Werror -Os -std=c11"
   F4_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m4 -mthumb -mfloat-abi=soft -DBR_HAL_SYS_CLOCK_HZ=16000000 -Iinclude -Ilib -Idrivers"
   F4_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/stm32f4-discovery/linker.ld -mcpu=cortex-m4 -mthumb"
-  X86_CFLAGS: "-c -Wall -Wextra -Werror -Os -m32 -march=i686 -ffreestanding -fno-pic -fno-pie -fno-stack-protector -fcf-protection=none -mgeneral-regs-only -ffunction-sections -fdata-sections -std=c11 -Iinclude -Ilib -Idrivers -Iarch/x86"
+  X86_CFLAGS: "-c -Wall -Wextra -Werror -Os -m32 -march=i686 -ffreestanding -fno-pic -fno-pie -fno-stack-protector -fcf-protection=none -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -mgeneral-regs-only -ffunction-sections -fdata-sections -std=c11 -Iinclude -Ilib -Idrivers -Iarch/x86"
   X86_LDFLAGS: "-m32 -nostdlib -static -no-pie -Wl,--gc-sections -Wl,-T,boards/qemu-x86/linker.ld -Wl,-m,elf_i386"
   RV_CC: "riscv64-elf-gcc"
   RV_AR: "riscv64-elf-ar"
