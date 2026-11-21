@@ -60,6 +60,10 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} boards/qemu-cortex-m3/br_hal_uart.c -o ${@}"
 
+  br_netif_enet.o:
+    cmds:
+      - "${CC} ${CFLAGS} boards/qemu-cortex-m3/br_netif_enet.c -o ${@}"
+
   br_hal_gpio.o:
     cmds:
       - "${CC} ${CFLAGS} boards/qemu-cortex-m3/br_hal_gpio.c -o ${@}"
@@ -123,6 +127,10 @@ targets:
   br_uart_dev.o:
     cmds:
       - "${CC} ${CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  br_netif_mock.o:
+    cmds:
+      - "${CC} ${CFLAGS} drivers/br_netif_mock.c -o ${@}"
 
   br_fs.o:
     cmds:
@@ -246,12 +254,12 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_hal.a:
-    deps: [br_hal_timer.o, br_hal_context.o, br_hal_uart.o, br_hal_gpio.o, br_hal_spi.o, br_hal_i2c.o, br_hal_pwm.o, startup.o]
+    deps: [br_hal_timer.o, br_hal_context.o, br_hal_uart.o, br_hal_gpio.o, br_hal_spi.o, br_hal_i2c.o, br_hal_pwm.o, br_netif_enet.o, startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_lib.a:
-    deps: [br_pool.o, br_string.o, br_shell.o, br_console.o, br_shell_cmds.o, br_gpio.o, br_spi.o, br_i2c.o, br_pwm.o, br_capture.o, br_uart_dev.o, br_fs.o, br_ramdisk.o, br_shell_fs.o]
+    deps: [br_pool.o, br_string.o, br_shell.o, br_console.o, br_shell_cmds.o, br_gpio.o, br_spi.o, br_i2c.o, br_pwm.o, br_capture.o, br_uart_dev.o, br_fs.o, br_ramdisk.o, br_shell_fs.o, br_netif_mock.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -521,6 +529,10 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_uart.c -o ${@}"
 
+  host-br_hal_netif.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_netif.c -o ${@}"
+
   host-br_hal_gpio.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} arch/host-x86-64/br_hal_gpio.c -o ${@}"
@@ -651,7 +663,7 @@ targets:
       - "ar rcs ${@} ${^}"
 
   libbedrock_hal_host.a:
-    deps: [host-br_hal_context.o, host-br_hal_timer.o, host-br_hal_uart.o, host-br_hal_gpio.o, host-br_hal_spi.o, host-br_hal_i2c.o, host-br_hal_pwm.o]
+    deps: [host-br_hal_context.o, host-br_hal_timer.o, host-br_hal_uart.o, host-br_hal_gpio.o, host-br_hal_spi.o, host-br_hal_i2c.o, host-br_hal_pwm.o, host-br_hal_netif.o]
     cmds:
       - "ar rcs ${@} ${^}"
 
@@ -800,6 +812,10 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} drivers/br_uart_dev.c -o ${@}"
 
+  host-br_netif_mock.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} drivers/br_netif_mock.c -o ${@}"
+
   host-br_fs.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} lib/br_fs.c -o ${@}"
@@ -818,7 +834,7 @@ targets:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_pool.o host-br_pool.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host, test_littlefs_host, test_fatfs_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host, test_littlefs_host, test_fatfs_host, test_net_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -970,6 +986,10 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} boards/qemu-riscv32-virt/br_hal_uart.c -o ${@}"
 
+  riscv32-br_netif_virtio.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} boards/qemu-riscv32-virt/br_netif_virtio.c -o ${@}"
+
   riscv32-br_hal_periph.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} boards/qemu-riscv32-virt/br_hal_periph.c -o ${@}"
@@ -1021,6 +1041,10 @@ targets:
   riscv32-br_uart_dev.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  riscv32-br_netif_mock.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} drivers/br_netif_mock.c -o ${@}"
 
   riscv32-br_fs.o:
     cmds:
@@ -1156,12 +1180,12 @@ targets:
       - "${RV_AR} rcs ${@} ${^}"
 
   libbedrock_hal_riscv32.a:
-    deps: [riscv32-br_hal_timer.o, riscv32-br_hal_context.o, riscv32-br_hal_uart.o, riscv32-br_hal_periph.o, riscv32-startup.o]
+    deps: [riscv32-br_hal_timer.o, riscv32-br_hal_context.o, riscv32-br_hal_uart.o, riscv32-br_hal_periph.o, riscv32-br_netif_virtio.o, riscv32-startup.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
   libbedrock_lib_riscv32.a:
-    deps: [riscv32-br_pool.o, riscv32-br_string.o, riscv32-br_shell.o, riscv32-br_console.o, riscv32-br_shell_cmds.o, riscv32-br_gpio.o, riscv32-br_spi.o, riscv32-br_i2c.o, riscv32-br_pwm.o, riscv32-br_capture.o, riscv32-br_uart_dev.o, riscv32-br_fs.o, riscv32-br_ramdisk.o, riscv32-br_shell_fs.o]
+    deps: [riscv32-br_pool.o, riscv32-br_string.o, riscv32-br_shell.o, riscv32-br_console.o, riscv32-br_shell_cmds.o, riscv32-br_gpio.o, riscv32-br_spi.o, riscv32-br_i2c.o, riscv32-br_pwm.o, riscv32-br_capture.o, riscv32-br_uart_dev.o, riscv32-br_fs.o, riscv32-br_ramdisk.o, riscv32-br_shell_fs.o, riscv32-br_netif_mock.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
@@ -1276,7 +1300,7 @@ targets:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
   riscv32:
-    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf, test_littlefs_riscv32.elf, test_fatfs_riscv32.elf]
+    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf, test_littlefs_riscv32.elf, test_fatfs_riscv32.elf, test_net_riscv32.elf, test_net_qemu_riscv32.elf, bedrock_udp_echo_riscv32.elf]
 
   run-riscv32:
     deps: [bedrock_example_riscv32.elf]
@@ -1430,6 +1454,10 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} arch/arm-cortex-m0plus/br_hal_uart.c -o ${@}"
 
+  rp2040-br_hal_netif.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} boards/rpi-pico/br_hal_netif.c -o ${@}"
+
   rp2040-br_hal_gpio.o:
     cmds:
       - "${CC} ${M0_CFLAGS} boards/rpi-pico/br_hal_gpio.c -o ${@}"
@@ -1489,6 +1517,10 @@ targets:
   rp2040-br_uart_dev.o:
     cmds:
       - "${CC} ${M0_CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  rp2040-br_netif_mock.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} drivers/br_netif_mock.c -o ${@}"
 
   rp2040-br_fs.o:
     cmds:
@@ -1643,12 +1675,12 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_hal_rp2040.a:
-    deps: [rp2040-br_hal_timer.o, rp2040-br_hal_context.o, rp2040-br_hal_uart.o, rp2040-br_hal_gpio.o, rp2040-br_hal_spi.o, rp2040-br_hal_i2c.o, rp2040-br_hal_pwm.o, rp2040-startup.o]
+    deps: [rp2040-br_hal_timer.o, rp2040-br_hal_context.o, rp2040-br_hal_uart.o, rp2040-br_hal_gpio.o, rp2040-br_hal_spi.o, rp2040-br_hal_i2c.o, rp2040-br_hal_pwm.o, rp2040-br_hal_netif.o, rp2040-startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_lib_rp2040.a:
-    deps: [rp2040-br_pool.o, rp2040-br_string.o, rp2040-br_shell.o, rp2040-br_console.o, rp2040-br_shell_cmds.o, rp2040-br_gpio.o, rp2040-br_spi.o, rp2040-br_i2c.o, rp2040-br_pwm.o, rp2040-br_capture.o, rp2040-br_uart_dev.o, rp2040-br_fs.o, rp2040-br_ramdisk.o, rp2040-br_shell_fs.o]
+    deps: [rp2040-br_pool.o, rp2040-br_string.o, rp2040-br_shell.o, rp2040-br_console.o, rp2040-br_shell_cmds.o, rp2040-br_gpio.o, rp2040-br_spi.o, rp2040-br_i2c.o, rp2040-br_pwm.o, rp2040-br_capture.o, rp2040-br_uart_dev.o, rp2040-br_fs.o, rp2040-br_ramdisk.o, rp2040-br_shell_fs.o, rp2040-br_netif_mock.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -1769,7 +1801,7 @@ targets:
       - "./bin2uf2 bedrock_example_rp2040.bin ${@} 0x10000000 0xe48bff56"
 
   rp2040:
-    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf, test_littlefs_rp2040.elf, test_fatfs_rp2040.elf]
+    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf, test_littlefs_rp2040.elf, test_fatfs_rp2040.elf, test_net_rp2040.elf]
 
   defconfig-rp2040:
     cmds:
@@ -1782,6 +1814,10 @@ targets:
   stm32f103-br_hal_uart.o:
     cmds:
       - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/br_hal_uart.c -o ${@}"
+
+  stm32f103-br_hal_netif.o:
+    cmds:
+      - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/br_hal_netif.c -o ${@}"
 
   stm32f103-br_hal_gpio.o:
     cmds:
@@ -1804,7 +1840,7 @@ targets:
       - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/board.c -o ${@}"
 
   libbedrock_hal_stm32f103.a:
-    deps: [stm32f103-br_hal_timer.o, br_hal_context.o, stm32f103-br_hal_uart.o, stm32f103-br_hal_gpio.o, stm32f103-br_hal_spi.o, stm32f103-br_hal_i2c.o, stm32f103-br_hal_pwm.o, startup.o]
+    deps: [stm32f103-br_hal_timer.o, br_hal_context.o, stm32f103-br_hal_uart.o, stm32f103-br_hal_gpio.o, stm32f103-br_hal_spi.o, stm32f103-br_hal_i2c.o, stm32f103-br_hal_pwm.o, stm32f103-br_hal_netif.o, startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -1925,8 +1961,739 @@ targets:
     cmds:
       - "3rd/tools/kconfig/zig-out/bin/defconfig boards/stm32f103c8-bluepill/defconfig"
 
+  lwip_init.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  lwip_def.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  lwip_dns.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  lwip_inet_chksum.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  lwip_ip.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  lwip_mem.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  lwip_memp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  lwip_netif.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  lwip_pbuf.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  lwip_raw.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  lwip_stats.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  lwip_sys.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  lwip_tcp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  lwip_tcp_in.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  lwip_tcp_out.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  lwip_timeouts.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  lwip_udp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  lwip_acd.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  lwip_autoip.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  lwip_dhcp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  lwip_etharp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  lwip_icmp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  lwip_igmp.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  lwip_ip4_frag.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  lwip_ip4.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  lwip_ip4_addr.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  lwip_api_lib.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  lwip_api_msg.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  lwip_err.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  lwip_if_api.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  lwip_netbuf.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  lwip_netdb.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  lwip_netifapi.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  lwip_tcpip.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  lwip_ethernet.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  sys_arch.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  br_net.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  br_net_sock.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  br_shell_net.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  liblwip.a:
+    deps: [lwip_init.o, lwip_def.o, lwip_dns.o, lwip_inet_chksum.o, lwip_ip.o, lwip_mem.o, lwip_memp.o, lwip_netif.o, lwip_pbuf.o, lwip_raw.o, lwip_stats.o, lwip_sys.o, lwip_tcp.o, lwip_tcp_in.o, lwip_tcp_out.o, lwip_timeouts.o, lwip_udp.o, lwip_acd.o, lwip_autoip.o, lwip_dhcp.o, lwip_etharp.o, lwip_icmp.o, lwip_igmp.o, lwip_ip4_frag.o, lwip_ip4.o, lwip_ip4_addr.o, lwip_api_lib.o, lwip_api_msg.o, lwip_err.o, lwip_if_api.o, lwip_netbuf.o, lwip_netdb.o, lwip_netifapi.o, lwip_tcpip.o, lwip_ethernet.o, sys_arch.o, br_net.o, br_net_sock.o, br_shell_net.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  host-lwip_init.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  host-lwip_def.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  host-lwip_dns.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  host-lwip_inet_chksum.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  host-lwip_ip.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  host-lwip_mem.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  host-lwip_memp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  host-lwip_netif.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  host-lwip_pbuf.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  host-lwip_raw.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  host-lwip_stats.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  host-lwip_sys.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  host-lwip_tcp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  host-lwip_tcp_in.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  host-lwip_tcp_out.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  host-lwip_timeouts.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  host-lwip_udp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  host-lwip_acd.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  host-lwip_autoip.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  host-lwip_dhcp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  host-lwip_etharp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  host-lwip_icmp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  host-lwip_igmp.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  host-lwip_ip4_frag.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  host-lwip_ip4.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  host-lwip_ip4_addr.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  host-lwip_api_lib.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  host-lwip_api_msg.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  host-lwip_err.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  host-lwip_if_api.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  host-lwip_netbuf.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  host-lwip_netdb.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  host-lwip_netifapi.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  host-lwip_tcpip.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  host-lwip_ethernet.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  host-sys_arch.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  host-br_net.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  host-br_net_sock.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  host-br_shell_net.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  liblwip_host.a:
+    deps: [host-lwip_init.o, host-lwip_def.o, host-lwip_dns.o, host-lwip_inet_chksum.o, host-lwip_ip.o, host-lwip_mem.o, host-lwip_memp.o, host-lwip_netif.o, host-lwip_pbuf.o, host-lwip_raw.o, host-lwip_stats.o, host-lwip_sys.o, host-lwip_tcp.o, host-lwip_tcp_in.o, host-lwip_tcp_out.o, host-lwip_timeouts.o, host-lwip_udp.o, host-lwip_acd.o, host-lwip_autoip.o, host-lwip_dhcp.o, host-lwip_etharp.o, host-lwip_icmp.o, host-lwip_igmp.o, host-lwip_ip4_frag.o, host-lwip_ip4.o, host-lwip_ip4_addr.o, host-lwip_api_lib.o, host-lwip_api_msg.o, host-lwip_err.o, host-lwip_if_api.o, host-lwip_netbuf.o, host-lwip_netdb.o, host-lwip_netifapi.o, host-lwip_tcpip.o, host-lwip_ethernet.o, host-sys_arch.o, host-br_net.o, host-br_net_sock.o, host-br_shell_net.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  riscv32-lwip_init.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  riscv32-lwip_def.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  riscv32-lwip_dns.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  riscv32-lwip_inet_chksum.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  riscv32-lwip_ip.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  riscv32-lwip_mem.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  riscv32-lwip_memp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  riscv32-lwip_netif.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  riscv32-lwip_pbuf.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  riscv32-lwip_raw.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  riscv32-lwip_stats.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  riscv32-lwip_sys.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  riscv32-lwip_tcp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  riscv32-lwip_tcp_in.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  riscv32-lwip_tcp_out.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  riscv32-lwip_timeouts.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  riscv32-lwip_udp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  riscv32-lwip_acd.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  riscv32-lwip_autoip.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  riscv32-lwip_dhcp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  riscv32-lwip_etharp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  riscv32-lwip_icmp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  riscv32-lwip_igmp.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  riscv32-lwip_ip4_frag.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  riscv32-lwip_ip4.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  riscv32-lwip_ip4_addr.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  riscv32-lwip_api_lib.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  riscv32-lwip_api_msg.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  riscv32-lwip_err.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  riscv32-lwip_if_api.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  riscv32-lwip_netbuf.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  riscv32-lwip_netdb.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  riscv32-lwip_netifapi.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  riscv32-lwip_tcpip.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  riscv32-lwip_ethernet.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  riscv32-sys_arch.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  riscv32-br_net.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  riscv32-br_net_sock.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  riscv32-br_shell_net.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  liblwip_riscv32.a:
+    deps: [riscv32-lwip_init.o, riscv32-lwip_def.o, riscv32-lwip_dns.o, riscv32-lwip_inet_chksum.o, riscv32-lwip_ip.o, riscv32-lwip_mem.o, riscv32-lwip_memp.o, riscv32-lwip_netif.o, riscv32-lwip_pbuf.o, riscv32-lwip_raw.o, riscv32-lwip_stats.o, riscv32-lwip_sys.o, riscv32-lwip_tcp.o, riscv32-lwip_tcp_in.o, riscv32-lwip_tcp_out.o, riscv32-lwip_timeouts.o, riscv32-lwip_udp.o, riscv32-lwip_acd.o, riscv32-lwip_autoip.o, riscv32-lwip_dhcp.o, riscv32-lwip_etharp.o, riscv32-lwip_icmp.o, riscv32-lwip_igmp.o, riscv32-lwip_ip4_frag.o, riscv32-lwip_ip4.o, riscv32-lwip_ip4_addr.o, riscv32-lwip_api_lib.o, riscv32-lwip_api_msg.o, riscv32-lwip_err.o, riscv32-lwip_if_api.o, riscv32-lwip_netbuf.o, riscv32-lwip_netdb.o, riscv32-lwip_netifapi.o, riscv32-lwip_tcpip.o, riscv32-lwip_ethernet.o, riscv32-sys_arch.o, riscv32-br_net.o, riscv32-br_net_sock.o, riscv32-br_shell_net.o]
+    cmds:
+      - "${RV_AR} rcs ${@} ${^}"
+
+  rp2040-lwip_init.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  rp2040-lwip_def.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  rp2040-lwip_dns.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  rp2040-lwip_inet_chksum.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  rp2040-lwip_ip.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  rp2040-lwip_mem.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  rp2040-lwip_memp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  rp2040-lwip_netif.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  rp2040-lwip_pbuf.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  rp2040-lwip_raw.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  rp2040-lwip_stats.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  rp2040-lwip_sys.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  rp2040-lwip_tcp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  rp2040-lwip_tcp_in.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  rp2040-lwip_tcp_out.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  rp2040-lwip_timeouts.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  rp2040-lwip_udp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  rp2040-lwip_acd.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  rp2040-lwip_autoip.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  rp2040-lwip_dhcp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  rp2040-lwip_etharp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  rp2040-lwip_icmp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  rp2040-lwip_igmp.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  rp2040-lwip_ip4_frag.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  rp2040-lwip_ip4.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  rp2040-lwip_ip4_addr.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  rp2040-lwip_api_lib.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  rp2040-lwip_api_msg.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  rp2040-lwip_err.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  rp2040-lwip_if_api.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  rp2040-lwip_netbuf.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  rp2040-lwip_netdb.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  rp2040-lwip_netifapi.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  rp2040-lwip_tcpip.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  rp2040-lwip_ethernet.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  rp2040-sys_arch.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  rp2040-br_net.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  rp2040-br_net_sock.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  rp2040-br_shell_net.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  liblwip_rp2040.a:
+    deps: [rp2040-lwip_init.o, rp2040-lwip_def.o, rp2040-lwip_dns.o, rp2040-lwip_inet_chksum.o, rp2040-lwip_ip.o, rp2040-lwip_mem.o, rp2040-lwip_memp.o, rp2040-lwip_netif.o, rp2040-lwip_pbuf.o, rp2040-lwip_raw.o, rp2040-lwip_stats.o, rp2040-lwip_sys.o, rp2040-lwip_tcp.o, rp2040-lwip_tcp_in.o, rp2040-lwip_tcp_out.o, rp2040-lwip_timeouts.o, rp2040-lwip_udp.o, rp2040-lwip_acd.o, rp2040-lwip_autoip.o, rp2040-lwip_dhcp.o, rp2040-lwip_etharp.o, rp2040-lwip_icmp.o, rp2040-lwip_igmp.o, rp2040-lwip_ip4_frag.o, rp2040-lwip_ip4.o, rp2040-lwip_ip4_addr.o, rp2040-lwip_api_lib.o, rp2040-lwip_api_msg.o, rp2040-lwip_err.o, rp2040-lwip_if_api.o, rp2040-lwip_netbuf.o, rp2040-lwip_netdb.o, rp2040-lwip_netifapi.o, rp2040-lwip_tcpip.o, rp2040-lwip_ethernet.o, rp2040-sys_arch.o, rp2040-br_net.o, rp2040-br_net_sock.o, rp2040-br_shell_net.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  test_net.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  riscv32-test_net.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  test_net_qemu.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net_qemu.c -o ${@}"
+
+  riscv32-test_net_qemu.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net_qemu.c -o ${@}"
+
+  host-test_net.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  rp2040-test_net.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  test_net.elf:
+    deps: [test_net.o, br_libc.o, liblwip.a, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_net.o br_libc.o lm3s-board.o -L. -Wl,--start-group -llwip -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_riscv32.elf:
+    deps: [riscv32-test_net.o, riscv32-br_libc.o, riscv32-board.o, liblwip_riscv32.a, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_net.o riscv32-br_libc.o riscv32-board.o -L. -Wl,--start-group -llwip_riscv32 -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_qemu.elf:
+    deps: [test_net_qemu.o, br_libc.o, liblwip.a, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_net_qemu.o br_libc.o lm3s-board.o -L. -Wl,--start-group -llwip -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_qemu_riscv32.elf:
+    deps: [riscv32-test_net_qemu.o, riscv32-br_libc.o, riscv32-board.o, liblwip_riscv32.a, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_net_qemu.o riscv32-br_libc.o riscv32-board.o -L. -Wl,--start-group -llwip_riscv32 -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_host:
+    deps: [host-test_net.o, liblwip_host.a, libbedrock_kernel_host.a, libbedrock_hal_host.a, host-br_netif_mock.o, host-br_shell.o, host-br_console.o]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_net.o host-br_netif_mock.o host-br_shell.o host-br_console.o -L. -Wl,--start-group -llwip_host -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
+
+  test-net-host:
+    deps: [test_net_host]
+    cmds:
+      - "timeout 5 ./test_net_host; true"
+
+  test_net_rp2040.elf:
+    deps: [rp2040-test_net.o, rp2040-br_libc.o, rp2040-boot2_crc.o, liblwip_rp2040.a, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} rp2040-test_net.o rp2040-br_libc.o rp2040-boot2_crc.o -L. -Wl,--start-group -llwip_rp2040 -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
+
+  net_udp_echo.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/net_udp_echo.c -o ${@}"
+
+  riscv32-net_udp_echo.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/net_udp_echo.c -o ${@}"
+
+  bedrock_udp_echo.elf:
+    deps: [net_udp_echo.o, br_libc.o, liblwip.a, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} net_udp_echo.o br_libc.o lm3s-board.o -L. -Wl,--start-group -llwip -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  bedrock_udp_echo_riscv32.elf:
+    deps: [riscv32-net_udp_echo.o, riscv32-br_libc.o, riscv32-board.o, liblwip_riscv32.a, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-net_udp_echo.o riscv32-br_libc.o riscv32-board.o -L. -Wl,--start-group -llwip_riscv32 -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
+  run-udp-echo:
+    deps: [bedrock_udp_echo.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -nographic -nic user,model=stellaris,hostfwd=udp::7777-:7 -kernel bedrock_udp_echo.elf"
+
+  run-udp-echo-riscv32:
+    deps: [bedrock_udp_echo_riscv32.elf]
+    cmds:
+      - "qemu-system-riscv32 -M virt -bios none -nographic -global virtio-mmio.force-legacy=false -netdev user,id=n0,hostfwd=udp::7777-:7 -device virtio-net-device,netdev=n0 -kernel bedrock_udp_echo_riscv32.elf"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin *.uf2 rp2040-boot2_crc.S bootcrc bin2uf2"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host test_littlefs_host test_fatfs_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host test_littlefs_host test_fatfs_host test_net_host"
       - "rm -rf include/generated"
