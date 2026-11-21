@@ -40,10 +40,12 @@ static void run_tests(void)
     uint32_t rtt = 0;
     print_result(br_net_ping(BR_IP4(10, 0, 2, 2), BR_SEC(3), &rtt) == BR_OK && rtt > 0,
                  "Test 1e: ping the gateway");
+    print_result(dev->irq && br_net_rx_wakeups() > 0 && rtt < BR_MSEC(100),
+                 "Test 1f: frames wake the receive task by interrupt");
 
     int fd = br_net_socket(BR_NET_DGRAM);
     print_result(fd >= 0 && br_net_sendto(fd, "bedrock", 7, BR_IP4(10, 0, 2, 2), 9) == 7,
-                 "Test 1f: send a datagram through the gateway");
+                 "Test 1g: send a datagram through the gateway");
     br_net_close(fd);
 }
 

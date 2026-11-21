@@ -11,6 +11,7 @@
 #define BR_NET_MAX_SOCKETS   6
 #define BR_NET_MAX_NETIFS    2
 #define BR_NET_POLL_MS       5
+#define BR_NET_IRQ_FALLBACK_MS  200
 
 #define BR_NET_DGRAM         1
 #define BR_NET_STREAM        2
@@ -46,6 +47,8 @@ int      br_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout,
 br_err_t br_net_close(int fd);
 
 br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us);
+
+uint32_t br_net_rx_wakeups(void);
 
 void     br_shell_register_net(void);
 

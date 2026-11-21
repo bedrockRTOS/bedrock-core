@@ -25,6 +25,19 @@ static bool        initialized;
 static uint8_t     rx_stack[BR_NET_RX_STACK] __attribute__((aligned(8)));
 static uint8_t     rx_frame[BR_NETIF_FRAME_MAX];
 static uint8_t     tx_frame[BR_NETIF_FRAME_MAX];
+static br_sem_t    rx_sem;
+static volatile uint32_t rx_wakeups;
+
+static void rx_notify(br_netif_t *netif)
+{
+    (void)netif;
+    br_sem_give(&rx_sem);
+}
+
+uint32_t br_net_rx_wakeups(void)
+{
+    return rx_wakeups;
+}
 
 extern br_mutex_t br_net_slot_lock;
 extern void       br_net_slots_init(void);
@@ -86,8 +99,19 @@ static void rx_task(void *arg)
             }
         }
 
-        if (!any) {
+        if (any) {
+            continue;
+        }
+
+        bool polled = false;
+        for (int i = 0; i < BR_NET_MAX_NETIFS; i++) {
+            polled = polled || (entries[i].used && !entries[i].dev->irq);
+        }
+
+        if (polled) {
             br_sleep_ms(BR_NET_POLL_MS);
+        } else if (br_sem_take(&rx_sem, BR_NET_IRQ_FALLBACK_MS * 1000ULL) == BR_OK) {
+            rx_wakeups++;
         }
     }
 }
@@ -99,6 +123,7 @@ br_err_t br_net_init(void)
     }
 
     br_net_slots_init();
+    br_sem_init(&rx_sem, 0, 1);
     tcpip_init(NULL, NULL);
 
     br_tid_t tid;
@@ -133,6 +158,9 @@ br_err_t br_net_netif_add(br_netif_t *dev, uint32_t ip, uint32_t mask, uint32_t 
     ip4_addr_set_u32(&g, lwip_htonl(gw));
 
     e->dev = dev;
+    if (dev->irq) {
+        dev->rx_notify = rx_notify;
+    }
 
     LOCK_TCPIP_CORE();
     struct netif *added = netif_add(&e->lwip, &a, &m, &g, e, netif_setup, tcpip_input);
