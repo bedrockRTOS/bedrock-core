@@ -50,8 +50,18 @@ void br_hal_context_switch(void **old_sp, void **new_sp)
     __asm volatile ("isb" ::: "memory");
 }
 
+#if CONFIG_MPU
+extern uint32_t br_hal_mpu_switch(br_tcb_t *t);
+extern br_tcb_t *br_sched_current(void);
+
+static volatile uint32_t br_hal_first_control __attribute__((used));
+#endif
+
 void br_hal_start_first_task(void *sp)
 {
+#if CONFIG_MPU
+    br_hal_first_control = br_hal_mpu_switch(br_sched_current());
+#endif
     __asm volatile (
         "ldr r0, =br_hal_first_task_sp \n"
         "str %0, [r0]                   \n"
@@ -135,6 +145,97 @@ void br_hal_check_stack_overflow(br_tcb_t *tcb)
     }
 }
 
+#if CONFIG_MPU
+
+__attribute__((naked))
+void PendSV_Handler(void)
+{
+    __asm volatile (
+        ".syntax unified              \n"
+        "mrs   r0, psp                \n"
+        "subs  r0, #32                \n"
+        "stmia r0!, {r4-r7}           \n"
+        "mov   r4, r8                 \n"
+        "mov   r5, r9                 \n"
+        "mov   r6, r10                \n"
+        "mov   r7, r11                \n"
+        "stmia r0!, {r4-r7}           \n"
+        "subs  r0, #32                \n"
+
+        "ldr   r1, =br_hal_old_sp_ptr \n"
+        "ldr   r1, [r1]               \n"
+        "str   r0, [r1]               \n"
+
+        "ldr   r1, =br_hal_new_sp_ptr \n"
+        "ldr   r1, [r1]               \n"
+
+        "push  {r1, lr}               \n"
+        "mov   r0, r1                 \n"
+        "bl    br_hal_mpu_switch      \n"
+        "mov   r2, r0                 \n"
+        "pop   {r1, r3}               \n"
+        "mov   lr, r3                 \n"
+
+        "ldr   r0, [r1]               \n"
+        "adds  r0, #16                \n"
+        "ldmia r0!, {r4-r7}           \n"
+        "mov   r8, r4                 \n"
+        "mov   r9, r5                 \n"
+        "mov   r10, r6                \n"
+        "mov   r11, r7                \n"
+        "subs  r0, #32                \n"
+        "ldmia r0!, {r4-r7}           \n"
+        "adds  r0, #16                \n"
+        "msr   psp, r0                \n"
+        "msr   control, r2            \n"
+        "isb                          \n"
+
+        "ldr   r0, =0xFFFFFFFD        \n"
+        "bx    r0                     \n"
+    );
+}
+
+__attribute__((naked))
+void SVC_Handler(void)
+{
+    __asm volatile (
+        ".syntax unified              \n"
+        "movs  r0, #4                 \n"
+        "mov   r1, lr                 \n"
+        "tst   r0, r1                 \n"
+        "beq   1f                     \n"
+
+        "mrs   r0, psp                \n"
+        "push  {r4, lr}               \n"
+        "bl    br_hal_svc             \n"
+        "pop   {r1, r3}               \n"
+        "mov   lr, r3                 \n"
+        "bx    r0                     \n"
+
+        "1:                           \n"
+        "ldr   r0, =br_hal_first_task_sp \n"
+        "ldr   r0, [r0]               \n"
+        "adds  r0, #16                \n"
+        "ldmia r0!, {r4-r7}           \n"
+        "mov   r8, r4                 \n"
+        "mov   r9, r5                 \n"
+        "mov   r10, r6                \n"
+        "mov   r11, r7                \n"
+        "subs  r0, #32                \n"
+        "ldmia r0!, {r4-r7}           \n"
+        "adds  r0, #16                \n"
+        "msr   psp, r0                \n"
+        "ldr   r0, =br_hal_first_control \n"
+        "ldr   r0, [r0]               \n"
+        "msr   control, r0            \n"
+        "isb                          \n"
+        "ldr   r0, =0xFFFFFFFD        \n"
+        "bx    r0                     \n"
+    );
+}
+
+#else
+
 __attribute__((naked))
 void PendSV_Handler(void)
 {
@@ -197,3 +298,5 @@ void SVC_Handler(void)
         "bx    r0                     \n"
     );
 }
+
+#endif

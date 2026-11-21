@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define RESETS_RESET_CLR     (*(volatile uint32_t *)0x4000F000UL)
 #define RESETS_RESET_DONE    (*(volatile uint32_t *)0x4000C008UL)
@@ -40,11 +41,14 @@ extern uint32_t _estack;
 extern uint32_t _sidata;
 extern uint32_t _sdata, _edata;
 extern uint32_t _sbss, _ebss;
+extern uint32_t _user_data_start __attribute__((weak));
+extern uint32_t _user_data_end __attribute__((weak));
 
 extern int main(void);
 extern void br_uart_init(void);
 extern void br_hal_board_init(void);
 extern void SVC_Handler(void);
+extern void HardFault_Handler(void);
 extern void PendSV_Handler(void);
 extern void TIMER_IRQ_0_Handler(void);
 extern void UART0_IRQ_Handler(void);
@@ -88,6 +92,11 @@ void Reset_Handler(void)
         *dst++ = 0;
     }
 
+    dst = &_user_data_start;
+    while (dst != NULL && dst < &_user_data_end) {
+        *dst++ = 0;
+    }
+
     clocks_init();
     resets_release();
     br_uart_init();
@@ -107,7 +116,7 @@ const uint32_t vectors[] = {
     (uint32_t)&_estack,
     (uint32_t)Reset_Handler,
     (uint32_t)Default_Handler,
-    (uint32_t)Default_Handler,
+    (uint32_t)HardFault_Handler,
     0, 0, 0, 0, 0, 0, 0,
     (uint32_t)SVC_Handler,
     0, 0,
