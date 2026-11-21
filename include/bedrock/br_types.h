@@ -27,7 +27,11 @@ typedef uint64_t br_time_t;
 
 /* Smallest stack br_task_create() accepts: the initial frame, the canary
  * and a little room to run */
-#define BR_STACK_MIN      256
+#ifdef __AVR__
+#  define BR_STACK_MIN    64
+#else
+#  define BR_STACK_MIN    256
+#endif
 
 /* Error codes */
 typedef enum {

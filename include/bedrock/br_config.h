@@ -11,6 +11,28 @@
 #  endif
 #endif
 
+/* An 8-bit AVR has 2 KiB of RAM, so the defaults are much smaller. */
+#ifdef __AVR__
+#  ifndef CONFIG_MAX_TASKS
+#    define CONFIG_MAX_TASKS        5
+#  endif
+#  ifndef CONFIG_TASK_STATS
+#    define CONFIG_TASK_STATS       0
+#  endif
+#  ifndef CONFIG_DEFAULT_STACK_SIZE
+#    define CONFIG_DEFAULT_STACK_SIZE  64
+#  endif
+#  ifndef CONFIG_UART_RX_BUF_SIZE
+#    define CONFIG_UART_RX_BUF_SIZE 16
+#  endif
+#  ifndef CONFIG_SHELL_LINE_MAX
+#    define CONFIG_SHELL_LINE_MAX   32
+#  endif
+#  ifndef CONFIG_SHELL_MAX_ARGS
+#    define CONFIG_SHELL_MAX_ARGS   4
+#  endif
+#endif
+
 #ifndef CONFIG_MAX_TASKS
 #  define CONFIG_MAX_TASKS          16
 #endif
