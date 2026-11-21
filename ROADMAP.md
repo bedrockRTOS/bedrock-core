@@ -85,14 +85,17 @@
 
 ## 0.6.0: Networking (optional module)
 
-- [ ] Network interface HAL `br_netif_t`: send, receive, link status
-- [ ] lwIP, picoTCP or a small UDP/IP stack of our own
-- [ ] Dedicated task that runs the network stack
-- [ ] Socket-style API: `br_net_socket()`, `br_net_bind()`, `br_net_send()`, `br_net_recv()`
-- [ ] Loopback interface for tests without hardware
-- [ ] QEMU network backend: `-netdev user` with SLIP or virtio-net
-- [ ] Example: UDP echo server
-- [ ] Shell commands: `ifconfig`, `ping` (if ICMP is supported)
+- [x] Network interface HAL `br_netif_t`: send, receive, link status
+- [x] lwIP as an optional port in `ports/lwip/`
+- [x] Dedicated task that runs the network stack
+- [x] Socket-style API: `br_net_socket()`, `br_net_bind()`, `br_net_send()`, `br_net_recv()`
+- [x] Loopback interface for tests without hardware
+- [x] QEMU network backend: `-netdev user` with the Stellaris Ethernet MAC (LM3S6965) and virtio-net (RISC-V `virt`)
+- [x] Example: UDP echo server
+- [x] Shell commands: `ifconfig`, `ping`
+- [ ] Interrupt-driven receive instead of polling
+- [ ] Network drivers for real hardware (STM32F103 has none on the Blue Pill, RP2040 needs a module)
+- [ ] DNS, IPv6
 
 ## 0.7.0: More architectures and boards
 

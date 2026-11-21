@@ -5,13 +5,16 @@
 | Port | Upstream | License | Glue |
 |------|----------|---------|------|
 | `ports/littlefs/` | [littlefs](https://github.com/littlefs-project/littlefs) v2.11.3, a git submodule in `upstream/` | BSD-3-Clause, `upstream/LICENSE.md` | `br_lfs.c`, `br_lfs.h`, `br_lfs_config.h` |
+| `ports/lwip/` | [lwIP](https://github.com/lwip-tcpip/lwip) 2.2.1, a git submodule in `upstream/` | BSD-3-Clause, `upstream/COPYING` | `br_net.c`, `br_net_sock.c`, `br_shell_net.c`, `sys_arch.c`, `lwipopts.h`, `arch/` |
 | `ports/fatfs/` | [FatFs](https://elm-chan.org/fsw/ff/) R0.16 by ChaN, files copied unchanged into `upstream/` | FatFs license (BSD-style), `upstream/LICENSE.txt` | `br_ff.c`, `br_ff.h`, `ffconf.h` |
 
-`ports/br_libc.c` supplies `memcmp`, `strchr`, `strcpy`, `strspn` and `strcspn` for both libraries on targets without a C library. Do not link it on the host.
+`ports/br_libc.c` supplies `memcmp`, `strchr`, `strcpy`, `strspn` and `strcspn` for these libraries on targets without a C library. Do not link it on the host.
 
 Both ports sit on `br_blkdev_t` (see [filesystem](filesystem.md)), so they work with the RAM block device and with any flash driver that implements it. Neither allocates memory.
 
-Fetch littlefs with `git submodule update --init ports/littlefs/upstream`.
+Fetch littlefs and lwIP with `git submodule update --init ports/littlefs/upstream ports/lwip/upstream`.
+
+lwIP is described in the [networking guide](networking.md).
 
 ## littlefs
 

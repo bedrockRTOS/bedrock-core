@@ -130,6 +130,14 @@ br_err_t br_hal_capture_start(uint8_t ch, br_capture_edge_t edge);
 
 and the rest of the GPIO, SPI, I2C, PWM and capture functions listed in `include/bedrock/br_hal.h`. Put them in `boards/<board_name>/br_hal_gpio.c`, `br_hal_spi.c`, `br_hal_i2c.c` and `br_hal_pwm.c`. A target without a peripheral still provides the functions and returns `BR_ERR_INVALID` (`boards/qemu-riscv32-virt/br_hal_periph.c`). The contract of each function and the pin and channel numbering of the existing targets are in the [driver guide](driver-guide.md).
 
+## Step 5c: Network Interface
+
+```c
+struct br_netif *br_hal_netif_default(void);
+```
+
+Return the board network interface (`br_netif_t`, see [networking](networking.md)), or `NULL` if the board has none. A board with a MAC fills in the name, MAC address, MTU and the `send`, `recv` and `link_up` operations, and sets the hardware up on the first call. The function must exist on every target.
+
 ## Step 6: Startup Code
 
 Provide a `startup.c` (or `.s`) that sets up the stack, initializes `.data` and `.bss`, installs the interrupt entry and calls `main()`.

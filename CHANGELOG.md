@@ -34,6 +34,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `test_fs` and `test_shell_fs` on every target.
 - Optional ports in `ports/`: littlefs v2.11.3 (`ports/littlefs/`, submodule) and FatFs R0.16 (`ports/fatfs/`) on `br_blkdev_t`, without dynamic allocation and with bedrock mutexes. See `docs/en/ports.md`.
 - `test_littlefs` on every target, `test_fatfs` on the host, RISC-V and RP2040.
+- Network interface contract `br_netif_t` (`include/bedrock/br_netif.h`), `br_hal_netif_default()` on every target and a software interface for tests (`drivers/br_netif_mock.c`).
+- Network interface drivers: Stellaris Ethernet MAC for LM3S6965 and virtio-net for RISC-V `virt`, both tested in QEMU.
+- lwIP 2.2.1 as an optional port in `ports/lwip/` with socket-style API `br_net_*` (UDP, TCP, loopback, DHCP, ping), the system layer on kernel primitives and the shell commands `ifconfig` and `ping`. See `docs/en/networking.md`.
+- Example `examples/net_udp_echo.c`, `chorus run-udp-echo` and `chorus run-udp-echo-riscv32`.
+- `test_net` on the host, LM3S6965, RISC-V and RP2040, `test_net_qemu` on LM3S6965 and RISC-V.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.
