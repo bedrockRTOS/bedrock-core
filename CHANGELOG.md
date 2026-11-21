@@ -26,6 +26,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - HAL functions `br_hal_gpio_*`, `br_hal_spi_*`, `br_hal_i2c_*`, `br_hal_pwm_*` and `br_hal_capture_*`. Implemented for LM3S6965, STM32F103C8 and RP2040 from the reference manuals, as a model on the host, and as `BR_ERR_INVALID` stubs for RISC-V `virt`, which has none of these devices.
 - `docs/en/driver-guide.md`.
 - `test_device`, `test_gpio`, `test_spi`, `test_i2c` and `test_pwm` on every target.
+- Block device interface `br_blkdev_t` (`include/bedrock/br_blkdev.h`) and a RAM block device with flash semantics and power loss injection (`lib/br_ramdisk.c`).
+- Filesystem in `lib/br_fs.c`: flat namespace, power-loss safe commit, `br_fs_format`, `br_fs_mount`, `br_fs_unmount`, `br_fs_open`, `br_fs_read`, `br_fs_write`, `br_fs_close`, `br_fs_remove`, `br_fs_stat`, `br_fs_list` and `br_fs_usage`. See `docs/en/filesystem.md`.
+- Error codes `BR_ERR_NOENT` and `BR_ERR_IO`.
+- `CONFIG_FS_NAME_MAX`, `CONFIG_FS_BLOCK_MAX`, `CONFIG_FS_MAX_BLOCKS` and `CONFIG_FS_MAX_OPEN`.
+- Shell commands `ls`, `cat` and `write`, registered with `br_shell_register_fs()`.
+- `test_fs` and `test_shell_fs` on every target.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

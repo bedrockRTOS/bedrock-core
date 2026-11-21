@@ -73,12 +73,14 @@
 
 ## 0.5.0: Filesystem (optional module)
 
-- [ ] Block device HAL `br_blkdev_t`: read, write, erase, sync
-- [ ] littlefs in `3rd/lib/littlefs/` or a small FAT reader
-- [ ] Thin VFS layer: `br_fs_mount()`, `br_fs_open()`, `br_fs_read()`, `br_fs_write()`, `br_fs_close()`
-- [ ] RAM block device for tests under QEMU
-- [ ] Shell commands: `ls`, `cat`, `write`
-- [ ] Filesystem unit tests
+- [x] Block device HAL `br_blkdev_t`: read, write, erase, sync
+- [x] Filesystem: own flat, power-loss safe format in `lib/br_fs.c` instead of littlefs or FAT
+- [x] Thin VFS layer: `br_fs_mount()`, `br_fs_open()`, `br_fs_read()`, `br_fs_write()`, `br_fs_close()`
+- [x] RAM block device for tests under QEMU
+- [x] Shell commands: `ls`, `cat`, `write`
+- [x] Filesystem unit tests
+- [ ] Block device drivers for real flash (SPI NOR, on-chip flash)
+- [ ] Append, seek and directories
 
 ## 0.6.0: Networking (optional module)
 

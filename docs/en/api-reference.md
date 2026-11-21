@@ -36,7 +36,10 @@ typedef enum {
     BR_ERR_TIMEOUT   = -3,
     BR_ERR_BUSY      = -4,
     BR_ERR_ISR       = -5,
-    BR_ERR_OVERFLOW  = -6
+    BR_ERR_OVERFLOW  = -6,
+    BR_ERR_STACK_OVF = -7,
+    BR_ERR_NOENT     = -8,
+    BR_ERR_IO        = -9
 } br_err_t;
 ```
 
@@ -390,6 +393,10 @@ Read one received character. The UART receive interrupt puts incoming bytes into
 | `BR_ERR_TIMEOUT` | No data within `timeout` |
 | `BR_ERR_INVALID` | `c` is `NULL` |
 | `BR_ERR_ISR` | Called from an ISR with a non-zero timeout |
+
+## Filesystem
+
+Declared in `lib/br_fs.h` and `include/bedrock/br_blkdev.h`. The API, the block device contract and the on-disk format are in the [filesystem guide](filesystem.md). The shell commands `ls`, `cat` and `write` are registered with `br_shell_register_fs()` from `lib/br_shell.h`.
 
 ## Console
 
