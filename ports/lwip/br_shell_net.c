@@ -125,6 +125,32 @@ static int ping_handler(int argc, char **argv)
     return received > 0 ? 0 : -1;
 }
 
+static int nslookup_handler(int argc, char **argv)
+{
+    if (argc != 2) {
+        br_printf("usage: nslookup <name>\n");
+        return -1;
+    }
+
+    uint32_t ip;
+    br_err_t err = br_net_resolve(argv[1], &ip);
+    if (err != BR_OK) {
+        br_printf("cannot resolve %s: %d\n", argv[1], (int)err);
+        return -1;
+    }
+
+    br_printf("%s is ", argv[1]);
+    print_ip(ip);
+    br_printf("\n");
+    return 0;
+}
+
+static br_shell_cmd_t nslookup_cmd = {
+    .name    = "nslookup",
+    .help    = "nslookup <name>",
+    .handler = nslookup_handler,
+};
+
 static br_shell_cmd_t ifconfig_cmd = {
     .name    = "ifconfig",
     .help    = "show network interfaces",
@@ -141,4 +167,5 @@ void br_shell_register_net(void)
 {
     br_shell_register(&ifconfig_cmd);
     br_shell_register(&ping_cmd);
+    br_shell_register(&nslookup_cmd);
 }
