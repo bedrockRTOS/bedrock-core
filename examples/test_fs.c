@@ -302,6 +302,191 @@ static void run_persistence_tests(void)
     br_fs_remove("note");
 }
 
+static void run_seek_tests(void)
+{
+    br_uart_puts("Test 8: Seek\n");
+
+    fill_pattern(21);
+    write_file("seek", pattern, 600, 70);
+
+    int fd = br_fs_open("seek", BR_FS_READ);
+    uint8_t buf[10];
+
+    print_result(br_fs_seek(fd, 250) == BR_OK && br_fs_read(fd, buf, 10) == 10 &&
+                 buf[0] == pattern[250] && buf[9] == pattern[259],
+                 "Test 8a: seek into the middle and read");
+
+    print_result(br_fs_seek(fd, 0) == BR_OK && br_fs_read(fd, buf, 10) == 10 && buf[0] == pattern[0],
+                 "Test 8b: seek back to the start");
+
+    print_result(br_fs_seek(fd, 595) == BR_OK && br_fs_read(fd, buf, 10) == 5 &&
+                 buf[4] == pattern[599] && br_fs_read(fd, buf, 10) == 0,
+                 "Test 8c: a read stops at the end");
+
+    print_result(br_fs_seek(fd, 600) == BR_OK && br_fs_read(fd, buf, 10) == 0 &&
+                 br_fs_seek(fd, 601) == BR_ERR_INVALID,
+                 "Test 8d: seek to the end and past it");
+
+    print_result(br_fs_seek(fd, 130) == BR_OK && br_fs_seek(fd, 360) == BR_OK &&
+                 br_fs_read(fd, buf, 4) == 4 && buf[0] == pattern[360],
+                 "Test 8e: seek forward from the middle");
+    br_fs_close(fd);
+
+    int w = br_fs_open("seekw", BR_FS_WRITE);
+    print_result(br_fs_seek(w, 0) == BR_ERR_INVALID, "Test 8f: seek on a write descriptor is rejected");
+    br_fs_close(w);
+
+    br_fs_remove("seek");
+    br_fs_remove("seekw");
+}
+
+static void run_append_tests(void)
+{
+    br_uart_puts("Test 9: Append\n");
+
+    write_file("log", (const uint8_t *)"abc", 3, 3);
+
+    int fd = br_fs_open("log", BR_FS_WRITE | BR_FS_APPEND);
+    br_fs_write(fd, "def", 3);
+    print_result(br_fs_close(fd) == BR_OK &&
+                 read_file_equals("log", (const uint8_t *)"abcdef", 6, 4),
+                 "Test 9a: append to a short file");
+
+    fill_pattern(33);
+    write_file("big", pattern, 500, 60);
+    fd = br_fs_open("big", BR_FS_WRITE | BR_FS_APPEND);
+    br_fs_write(fd, pattern + 500, 400);
+    print_result(br_fs_close(fd) == BR_OK && read_file_equals("big", pattern, 900, 77) &&
+                 count_files() == 2,
+                 "Test 9b: append across blocks keeps one file");
+
+    fd = br_fs_open("fresh", BR_FS_WRITE | BR_FS_APPEND);
+    br_fs_write(fd, "new", 3);
+    print_result(br_fs_close(fd) == BR_OK && read_file_equals("fresh", (const uint8_t *)"new", 3, 3),
+                 "Test 9c: append to a missing file creates it");
+
+    br_fs_remove("log");
+    br_fs_remove("big");
+    br_fs_remove("fresh");
+
+    uint8_t base[200];
+    uint8_t more[100];
+    uint8_t joined[300];
+    for (size_t i = 0; i < sizeof(joined); i++) {
+        joined[i] = (uint8_t)(i * 9 + 4);
+    }
+    for (size_t i = 0; i < sizeof(base); i++) {
+        base[i] = joined[i];
+    }
+    for (size_t i = 0; i < sizeof(more); i++) {
+        more[i] = joined[200 + i];
+    }
+
+    bool atomic = true;
+    int  saw_old = 0;
+    int  saw_new = 0;
+    for (int cut = 0; cut < 14; cut++) {
+        write_file("cfg", base, sizeof(base), 100);
+
+        ramdisk.writes_until_fail = cut;
+        int a = br_fs_open("cfg", BR_FS_WRITE | BR_FS_APPEND);
+        if (a >= 0) {
+            br_fs_write(a, more, sizeof(more));
+            br_fs_close(a);
+        }
+        ramdisk.writes_until_fail = -1;
+
+        br_fs_unmount();
+        br_fs_mount(&ramdisk.dev);
+
+        bool is_old = read_file_equals("cfg", base, sizeof(base), 64);
+        bool is_new = read_file_equals("cfg", joined, sizeof(joined), 64);
+        saw_old += is_old;
+        saw_new += is_new;
+        if ((!is_old && !is_new) || count_files() != 1) {
+            atomic = false;
+        }
+        br_fs_remove("cfg");
+    }
+    print_result(atomic && saw_old > 0 && saw_new > 0,
+                 "Test 9d: an append that loses power leaves the old or the new file");
+}
+
+static void run_directory_tests(void)
+{
+    br_uart_puts("Test 10: Directories\n");
+
+    print_result(br_fs_mkdir("a") == BR_OK && br_fs_mkdir("a") == BR_ERR_BUSY,
+                 "Test 10a: create a directory, twice");
+    print_result(br_fs_mkdir("a/b") == BR_OK && br_fs_mkdir("x/y") == BR_ERR_NOENT,
+                 "Test 10b: a directory needs its parent");
+
+    print_result(write_file("a/f.txt", (const uint8_t *)"in a", 4, 4) &&
+                 read_file_equals("a/f.txt", (const uint8_t *)"in a", 4, 4) &&
+                 br_fs_open("z/f", BR_FS_WRITE) == BR_ERR_NOENT,
+                 "Test 10c: a file in a directory, and without one");
+
+    write_file("top", (const uint8_t *)"t", 1, 1);
+
+    br_fs_info_t info;
+    int dirs = 0;
+    int files = 0;
+    for (uint32_t i = 0; br_fs_readdir("", i, &info) == BR_OK; i++) {
+        dirs  += info.dir;
+        files += !info.dir;
+    }
+    print_result(dirs == 1 && files == 1, "Test 10d: the root lists its own entries only");
+
+    dirs = 0;
+    files = 0;
+    bool names = false;
+    for (uint32_t i = 0; br_fs_readdir("a", i, &info) == BR_OK; i++) {
+        dirs  += info.dir;
+        files += !info.dir;
+        names = names || (info.name[0] == 'f' && !info.dir && info.size == 4) ||
+                (info.name[0] == 'b' && info.name[1] == '\0' && info.dir);
+    }
+    print_result(dirs == 1 && files == 1 && names, "Test 10e: a directory lists its children by leaf name");
+
+    print_result(br_fs_readdir("nothing", 0, &info) == BR_ERR_NOENT, "Test 10f: listing a missing directory");
+
+    print_result(br_fs_info("a", &info) == BR_OK && info.dir &&
+                 br_fs_info("a/f.txt", &info) == BR_OK && !info.dir && info.size == 4 &&
+                 br_fs_info("a/none", &info) == BR_ERR_NOENT,
+                 "Test 10g: info tells files from directories");
+
+    print_result(br_fs_rmdir("a") == BR_ERR_BUSY, "Test 10h: a directory with entries is not removed");
+
+    print_result(br_fs_open("a", BR_FS_WRITE) == BR_ERR_BUSY &&
+                 write_file("q", (const uint8_t *)"q", 1, 1) && br_fs_mkdir("q") == BR_ERR_BUSY,
+                 "Test 10i: a file and a directory cannot share a name");
+
+    print_result(br_fs_open("/a", BR_FS_READ) == BR_ERR_INVALID &&
+                 br_fs_open("a/", BR_FS_READ) == BR_ERR_INVALID &&
+                 br_fs_open("a//f", BR_FS_READ) == BR_ERR_INVALID &&
+                 br_fs_mkdir("") == BR_ERR_INVALID,
+                 "Test 10j: malformed paths are rejected");
+
+    br_fs_remove("a/f.txt");
+    br_fs_remove("q");
+    br_fs_remove("top");
+    print_result(br_fs_rmdir("a/b") == BR_OK && br_fs_rmdir("a") == BR_OK &&
+                 br_fs_rmdir("a") == BR_ERR_NOENT && count_files() == 0,
+                 "Test 10k: empty directories are removed");
+
+    br_fs_unmount();
+    br_fs_mount(&ramdisk.dev);
+    br_fs_mkdir("keep");
+    write_file("keep/f", (const uint8_t *)"k", 1, 1);
+    br_fs_unmount();
+    br_fs_mount(&ramdisk.dev);
+    print_result(br_fs_readdir("keep", 0, &info) == BR_OK && !info.dir &&
+                 read_file_equals("keep/f", (const uint8_t *)"k", 1, 1),
+                 "Test 10l: directories survive a remount");
+    br_fs_remove("keep/f");
+    br_fs_rmdir("keep");
+}
+
 static void run_powerfail_tests(void)
 {
     br_uart_puts("Test 7: Power loss during a rewrite\n");
@@ -361,6 +546,9 @@ static void supervisor_task(void *arg)
     run_error_tests();
     run_space_tests();
     run_persistence_tests();
+    run_seek_tests();
+    run_append_tests();
+    run_directory_tests();
     run_powerfail_tests();
 
     br_uart_puts("\n=== All Tests Complete ===\n");

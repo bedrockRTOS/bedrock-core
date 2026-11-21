@@ -59,6 +59,8 @@ typedef struct {
     uint32_t blk_data_off;
     uint32_t blk_len;
     uint32_t blk_off;
+    uint32_t h_len;
+    uint32_t h_next;
     uint32_t wpos;
     size_t   size;
     size_t   pos;
@@ -81,6 +83,9 @@ static struct {
     uint8_t      wbuf[CONFIG_FS_BLOCK_MAX] __attribute__((aligned(4)));
     file_t       files[CONFIG_FS_MAX_OPEN];
 } fs;
+
+static int read_bytes(file_t *f, void *buf, size_t len);
+static int write_bytes(file_t *f, const void *buf, size_t len);
 
 static uint32_t round_up(uint32_t v, uint32_t to)
 {
@@ -107,7 +112,7 @@ static void name_copy(char *dst, const char *src)
     }
 }
 
-static bool name_valid(const char *name)
+static bool chars_valid(const char *name)
 {
     if (name == NULL || name[0] == '\0') {
         return false;
@@ -119,6 +124,69 @@ static bool name_valid(const char *name)
         }
     }
     return true;
+}
+
+static size_t name_length(const char *name)
+{
+    size_t n = 0;
+    while (name[n] != '\0') {
+        n++;
+    }
+    return n;
+}
+
+static bool name_valid(const char *name)
+{
+    if (!chars_valid(name)) {
+        return false;
+    }
+
+    size_t n = name_length(name);
+    if (name[0] == '/' || name[n - 1] == '/') {
+        return false;
+    }
+    for (size_t i = 0; i + 1 < n; i++) {
+        if (name[i] == '/' && name[i + 1] == '/') {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool make_marker(char *out, const char *path)
+{
+    size_t n = name_length(path);
+
+    if (n + 2 > CONFIG_FS_NAME_MAX) {
+        return false;
+    }
+    for (size_t i = 0; i < n; i++) {
+        out[i] = path[i];
+    }
+    out[n] = '/';
+    out[n + 1] = '\0';
+    return true;
+}
+
+static bool starts_with(const char *name, const char *prefix)
+{
+    while (*prefix != '\0') {
+        if (*name++ != *prefix++) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static const char *leaf_of(const char *path)
+{
+    const char *leaf = path;
+    for (const char *c = path; *c != '\0'; c++) {
+        if (*c == '/' && c[1] != '\0') {
+            leaf = c + 1;
+        }
+    }
+    return leaf;
 }
 
 static bool used_get(uint32_t b)
@@ -483,6 +551,29 @@ br_err_t br_fs_unmount(void)
     return err;
 }
 
+static br_err_t parent_ok(const char *path)
+{
+    size_t n = name_length(path);
+    size_t k = n;
+
+    while (k > 0 && path[k - 1] != '/') {
+        k--;
+    }
+    if (k == 0) {
+        return BR_OK;
+    }
+
+    char marker[CONFIG_FS_NAME_MAX];
+    for (size_t i = 0; i < k; i++) {
+        marker[i] = path[i];
+    }
+    marker[k] = '\0';
+
+    uint32_t    block;
+    head_info_t info;
+    return find_live(marker, &block, &info);
+}
+
 static int open_read(const char *name)
 {
     uint32_t    block;
@@ -506,12 +597,14 @@ static int open_read(const char *name)
     f->next         = info.next;
     f->blk_data_off = fs.head_data_off;
     f->blk_len      = info.len;
+    f->h_len        = info.len;
+    f->h_next       = info.next;
     f->size         = info.size;
     name_copy(f->name, name);
     return fd;
 }
 
-static int open_write(const char *name)
+static int open_write(const char *name, bool append)
 {
     int fd = fd_alloc();
     if (fd < 0) {
@@ -543,12 +636,38 @@ static int open_write(const char *name)
     f->wpos     = fs.head_data_off;
     name_copy(f->name, name);
     fs.next_gen++;
+
+    if (append && old != FS_NONE) {
+        file_t r;
+        memset(&r, 0, sizeof(r));
+        r.head         = old;
+        r.blk          = old;
+        r.next         = info.next;
+        r.blk_data_off = fs.head_data_off;
+        r.blk_len      = info.len;
+        r.size         = info.size;
+
+        uint8_t chunk[64];
+        int n;
+        while ((n = read_bytes(&r, chunk, sizeof(chunk))) > 0) {
+            if (write_bytes(f, chunk, (size_t)n) != n) {
+                n = BR_ERR_IO;
+                break;
+            }
+        }
+        if (n < 0) {
+            f->open = false;
+            rebuild_used();
+            return n;
+        }
+    }
     return fd;
 }
 
 int br_fs_open(const char *name, uint8_t flags)
 {
-    if (!name_valid(name) || (flags != BR_FS_READ && flags != BR_FS_WRITE)) {
+    if (!name_valid(name) ||
+        (flags != BR_FS_READ && flags != BR_FS_WRITE && flags != (BR_FS_WRITE | BR_FS_APPEND))) {
         return BR_ERR_INVALID;
     }
     br_err_t err = lock();
@@ -562,12 +681,79 @@ int br_fs_open(const char *name, uint8_t flags)
 
     if (flags == BR_FS_READ) {
         fd = (same && writer) ? BR_ERR_BUSY : open_read(name);
+    } else if (same || writer) {
+        fd = BR_ERR_BUSY;
     } else {
-        fd = (same || writer) ? BR_ERR_BUSY : open_write(name);
+        char marker[CONFIG_FS_NAME_MAX];
+        uint32_t    block;
+        head_info_t info;
+
+        err = parent_ok(name);
+        if (err == BR_OK && make_marker(marker, name) && find_live(marker, &block, &info) == BR_OK) {
+            err = BR_ERR_BUSY;
+        }
+        fd = err != BR_OK ? (int)err : open_write(name, (flags & BR_FS_APPEND) != 0);
     }
 
     br_mutex_unlock(&fs.lock);
     return fd;
+}
+
+static br_err_t advance_chunk(file_t *f)
+{
+    data_hdr_t h;
+
+    if (f->next == FS_NONE || f->next == 0 || f->next >= fs.dev->block_count ||
+        br_blkdev_read(fs.dev, f->next, 0, &h, sizeof(h)) != BR_OK ||
+        h.magic != FS_MAGIC_DATA || h.len > fs.dev->block_size - fs.data_off) {
+        return BR_ERR_IO;
+    }
+
+    f->blk          = f->next;
+    f->blk_data_off = fs.data_off;
+    f->blk_len      = h.len;
+    f->blk_off      = 0;
+    f->next         = h.next;
+    return BR_OK;
+}
+
+static int read_bytes(file_t *f, void *buf, size_t len)
+{
+    if (len > f->size - f->pos) {
+        len = f->size - f->pos;
+    }
+
+    uint8_t *out    = buf;
+    size_t   done   = 0;
+    int      result = 0;
+
+    while (done < len) {
+        if (f->blk_off == f->blk_len) {
+            br_err_t err = advance_chunk(f);
+            if (err != BR_OK) {
+                result = err;
+                break;
+            }
+            continue;
+        }
+
+        size_t chunk = len - done;
+        if (chunk > f->blk_len - f->blk_off) {
+            chunk = f->blk_len - f->blk_off;
+        }
+
+        br_err_t err = br_blkdev_read(fs.dev, f->blk, f->blk_data_off + f->blk_off,
+                                      out + done, chunk);
+        if (err != BR_OK) {
+            result = err;
+            break;
+        }
+        f->blk_off += (uint32_t)chunk;
+        done       += chunk;
+    }
+
+    f->pos += done;
+    return (done == 0 && result != 0) ? result : (int)done;
 }
 
 int br_fs_read(int fd, void *buf, size_t len)
@@ -581,73 +767,57 @@ int br_fs_read(int fd, void *buf, size_t len)
     }
 
     file_t *f = fd_get(fd);
-    if (f == NULL || f->writing) {
-        br_mutex_unlock(&fs.lock);
-        return BR_ERR_INVALID;
-    }
+    int result = (f == NULL || f->writing) ? BR_ERR_INVALID : read_bytes(f, buf, len);
 
-    if (len > f->size - f->pos) {
-        len = f->size - f->pos;
-    }
-
-    uint8_t *out    = buf;
-    size_t   done   = 0;
-    int      result = 0;
-
-    while (done < len) {
-        if (f->blk_off == f->blk_len) {
-            data_hdr_t h;
-            if (f->next == FS_NONE || f->next == 0 || f->next >= fs.dev->block_count ||
-                br_blkdev_read(fs.dev, f->next, 0, &h, sizeof(h)) != BR_OK ||
-                h.magic != FS_MAGIC_DATA ||
-                h.len > fs.dev->block_size - fs.data_off) {
-                result = BR_ERR_IO;
-                break;
-            }
-            f->blk          = f->next;
-            f->blk_data_off = fs.data_off;
-            f->blk_len      = h.len;
-            f->blk_off      = 0;
-            f->next         = h.next;
-            continue;
-        }
-
-        size_t chunk = len - done;
-        if (chunk > f->blk_len - f->blk_off) {
-            chunk = f->blk_len - f->blk_off;
-        }
-
-        err = br_blkdev_read(fs.dev, f->blk, f->blk_data_off + f->blk_off,
-                             out + done, chunk);
-        if (err != BR_OK) {
-            result = err;
-            break;
-        }
-        f->blk_off += (uint32_t)chunk;
-        done       += chunk;
-    }
-
-    f->pos += done;
     br_mutex_unlock(&fs.lock);
-    return (done == 0 && result != 0) ? result : (int)done;
+    return result;
 }
 
-int br_fs_write(int fd, const void *buf, size_t len)
+br_err_t br_fs_seek(int fd, size_t offset)
 {
-    if (buf == NULL) {
-        return BR_ERR_INVALID;
-    }
     br_err_t err = lock();
     if (err != BR_OK) {
         return err;
     }
 
     file_t *f = fd_get(fd);
-    if (f == NULL || !f->writing) {
+    if (f == NULL || f->writing || offset > f->size) {
         br_mutex_unlock(&fs.lock);
         return BR_ERR_INVALID;
     }
 
+    f->blk          = f->head;
+    f->blk_data_off = fs.head_data_off;
+    f->blk_len      = f->h_len;
+    f->blk_off      = 0;
+    f->next         = f->h_next;
+    f->pos          = 0;
+
+    size_t remaining = offset;
+    while (remaining > 0) {
+        if (f->blk_off == f->blk_len) {
+            err = advance_chunk(f);
+            if (err != BR_OK) {
+                break;
+            }
+            continue;
+        }
+
+        size_t step = remaining;
+        if (step > f->blk_len - f->blk_off) {
+            step = f->blk_len - f->blk_off;
+        }
+        f->blk_off += (uint32_t)step;
+        f->pos     += step;
+        remaining  -= step;
+    }
+
+    br_mutex_unlock(&fs.lock);
+    return err;
+}
+
+static int write_bytes(file_t *f, const void *buf, size_t len)
+{
     const uint8_t *in = buf;
     size_t done = 0;
     int result = 0;
@@ -657,7 +827,7 @@ int br_fs_write(int fd, const void *buf, size_t len)
 
         if (room == 0) {
             uint32_t next;
-            err = alloc_block(&next);
+            br_err_t err = alloc_block(&next);
             if (err == BR_OK) {
                 err = flush_block(f, next);
             }
@@ -682,8 +852,24 @@ int br_fs_write(int fd, const void *buf, size_t len)
     }
 
     f->size += done;
-    br_mutex_unlock(&fs.lock);
     return (done == 0 && result != 0) ? result : (int)done;
+}
+
+int br_fs_write(int fd, const void *buf, size_t len)
+{
+    if (buf == NULL) {
+        return BR_ERR_INVALID;
+    }
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    file_t *f = fd_get(fd);
+    int result = (f == NULL || !f->writing) ? BR_ERR_INVALID : write_bytes(f, buf, len);
+
+    br_mutex_unlock(&fs.lock);
+    return result;
 }
 
 static br_err_t commit_file(file_t *f)
@@ -707,19 +893,14 @@ static br_err_t commit_file(file_t *f)
     return err;
 }
 
-br_err_t br_fs_close(int fd)
+static br_err_t close_fd(int fd)
 {
-    br_err_t err = lock();
-    if (err != BR_OK) {
-        return err;
-    }
-
     file_t *f = fd_get(fd);
     if (f == NULL) {
-        br_mutex_unlock(&fs.lock);
         return BR_ERR_INVALID;
     }
 
+    br_err_t err = BR_OK;
     if (f->writing) {
         err = f->failed ? BR_ERR_IO : commit_file(f);
         br_err_t scan = rebuild_used();
@@ -729,6 +910,17 @@ br_err_t br_fs_close(int fd)
     }
 
     f->open = false;
+    return err;
+}
+
+br_err_t br_fs_close(int fd)
+{
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    err = close_fd(fd);
     br_mutex_unlock(&fs.lock);
     return err;
 }
@@ -813,6 +1005,7 @@ br_err_t br_fs_list(uint32_t index, br_fs_info_t *out)
         if (seen++ == index) {
             memcpy(out->name, info.name, sizeof(out->name));
             out->size = info.size;
+            out->dir  = info.name[name_length(info.name) - 1] == '/';
             err = BR_OK;
             break;
         }
@@ -844,4 +1037,177 @@ br_err_t br_fs_usage(br_fs_usage_t *usage)
 
     br_mutex_unlock(&fs.lock);
     return BR_OK;
+}
+
+br_err_t br_fs_mkdir(const char *path)
+{
+    char marker[CONFIG_FS_NAME_MAX];
+
+    if (!name_valid(path) || !make_marker(marker, path)) {
+        return BR_ERR_INVALID;
+    }
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    uint32_t    block;
+    head_info_t info;
+    bool        writer = false;
+
+    if (name_open(marker, &writer) || writer) {
+        err = BR_ERR_BUSY;
+    } else if (find_live(path, &block, &info) == BR_OK ||
+               find_live(marker, &block, &info) == BR_OK) {
+        err = BR_ERR_BUSY;
+    } else {
+        err = parent_ok(path);
+        if (err == BR_OK) {
+            int fd = open_write(marker, false);
+            err = fd < 0 ? (br_err_t)fd : close_fd(fd);
+        }
+    }
+
+    br_mutex_unlock(&fs.lock);
+    return err;
+}
+
+static bool has_children(const char *marker)
+{
+    for (uint32_t b = 1; b < fs.dev->block_count; b++) {
+        head_info_t info;
+        if (load_head(b, &info) != BR_OK || !head_live(&info)) {
+            continue;
+        }
+        if (starts_with(info.name, marker) && !name_equal(info.name, marker)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+br_err_t br_fs_rmdir(const char *path)
+{
+    char marker[CONFIG_FS_NAME_MAX];
+
+    if (!name_valid(path) || !make_marker(marker, path)) {
+        return BR_ERR_INVALID;
+    }
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    uint32_t    block;
+    head_info_t info;
+    bool        writer = false;
+
+    err = find_live(marker, &block, &info);
+    if (err == BR_OK && (has_children(marker) || name_open(marker, &writer) || writer)) {
+        err = BR_ERR_BUSY;
+    }
+    if (err == BR_OK) {
+        err = write_slot(block, fs.dead_off, FS_DEAD);
+    }
+    if (err == BR_OK) {
+        err = rebuild_used();
+    }
+
+    br_mutex_unlock(&fs.lock);
+    return err;
+}
+
+br_err_t br_fs_info(const char *path, br_fs_info_t *out)
+{
+    char marker[CONFIG_FS_NAME_MAX];
+
+    if (!name_valid(path) || out == NULL || !make_marker(marker, path)) {
+        return BR_ERR_INVALID;
+    }
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    uint32_t    block;
+    head_info_t info;
+
+    err = find_live(path, &block, &info);
+    if (err == BR_OK) {
+        out->size = info.size;
+        out->dir  = false;
+    } else if (find_live(marker, &block, &info) == BR_OK) {
+        err = BR_OK;
+        out->size = 0;
+        out->dir  = true;
+    }
+    if (err == BR_OK) {
+        name_copy(out->name, leaf_of(path));
+    }
+
+    br_mutex_unlock(&fs.lock);
+    return err;
+}
+
+br_err_t br_fs_readdir(const char *dir, uint32_t index, br_fs_info_t *out)
+{
+    char prefix[CONFIG_FS_NAME_MAX];
+    bool root = dir == NULL || dir[0] == '\0';
+
+    if (out == NULL || (!root && (!name_valid(dir) || !make_marker(prefix, dir)))) {
+        return BR_ERR_INVALID;
+    }
+    if (root) {
+        prefix[0] = '\0';
+    }
+    br_err_t err = lock();
+    if (err != BR_OK) {
+        return err;
+    }
+
+    uint32_t    block;
+    head_info_t info;
+
+    if (!root && find_live(prefix, &block, &info) != BR_OK) {
+        br_mutex_unlock(&fs.lock);
+        return BR_ERR_NOENT;
+    }
+
+    err = BR_ERR_NOENT;
+    uint32_t seen = 0;
+    size_t   plen = name_length(prefix);
+
+    for (uint32_t b = 1; b < fs.dev->block_count; b++) {
+        if (load_head(b, &info) != BR_OK || !head_live(&info) ||
+            !starts_with(info.name, prefix) || info.name[plen] == '\0') {
+            continue;
+        }
+
+        const char *rest = info.name + plen;
+        size_t      n    = name_length(rest);
+        size_t      slashes = 0;
+        for (size_t i = 0; i < n; i++) {
+            slashes += rest[i] == '/';
+        }
+
+        bool is_dir  = slashes == 1 && rest[n - 1] == '/';
+        bool is_file = slashes == 0;
+        if (!is_dir && !is_file) {
+            continue;
+        }
+
+        if (seen++ == index) {
+            name_copy(out->name, rest);
+            if (is_dir) {
+                out->name[n - 1] = '\0';
+            }
+            out->size = is_dir ? 0 : info.size;
+            out->dir  = is_dir;
+            err = BR_OK;
+            break;
+        }
+    }
+
+    br_mutex_unlock(&fs.lock);
+    return err;
 }
