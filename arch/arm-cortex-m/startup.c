@@ -3,17 +3,24 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 extern uint32_t _estack;
 extern uint32_t _sidata;
 extern uint32_t _sdata, _edata;
 extern uint32_t _sbss, _ebss;
+extern uint32_t _user_data_start __attribute__((weak));
+extern uint32_t _user_data_end __attribute__((weak));
 
 extern int main(void);
 extern void br_hal_board_init(void);
 extern void SysTick_Handler(void);
 extern void PendSV_Handler(void);
 extern void SVC_Handler(void);
+extern void HardFault_Handler(void);
+extern void MemManage_Handler(void);
+extern void BusFault_Handler(void);
+extern void UsageFault_Handler(void);
 
 void Reset_Handler(void)
 {
@@ -25,6 +32,11 @@ void Reset_Handler(void)
 
     dst = &_sbss;
     while (dst < &_ebss) {
+        *dst++ = 0;
+    }
+
+    dst = &_user_data_start;
+    while (dst != NULL && dst < &_user_data_end) {
         *dst++ = 0;
     }
 
@@ -108,10 +120,10 @@ const uint32_t vectors[] = {
     (uint32_t)&_estack,
     (uint32_t)Reset_Handler,
     (uint32_t)Default_Handler,  /* NMI */
-    (uint32_t)Default_Handler,  /* HardFault */
-    (uint32_t)Default_Handler,  /* MemManage */
-    (uint32_t)Default_Handler,  /* BusFault */
-    (uint32_t)Default_Handler,  /* UsageFault */
+    (uint32_t)HardFault_Handler,
+    (uint32_t)MemManage_Handler,
+    (uint32_t)BusFault_Handler,
+    (uint32_t)UsageFault_Handler,
     0, 0, 0, 0,                 /* Reserved */
     (uint32_t)SVC_Handler,      /* SVCall */
     (uint32_t)Default_Handler,  /* Debug */

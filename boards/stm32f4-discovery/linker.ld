@@ -39,5 +39,16 @@ SECTIONS
         _ebss = .;
     } > SRAM
 
+    .user_bss (NOLOAD) : ALIGN(4096)
+    {
+        _user_data_start = .;
+        *(.user_bss*)
+        . = _user_data_start + 4096;
+        _user_data_end = .;
+    } > SRAM
+
     _estack = ORIGIN(SRAM) + LENGTH(SRAM);
+
+    _mpu_code_base = ORIGIN(FLASH);
+    _mpu_code_size = LENGTH(FLASH);
 }

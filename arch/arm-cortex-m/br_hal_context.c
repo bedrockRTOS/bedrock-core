@@ -68,8 +68,18 @@ void br_hal_context_switch(void **old_sp, void **new_sp)
     __asm volatile ("isb" ::: "memory");
 }
 
+#if CONFIG_MPU
+extern uint32_t br_hal_mpu_switch(br_tcb_t *t);
+extern br_tcb_t *br_sched_current(void);
+
+static volatile uint32_t br_hal_first_control __attribute__((used));
+#endif
+
 void br_hal_start_first_task(void *sp)
 {
+#if CONFIG_MPU
+    br_hal_first_control = br_hal_mpu_switch(br_sched_current());
+#endif
     /* We need to trigger an exception return to properly enter thread mode with PSP.
      * The cleanest way is to use SVC (supervisor call) exception. */
     __asm volatile (
@@ -177,6 +187,41 @@ void br_hal_check_stack_overflow(br_tcb_t *tcb)
  * br_hal_new_sp_ptr -> &new_tcb->sp  (where to load new SP)
  */
 
+#if CONFIG_MPU
+
+__attribute__((naked))
+void PendSV_Handler(void)
+{
+    __asm volatile (
+        "mrs   r0, psp              \n"
+        "stmdb r0!, {r4-r11}        \n"
+
+        "ldr   r1, =br_hal_old_sp_ptr \n"
+        "ldr   r1, [r1]             \n"
+        "str   r0, [r1]             \n"
+
+        "ldr   r1, =br_hal_new_sp_ptr \n"
+        "ldr   r1, [r1]             \n"
+
+        "push  {r1, lr}             \n"
+        "mov   r0, r1               \n"
+        "bl    br_hal_mpu_switch    \n"
+        "mov   r2, r0               \n"
+        "pop   {r1, lr}             \n"
+
+        "ldr   r0, [r1]             \n"
+        "ldmia r0!, {r4-r11}        \n"
+        "msr   psp, r0              \n"
+        "msr   control, r2          \n"
+        "isb                        \n"
+
+        "ldr   lr, =0xFFFFFFFD      \n"
+        "bx    lr                   \n"
+    );
+}
+
+#else
+
 __attribute__((naked))
 void PendSV_Handler(void)
 {
@@ -205,6 +250,8 @@ void PendSV_Handler(void)
     );
 }
 
+#endif
+
 /*
  * SVC handler (start first task)
  *
@@ -212,6 +259,37 @@ void PendSV_Handler(void)
  * It switches from handler mode (MSP) to thread mode (PSP) and starts
  * the first task.
  */
+
+#if CONFIG_MPU
+
+__attribute__((naked))
+void SVC_Handler(void)
+{
+    __asm volatile (
+        "tst   lr, #4                  \n"
+        "beq   1f                      \n"
+
+        "mrs   r0, psp                 \n"
+        "push  {r4, lr}                \n"
+        "bl    br_hal_svc              \n"
+        "pop   {r4, lr}                \n"
+        "bx    r0                      \n"
+
+        "1:                            \n"
+        "ldr   r0, =br_hal_first_task_sp \n"
+        "ldr   r0, [r0]                \n"
+        "ldmia r0!, {r4-r11}           \n"
+        "msr   psp, r0                 \n"
+        "ldr   r0, =br_hal_first_control \n"
+        "ldr   r0, [r0]                \n"
+        "msr   control, r0             \n"
+        "isb                           \n"
+        "ldr   lr, =0xFFFFFFFD         \n"
+        "bx    lr                      \n"
+    );
+}
+
+#else
 
 __attribute__((naked))
 void SVC_Handler(void)
@@ -237,3 +315,5 @@ void SVC_Handler(void)
         "bx lr                         \n"
     );
 }
+
+#endif
