@@ -147,16 +147,16 @@ br_err_t br_user_fs_info(const char *path, void *info) { return (br_err_t)SYS4(B
 br_err_t br_user_fs_readdir(const char *dir, uint32_t index, void *info) { return (br_err_t)SYS4(BR_SYS_FS_READDIR, P(dir), index, P(info), 0); }
 br_err_t br_user_fs_usage(void *usage) { return (br_err_t)SYS4(BR_SYS_FS_USAGE, P(usage), 0, 0, 0); }
 
-int br_user_net_socket(int type) { return (int)SYS4(BR_SYS_NET_SOCKET, (uint32_t)type, 0, 0, 0); }
-br_err_t br_user_net_bind(int fd, uint32_t ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_BIND, (uint32_t)fd, ip, port, 0); }
+int br_user_net_socket(int family, int type) { return (int)SYS4(BR_SYS_NET_SOCKET, (uint32_t)family, (uint32_t)type, 0, 0); }
+br_err_t br_user_net_bind(int fd, const br_ip_t *ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_BIND, (uint32_t)fd, P(ip), port, 0); }
 br_err_t br_user_net_listen(int fd, int backlog) { return (br_err_t)SYS4(BR_SYS_NET_LISTEN, (uint32_t)fd, (uint32_t)backlog, 0, 0); }
-br_err_t br_user_net_connect(int fd, uint32_t ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_CONNECT, (uint32_t)fd, ip, port, 0); }
+br_err_t br_user_net_connect(int fd, const br_ip_t *ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_CONNECT, (uint32_t)fd, P(ip), port, 0); }
 int br_user_net_send(int fd, const void *buf, size_t len) { return (int)SYS4(BR_SYS_NET_SEND, (uint32_t)fd, P(buf), (uint32_t)len, 0); }
 br_err_t br_user_net_close(int fd) { return (br_err_t)SYS4(BR_SYS_NET_CLOSE, (uint32_t)fd, 0, 0, 0); }
-br_err_t br_user_net_resolve(const char *name, uint32_t *ip) { return (br_err_t)SYS4(BR_SYS_NET_RESOLVE, P(name), P(ip), 0, 0); }
+br_err_t br_user_net_resolve(const char *name, int family, br_ip_t *ip) { return (br_err_t)SYS4(BR_SYS_NET_RESOLVE, P(name), (uint32_t)family, P(ip), 0); }
 br_err_t br_user_net_ifinfo(uint32_t index, void *info) { return (br_err_t)SYS4(BR_SYS_NET_IFINFO, index, P(info), 0, 0); }
 
-int br_user_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint32_t *port)
+int br_user_net_accept(int fd, br_time_t timeout, br_ip_t *ip, uint32_t *port)
 {
     uint32_t b[5] = { (uint32_t)fd, LO(timeout), HI(timeout), P(ip), P(port) };
     return (int)SYS4(BR_SYS_NET_ACCEPT, P(b), 0, 0, 0);
@@ -168,21 +168,21 @@ int br_user_net_recv(int fd, void *buf, size_t len, br_time_t timeout)
     return (int)SYS4(BR_SYS_NET_RECV, P(b), 0, 0, 0);
 }
 
-int br_user_net_sendto(int fd, const void *buf, size_t len, uint32_t ip, uint16_t port)
+int br_user_net_sendto(int fd, const void *buf, size_t len, const br_ip_t *ip, uint16_t port)
 {
-    uint32_t b[5] = { (uint32_t)fd, P(buf), (uint32_t)len, ip, port };
+    uint32_t b[5] = { (uint32_t)fd, P(buf), (uint32_t)len, P(ip), port };
     return (int)SYS4(BR_SYS_NET_SENDTO, P(b), 0, 0, 0);
 }
 
-int br_user_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout, uint32_t *ip, uint32_t *port)
+int br_user_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout, br_ip_t *ip, uint32_t *port)
 {
     uint32_t b[7] = { (uint32_t)fd, P(buf), (uint32_t)len, LO(timeout), HI(timeout), P(ip), P(port) };
     return (int)SYS4(BR_SYS_NET_RECVFROM, P(b), 0, 0, 0);
 }
 
-br_err_t br_user_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
+br_err_t br_user_net_ping(const br_ip_t *ip, br_time_t timeout, uint32_t *rtt_us)
 {
-    uint32_t b[4] = { ip, LO(timeout), HI(timeout), P(rtt_us) };
+    uint32_t b[4] = { P(ip), LO(timeout), HI(timeout), P(rtt_us) };
     return (br_err_t)SYS4(BR_SYS_NET_PING, P(b), 0, 0, 0);
 }
 

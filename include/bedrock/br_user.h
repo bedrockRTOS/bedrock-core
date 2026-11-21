@@ -6,6 +6,7 @@
 #define BR_USER_H
 
 #include "br_types.h"
+#include "br_ip.h"
 
 #if CONFIG_MPU
 
@@ -55,19 +56,19 @@ br_err_t br_user_fs_info(const char *path, void *info);
 br_err_t br_user_fs_readdir(const char *dir, uint32_t index, void *info);
 br_err_t br_user_fs_usage(void *usage);
 
-int      br_user_net_socket(int type);
-br_err_t br_user_net_bind(int fd, uint32_t ip, uint16_t port);
+int      br_user_net_socket(int family, int type);
+br_err_t br_user_net_bind(int fd, const br_ip_t *ip, uint16_t port);
 br_err_t br_user_net_listen(int fd, int backlog);
-int      br_user_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint32_t *port);
-br_err_t br_user_net_connect(int fd, uint32_t ip, uint16_t port);
+int      br_user_net_accept(int fd, br_time_t timeout, br_ip_t *ip, uint32_t *port);
+br_err_t br_user_net_connect(int fd, const br_ip_t *ip, uint16_t port);
 int      br_user_net_send(int fd, const void *buf, size_t len);
 int      br_user_net_recv(int fd, void *buf, size_t len, br_time_t timeout);
-int      br_user_net_sendto(int fd, const void *buf, size_t len, uint32_t ip, uint16_t port);
+int      br_user_net_sendto(int fd, const void *buf, size_t len, const br_ip_t *ip, uint16_t port);
 int      br_user_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout,
-                              uint32_t *ip, uint32_t *port);
+                              br_ip_t *ip, uint32_t *port);
 br_err_t br_user_net_close(int fd);
-br_err_t br_user_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us);
-br_err_t br_user_net_resolve(const char *name, uint32_t *ip);
+br_err_t br_user_net_ping(const br_ip_t *ip, br_time_t timeout, uint32_t *rtt_us);
+br_err_t br_user_net_resolve(const char *name, int family, br_ip_t *ip);
 br_err_t br_user_net_ifinfo(uint32_t index, void *info);
 
 #endif
