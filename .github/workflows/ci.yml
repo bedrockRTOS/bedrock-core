@@ -214,6 +214,45 @@ jobs:
           ! grep -q "FAIL" <<< "$out"
           ! grep -q "KERNEL PANIC" <<< "$out"
 
+  avr:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-avr binutils-avr avr-libc qemu-system-misc
+
+      - name: Install chorus
+        run: |
+          sudo curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          sudo chmod +x /usr/local/bin/chorus
+
+      - name: Build
+        run: chorus avr
+
+      - name: Run tests on QEMU
+        run: |
+          failed=0
+          for t in task_delete scheduler sleep_list task_info console semaphore mutex mqueue pool uart_rx shell device gpio; do
+            echo "::group::test_${t}_avr"
+            case "$t" in
+              uart_rx|shell) out=$( (sleep 1; printf 'bedrock\n'; sleep 14) | timeout 30 qemu-system-avr -machine uno -bios "test_${t}_avr.elf" -nographic || true) ;;
+              *) out=$(timeout 40 qemu-system-avr -machine uno -bios "test_${t}_avr.elf" -nographic < /dev/null || true) ;;
+            esac
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t}_avr did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t}_avr reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
+
   rp2040:
     runs-on: ubuntu-24.04
     steps:

@@ -15,6 +15,10 @@ variables:
   F4_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/stm32f4-discovery/linker.ld -mcpu=cortex-m4 -mthumb"
   X86_CFLAGS: "-c -Wall -Wextra -Werror -Os -m32 -march=i686 -ffreestanding -fno-pic -fno-pie -fno-stack-protector -fcf-protection=none -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 -mgeneral-regs-only -ffunction-sections -fdata-sections -std=c11 -Iinclude -Ilib -Idrivers -Iarch/x86"
   X86_LDFLAGS: "-m32 -nostdlib -static -no-pie -Wl,--gc-sections -Wl,-T,boards/qemu-x86/linker.ld -Wl,-m,elf_i386"
+  AVR_CC: "avr-gcc"
+  AVR_AR: "avr-ar"
+  AVR_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mmcu=atmega328p -DBR_HAL_SYS_CLOCK_HZ=16000000UL -Iinclude -Ilib -Idrivers -Iarch/avr -Iexamples"
+  AVR_LDFLAGS: "-mmcu=atmega328p -Wl,--gc-sections -Wl,--defsym=__DATA_REGION_LENGTH__=1952"
   RV_CC: "riscv64-elf-gcc"
   RV_AR: "riscv64-elf-ar"
   RV_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -march=rv32imac_zicsr -mabi=ilp32 -DBR_HAL_SYS_CLOCK_HZ=10000000 -Iinclude -Ilib -Idrivers"
@@ -4598,6 +4602,325 @@ targets:
     deps: [mpuf4-br_sched.o, mpuf4-br_time.o, mpuf4-br_task.o, mpuf4-br_ipc.o, mpuf4-br_panic.o, mpuf4-br_uart.o, mpuf4-br_device.o, mpuf4-br_user.o, mpuf4-br_usercall.o, mpuf4-br_hal_context.o, mpuf4-br_hal_timer.o, mpuf4-startup.o, mpuf4-br_hal_fault.o, mpuf4-br_hal_mpu.o, mpuf4-br_hal_uart.o, mpuf4-br_hal_gpio.o, mpuf4-br_hal_spi.o, mpuf4-br_hal_i2c.o, mpuf4-br_hal_pwm.o, mpuf4-br_hal_netif.o, mpuf4-br_string.o, mpuf4-br_fs.o, mpuf4-br_ramdisk.o, mpuf4-board.o, mpuf4-test_mpu.o]
     cmds:
       - "${CC} ${F4_LDFLAGS} mpuf4-test_mpu.o mpuf4-board.o mpuf4-br_sched.o mpuf4-br_time.o mpuf4-br_task.o mpuf4-br_ipc.o mpuf4-br_panic.o mpuf4-br_uart.o mpuf4-br_device.o mpuf4-br_user.o mpuf4-br_usercall.o mpuf4-br_hal_context.o mpuf4-br_hal_timer.o mpuf4-startup.o mpuf4-br_hal_fault.o mpuf4-br_hal_mpu.o mpuf4-br_hal_uart.o mpuf4-br_hal_gpio.o mpuf4-br_hal_spi.o mpuf4-br_hal_i2c.o mpuf4-br_hal_pwm.o mpuf4-br_hal_netif.o mpuf4-br_string.o mpuf4-br_fs.o mpuf4-br_ramdisk.o -lgcc -o ${@}"
+
+  # ---- AVR: ATmega328P (Arduino Uno), 2 KiB of RAM, run in QEMU ----
+
+  avr-br_sched.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_sched.c -o ${@}"
+
+  avr-br_time.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_time.c -o ${@}"
+
+  avr-br_task.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_task.c -o ${@}"
+
+  avr-br_ipc.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_ipc.c -o ${@}"
+
+  avr-br_panic.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_panic.c -o ${@}"
+
+  avr-br_uart.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_uart.c -o ${@}"
+
+  avr-br_device.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_device.c -o ${@}"
+
+  avr-br_user.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_user.c -o ${@}"
+
+  avr-br_usercall.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} kernel/br_usercall.c -o ${@}"
+
+  avr-br_pool.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} lib/br_pool.c -o ${@}"
+
+  avr-br_string.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} lib/br_string.c -o ${@}"
+
+  avr-br_shell.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} lib/br_shell.c -o ${@}"
+
+  avr-br_console.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} lib/br_console.c -o ${@}"
+
+  avr-br_shell_cmds.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} lib/br_shell_cmds.c -o ${@}"
+
+  avr-br_gpio.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_gpio.c -o ${@}"
+
+  avr-br_spi.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_spi.c -o ${@}"
+
+  avr-br_i2c.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_i2c.c -o ${@}"
+
+  avr-br_pwm.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_pwm.c -o ${@}"
+
+  avr-br_capture.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_capture.c -o ${@}"
+
+  avr-br_uart_dev.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  avr-br_hal_timer.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} arch/avr/br_hal_timer.c -o ${@}"
+
+  avr-br_hal_context.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} arch/avr/br_hal_context.c -o ${@}"
+
+  avr-board.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/board.c -o ${@}"
+
+  avr-br_hal_uart.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_uart.c -o ${@}"
+
+  avr-br_hal_gpio.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_gpio.c -o ${@}"
+
+  avr-br_hal_spi.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_spi.c -o ${@}"
+
+  avr-br_hal_i2c.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_i2c.c -o ${@}"
+
+  avr-br_hal_pwm.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_pwm.c -o ${@}"
+
+  avr-br_hal_netif.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} boards/arduino-uno/br_hal_netif.c -o ${@}"
+
+  avr-test_task_delete.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_task_delete.c -o ${@}"
+
+  avr-test_scheduler.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_scheduler.c -o ${@}"
+
+  avr-test_sleep_list.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_sleep_list.c -o ${@}"
+
+  avr-test_task_info.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_task_info.c -o ${@}"
+
+  avr-test_console.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_console.c -o ${@}"
+
+  avr-test_semaphore.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_semaphore.c -o ${@}"
+
+  avr-test_mutex.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_mutex.c -o ${@}"
+
+  avr-test_mqueue.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  avr-test_pool.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_pool.c -o ${@}"
+
+  avr-test_uart_rx.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_uart_rx.c -o ${@}"
+
+  avr-test_shell.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_shell.c -o ${@}"
+
+  avr-test_device.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_device.c -o ${@}"
+
+  avr-test_gpio.o:
+    cmds:
+      - "${AVR_CC} ${AVR_CFLAGS} examples/test_gpio.c -o ${@}"
+
+  libbedrock_kernel_avr.a:
+    deps: [avr-br_sched.o, avr-br_time.o, avr-br_task.o, avr-br_ipc.o, avr-br_panic.o, avr-br_uart.o, avr-br_device.o, avr-br_user.o, avr-br_usercall.o]
+    cmds:
+      - "${AVR_AR} rcs ${@} ${^}"
+
+  libbedrock_hal_avr.a:
+    deps: [avr-br_hal_timer.o, avr-br_hal_context.o, avr-board.o, avr-br_hal_uart.o, avr-br_hal_gpio.o, avr-br_hal_spi.o, avr-br_hal_i2c.o, avr-br_hal_pwm.o, avr-br_hal_netif.o]
+    cmds:
+      - "${AVR_AR} rcs ${@} ${^}"
+
+  libbedrock_lib_avr.a:
+    deps: [avr-br_pool.o, avr-br_string.o, avr-br_shell.o, avr-br_console.o, avr-br_shell_cmds.o, avr-br_gpio.o, avr-br_spi.o, avr-br_i2c.o, avr-br_pwm.o, avr-br_capture.o, avr-br_uart_dev.o]
+    cmds:
+      - "${AVR_AR} rcs ${@} ${^}"
+
+  test_task_delete_avr.elf:
+    deps: [avr-test_task_delete.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_task_delete.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-task-delete-avr:
+    deps: [test_task_delete_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_task_delete_avr.elf -nographic"
+
+  test_scheduler_avr.elf:
+    deps: [avr-test_scheduler.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_scheduler.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-scheduler-avr:
+    deps: [test_scheduler_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_scheduler_avr.elf -nographic"
+
+  test_sleep_list_avr.elf:
+    deps: [avr-test_sleep_list.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_sleep_list.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-sleep-list-avr:
+    deps: [test_sleep_list_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_sleep_list_avr.elf -nographic"
+
+  test_task_info_avr.elf:
+    deps: [avr-test_task_info.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_task_info.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-task-info-avr:
+    deps: [test_task_info_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_task_info_avr.elf -nographic"
+
+  test_console_avr.elf:
+    deps: [avr-test_console.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_console.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-console-avr:
+    deps: [test_console_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_console_avr.elf -nographic"
+
+  test_semaphore_avr.elf:
+    deps: [avr-test_semaphore.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_semaphore.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-semaphore-avr:
+    deps: [test_semaphore_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_semaphore_avr.elf -nographic"
+
+  test_mutex_avr.elf:
+    deps: [avr-test_mutex.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_mutex.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-mutex-avr:
+    deps: [test_mutex_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_mutex_avr.elf -nographic"
+
+  test_mqueue_avr.elf:
+    deps: [avr-test_mqueue.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_mqueue.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-mqueue-avr:
+    deps: [test_mqueue_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_mqueue_avr.elf -nographic"
+
+  test_pool_avr.elf:
+    deps: [avr-test_pool.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_pool.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-pool-avr:
+    deps: [test_pool_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_pool_avr.elf -nographic"
+
+  test_uart_rx_avr.elf:
+    deps: [avr-test_uart_rx.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_uart_rx.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-uart-rx-avr:
+    deps: [test_uart_rx_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_uart_rx_avr.elf -nographic"
+
+  test_shell_avr.elf:
+    deps: [avr-test_shell.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_shell.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-shell-avr:
+    deps: [test_shell_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_shell_avr.elf -nographic"
+
+  test_device_avr.elf:
+    deps: [avr-test_device.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_device.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-device-avr:
+    deps: [test_device_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_device_avr.elf -nographic"
+
+  test_gpio_avr.elf:
+    deps: [avr-test_gpio.o, libbedrock_kernel_avr.a, libbedrock_hal_avr.a, libbedrock_lib_avr.a]
+    cmds:
+      - "${AVR_CC} ${AVR_LDFLAGS} avr-test_gpio.o -L. -Wl,--start-group -lbedrock_hal_avr -lbedrock_kernel_avr -lbedrock_lib_avr -Wl,--end-group -o ${@}"
+
+  test-gpio-avr:
+    deps: [test_gpio_avr.elf]
+    cmds:
+      - "qemu-system-avr -machine uno -bios test_gpio_avr.elf -nographic"
+
+  avr:
+    deps: [test_task_delete_avr.elf, test_scheduler_avr.elf, test_sleep_list_avr.elf, test_task_info_avr.elf, test_console_avr.elf, test_semaphore_avr.elf, test_mutex_avr.elf, test_mqueue_avr.elf, test_pool_avr.elf, test_uart_rx_avr.elf, test_shell_avr.elf, test_device_avr.elf, test_gpio_avr.elf]
+
 
   clean:
     cmds:
