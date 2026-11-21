@@ -7,3 +7,6 @@
 [submodule "ports/littlefs/upstream"]
 	path = ports/littlefs/upstream
 	url = https://github.com/littlefs-project/littlefs.git
+[submodule "ports/lwip/upstream"]
+	path = ports/lwip/upstream
+	url = https://github.com/lwip-tcpip/lwip.git
