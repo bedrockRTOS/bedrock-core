@@ -93,7 +93,7 @@
 - [x] QEMU network backend: `-netdev user` with the Stellaris Ethernet MAC (LM3S6965) and virtio-net (RISC-V `virt`)
 - [x] Example: UDP echo server
 - [x] Shell commands: `ifconfig`, `ping`
-- [ ] Interrupt-driven receive instead of polling
+- [x] Interrupt-driven receive instead of polling
 - [ ] Network drivers for real hardware (STM32F103 has none on the Blue Pill, RP2040 needs a module)
 - [ ] DNS, IPv6
 

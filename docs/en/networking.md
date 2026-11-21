@@ -13,7 +13,7 @@ br_netif_t           send, recv, link_up           network interface contract
 drivers, boards      Stellaris Ethernet, virtio-net, mock
 ```
 
-Two tasks run the stack: lwIP's `tcpip` thread at priority 2 and `netrx` at priority 3, each with a 3 KiB stack. `netrx` polls every interface for received frames and sleeps `BR_NET_POLL_MS` (5 ms) when there are none, so the stack has a periodic wakeup even when the network is idle. Receive interrupts are not used yet.
+Two tasks run the stack: lwIP's `tcpip` thread at priority 2 and `netrx` at priority 3, each with a 3 KiB stack. `netrx` reads the received frames of every interface. An interface whose driver sets `irq` wakes it from the receive interrupt: the driver calls `rx_notify()`, which gives a semaphore, and `netrx` sleeps on that semaphore for at most `BR_NET_IRQ_FALLBACK_MS` (200 ms, a safety net). An interface without an interrupt, such as the mock, is polled every `BR_NET_POLL_MS` (5 ms) instead. `br_net_rx_wakeups()` counts the interrupt wakeups.
 
 ## Network interface: `include/bedrock/br_netif.h`
 
@@ -30,10 +30,14 @@ typedef struct br_netif {
     uint16_t               mtu;
     const br_netif_ops_t  *ops;
     void                  *priv;
+    bool                   irq;
+    void                 (*rx_notify)(struct br_netif *netif);
 } br_netif_t;
 ```
 
 `send` takes one Ethernet frame without the FCS. `recv` copies one received frame into `buf` and returns its length, `0` when there is none, or a negative `br_err_t`. A frame is at most `BR_NETIF_FRAME_MAX` (1536) bytes.
+
+A driver with a receive interrupt sets `irq` and calls `rx_notify(netif)` from the interrupt handler when `rx_notify` is not `NULL`. The stack fills `rx_notify` in `br_net_netif_add`.
 
 `br_hal_netif_default()` returns the board interface, or `NULL` if the board has none.
 
@@ -47,7 +51,7 @@ typedef struct br_netif {
 
 ### Drivers
 
-The Stellaris MAC driver reads the MAC address from the device and polls the receive FIFO. The virtio-net driver supports the modern (version 2) transport only, with one 8-entry queue for each direction, so QEMU must run with `-global virtio-mmio.force-legacy=false`. Both drivers send synchronously.
+The Stellaris MAC driver reads the MAC address from the device and enables the receive interrupt (IRQ 42). The virtio-net driver takes the interrupt through the PLIC (source `1 + slot`) and supports the modern (version 2) transport only, with one 8-entry queue for each direction, so QEMU must run with `-global virtio-mmio.force-legacy=false`. Both drivers send synchronously.
 
 ## API: `ports/lwip/br_net.h`
 
@@ -128,14 +132,14 @@ echo hello | nc -u -w1 127.0.0.1 7777
 | Test | Targets | Covers |
 |------|---------|--------|
 | `test_net` | host, LM3S6965, RISC-V, RP2040 | Loopback UDP and TCP, socket limits, ARP and ICMP through the mock interface, ping, shell commands |
-| `test_net_qemu` | LM3S6965 and RISC-V in QEMU | The real drivers: DHCP lease, ping of the gateway, a datagram sent through it. Prints `SKIP` on a target without an interface |
+| `test_net_qemu` | LM3S6965 and RISC-V in QEMU | The real drivers: DHCP lease, ping of the gateway, the receive interrupt wakeups, a datagram sent through it. Prints `SKIP` on a target without an interface |
 
 `test_net_qemu` needs the QEMU options above (`-nic user,model=stellaris` or the virtio-net options). `test_net_rp2040` is built but is not run in CI.
 
 ## Limits
 
 - No DNS, no IPv6, no TLS.
-- Receive is polled every 5 ms. Latency is up to that, and the stack never fully sleeps.
+- Receive is interrupt driven on the two QEMU drivers. An interface without an interrupt is polled every 5 ms.
 - One TCP connection at a time per descriptor, with `BR_NET_MAX_SOCKETS` in the whole system.
 - The drivers were run on QEMU only. The Stellaris driver follows the QEMU model and the StellarisWare driver as far as the frame format goes, and has not been tried on real hardware.
 - The virtio driver does not support the legacy transport.
