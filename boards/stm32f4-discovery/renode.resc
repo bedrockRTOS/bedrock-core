@@ -1,0 +1,5 @@
+mach create "stm32f4"
+machine LoadPlatformDescription @platforms/boards/stm32f4_discovery-kit.repl
+sysbus LoadELF $fw
+sysbus.cpu VectorTableOffset 0x08000000
+sysbus.usart1 CreateFileBackend $out true
