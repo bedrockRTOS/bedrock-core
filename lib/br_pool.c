@@ -136,3 +136,25 @@ size_t br_pool_total(br_pool_handle_t handle)
     }
     return pool->total;
 }
+
+size_t br_pool_count(void)
+{
+    return pool_count;
+}
+
+br_pool_handle_t br_pool_get(size_t index)
+{
+    if (index >= pool_count) {
+        return NULL;
+    }
+    return (br_pool_handle_t)&pools[index];
+}
+
+size_t br_pool_block_size(br_pool_handle_t handle)
+{
+    struct br_pool *pool = (struct br_pool *)handle;
+    if (pool == NULL || !pool->initialized) {
+        return 0;
+    }
+    return pool->block_size;
+}

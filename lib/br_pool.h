@@ -30,4 +30,8 @@ size_t br_pool_available(br_pool_handle_t handle);
 /* Query: total blocks in pool */
 size_t br_pool_total(br_pool_handle_t handle);
 
+size_t br_pool_count(void);
+br_pool_handle_t br_pool_get(size_t index);
+size_t br_pool_block_size(br_pool_handle_t handle);
+
 #endif /* BR_POOL_H */
