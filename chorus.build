@@ -48,6 +48,14 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} kernel/br_uart.c -o ${@}"
 
+  br_user.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_user.c -o ${@}"
+
+  br_usercall.o:
+    cmds:
+      - "${CC} ${CFLAGS} kernel/br_usercall.c -o ${@}"
+
   br_device.o:
     cmds:
       - "${CC} ${CFLAGS} kernel/br_device.c -o ${@}"
@@ -59,6 +67,14 @@ targets:
   br_hal_context.o:
     cmds:
       - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  br_hal_fault.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_fault.c -o ${@}"
+
+  br_hal_mpu.o:
+    cmds:
+      - "${CC} ${CFLAGS} arch/arm-cortex-m/br_hal_mpu.c -o ${@}"
 
   br_hal_uart.o:
     cmds:
@@ -253,12 +269,12 @@ targets:
       - "${CC} ${CFLAGS} examples/test_pool.c -o ${@}"
 
   libbedrock_kernel.a:
-    deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o, br_uart.o, br_device.o]
+    deps: [br_sched.o, br_time.o, br_task.o, br_ipc.o, br_panic.o, br_uart.o, br_device.o, br_user.o, br_usercall.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_hal.a:
-    deps: [br_hal_timer.o, br_hal_context.o, br_hal_uart.o, br_hal_gpio.o, br_hal_spi.o, br_hal_i2c.o, br_hal_pwm.o, br_netif_enet.o, startup.o]
+    deps: [br_hal_timer.o, br_hal_context.o, br_hal_uart.o, br_hal_gpio.o, br_hal_spi.o, br_hal_i2c.o, br_hal_pwm.o, br_netif_enet.o, br_hal_fault.o, br_hal_mpu.o, startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -517,6 +533,14 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} kernel/br_uart.c -o ${@}"
 
+  host-br_user.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_user.c -o ${@}"
+
+  host-br_usercall.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} kernel/br_usercall.c -o ${@}"
+
   host-br_device.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} kernel/br_device.c -o ${@}"
@@ -662,7 +686,7 @@ targets:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_pool.c -o ${@}"
 
   libbedrock_kernel_host.a:
-    deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o, host-br_uart.o, host-br_device.o]
+    deps: [host-br_sched.o, host-br_time.o, host-br_task.o, host-br_ipc.o, host-br_panic.o, host-br_uart.o, host-br_device.o, host-br_user.o, host-br_usercall.o]
     cmds:
       - "ar rcs ${@} ${^}"
 
@@ -838,7 +862,7 @@ targets:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_pool.o host-br_pool.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host, test_littlefs_host, test_fatfs_host, test_net_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_audit_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host, test_littlefs_host, test_fatfs_host, test_net_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -973,6 +997,14 @@ targets:
   riscv32-br_uart.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} kernel/br_uart.c -o ${@}"
+
+  riscv32-br_user.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} kernel/br_user.c -o ${@}"
+
+  riscv32-br_usercall.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} kernel/br_usercall.c -o ${@}"
 
   riscv32-br_device.o:
     cmds:
@@ -1179,7 +1211,7 @@ targets:
       - "${RV_CC} ${RV_CFLAGS} examples/test_pool.c -o ${@}"
 
   libbedrock_kernel_riscv32.a:
-    deps: [riscv32-br_sched.o, riscv32-br_time.o, riscv32-br_task.o, riscv32-br_ipc.o, riscv32-br_panic.o, riscv32-br_uart.o, riscv32-br_device.o]
+    deps: [riscv32-br_sched.o, riscv32-br_time.o, riscv32-br_task.o, riscv32-br_ipc.o, riscv32-br_panic.o, riscv32-br_uart.o, riscv32-br_device.o, riscv32-br_user.o, riscv32-br_usercall.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
@@ -1304,7 +1336,7 @@ targets:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
   riscv32:
-    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf, test_littlefs_riscv32.elf, test_fatfs_riscv32.elf, test_net_riscv32.elf, test_net_qemu_riscv32.elf, bedrock_udp_echo_riscv32.elf]
+    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_audit_riscv32.elf, test_mpu_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf, test_littlefs_riscv32.elf, test_fatfs_riscv32.elf, test_net_riscv32.elf, test_net_qemu_riscv32.elf, bedrock_udp_echo_riscv32.elf]
 
   run-riscv32:
     deps: [bedrock_example_riscv32.elf]
@@ -1442,6 +1474,14 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} kernel/br_uart.c -o ${@}"
 
+  rp2040-br_user.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} kernel/br_user.c -o ${@}"
+
+  rp2040-br_usercall.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} kernel/br_usercall.c -o ${@}"
+
   rp2040-br_device.o:
     cmds:
       - "${CC} ${M0_CFLAGS} kernel/br_device.c -o ${@}"
@@ -1453,6 +1493,10 @@ targets:
   rp2040-br_hal_context.o:
     cmds:
       - "${CC} ${M0_CFLAGS} arch/arm-cortex-m0plus/br_hal_context.c -o ${@}"
+
+  rp2040-br_hal_fault.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} arch/arm-cortex-m0plus/br_hal_fault.c -o ${@}"
 
   rp2040-br_hal_uart.o:
     cmds:
@@ -1674,12 +1718,12 @@ targets:
       - "${CC} ${M0_CFLAGS} rp2040-boot2_crc.S -o ${@}"
 
   libbedrock_kernel_rp2040.a:
-    deps: [rp2040-br_sched.o, rp2040-br_time.o, rp2040-br_task.o, rp2040-br_ipc.o, rp2040-br_panic.o, rp2040-br_uart.o, rp2040-br_device.o]
+    deps: [rp2040-br_sched.o, rp2040-br_time.o, rp2040-br_task.o, rp2040-br_ipc.o, rp2040-br_panic.o, rp2040-br_uart.o, rp2040-br_device.o, rp2040-br_user.o, rp2040-br_usercall.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_hal_rp2040.a:
-    deps: [rp2040-br_hal_timer.o, rp2040-br_hal_context.o, rp2040-br_hal_uart.o, rp2040-br_hal_gpio.o, rp2040-br_hal_spi.o, rp2040-br_hal_i2c.o, rp2040-br_hal_pwm.o, rp2040-br_hal_netif.o, rp2040-startup.o]
+    deps: [rp2040-br_hal_timer.o, rp2040-br_hal_context.o, rp2040-br_hal_uart.o, rp2040-br_hal_gpio.o, rp2040-br_hal_spi.o, rp2040-br_hal_i2c.o, rp2040-br_hal_pwm.o, rp2040-br_hal_netif.o, rp2040-br_hal_fault.o, rp2040-startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -1805,7 +1849,7 @@ targets:
       - "./bin2uf2 bedrock_example_rp2040.bin ${@} 0x10000000 0xe48bff56"
 
   rp2040:
-    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf, test_littlefs_rp2040.elf, test_fatfs_rp2040.elf, test_net_rp2040.elf]
+    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_audit_rp2040.elf, test_mpu_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf, test_littlefs_rp2040.elf, test_fatfs_rp2040.elf, test_net_rp2040.elf]
 
   defconfig-rp2040:
     cmds:
@@ -1844,7 +1888,7 @@ targets:
       - "${CC} ${CFLAGS} boards/stm32f103c8-bluepill/board.c -o ${@}"
 
   libbedrock_hal_stm32f103.a:
-    deps: [stm32f103-br_hal_timer.o, br_hal_context.o, stm32f103-br_hal_uart.o, stm32f103-br_hal_gpio.o, stm32f103-br_hal_spi.o, stm32f103-br_hal_i2c.o, stm32f103-br_hal_pwm.o, stm32f103-br_hal_netif.o, startup.o]
+    deps: [stm32f103-br_hal_timer.o, br_hal_context.o, stm32f103-br_hal_uart.o, stm32f103-br_hal_gpio.o, stm32f103-br_hal_spi.o, stm32f103-br_hal_i2c.o, stm32f103-br_hal_pwm.o, stm32f103-br_hal_netif.o, br_hal_fault.o, br_hal_mpu.o, startup.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -1959,7 +2003,7 @@ targets:
       - "${OBJCOPY} -O binary bedrock_example_stm32f103.elf ${@}"
 
   stm32f103:
-    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf, test_shell_stm32f103.elf, test_console_stm32f103.elf, test_task_info_stm32f103.elf, test_shell_cmds_stm32f103.elf, test_device_stm32f103.elf, test_gpio_stm32f103.elf, test_spi_stm32f103.elf, test_i2c_stm32f103.elf, test_pwm_stm32f103.elf, test_fs_stm32f103.elf, test_shell_fs_stm32f103.elf, test_littlefs_stm32f103.elf]
+    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf, test_shell_stm32f103.elf, test_console_stm32f103.elf, test_audit_stm32f103.elf, test_task_info_stm32f103.elf, test_shell_cmds_stm32f103.elf, test_device_stm32f103.elf, test_gpio_stm32f103.elf, test_spi_stm32f103.elf, test_i2c_stm32f103.elf, test_pwm_stm32f103.elf, test_fs_stm32f103.elf, test_shell_fs_stm32f103.elf, test_littlefs_stm32f103.elf]
 
   defconfig-stm32f103:
     cmds:
@@ -2720,6 +2764,14 @@ targets:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} kernel/br_uart.c -o ${@}"
 
+  x86-br_user.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_user.c -o ${@}"
+
+  x86-br_usercall.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_usercall.c -o ${@}"
+
   x86-br_device.o:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} kernel/br_device.c -o ${@}"
@@ -3081,7 +3133,7 @@ targets:
       - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
 
   libbedrock_kernel_x86.a:
-    deps: [x86-br_sched.o, x86-br_time.o, x86-br_task.o, x86-br_ipc.o, x86-br_panic.o, x86-br_uart.o, x86-br_device.o]
+    deps: [x86-br_sched.o, x86-br_time.o, x86-br_task.o, x86-br_ipc.o, x86-br_panic.o, x86-br_uart.o, x86-br_device.o, x86-br_user.o, x86-br_usercall.o]
     cmds:
       - "ar rcs ${@} ${^}"
 
@@ -3216,7 +3268,7 @@ targets:
       - "${HOST_CC} ${X86_LDFLAGS} x86-test_net.o x86-board.o x86-br_libc.o -L. -Wl,--start-group -llwip_x86 -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
 
   x86:
-    deps: [bedrock_example_x86.elf, test_task_delete_x86.elf, test_scheduler_x86.elf, test_semaphore_x86.elf, test_mutex_x86.elf, test_mqueue_x86.elf, test_sleep_list_x86.elf, test_pool_x86.elf, test_uart_rx_x86.elf, test_shell_x86.elf, test_console_x86.elf, test_task_info_x86.elf, test_shell_cmds_x86.elf, test_device_x86.elf, test_gpio_x86.elf, test_spi_x86.elf, test_i2c_x86.elf, test_pwm_x86.elf, test_fs_x86.elf, test_shell_fs_x86.elf, test_littlefs_x86.elf, test_fatfs_x86.elf, test_net_x86.elf]
+    deps: [bedrock_example_x86.elf, test_task_delete_x86.elf, test_scheduler_x86.elf, test_semaphore_x86.elf, test_mutex_x86.elf, test_mqueue_x86.elf, test_sleep_list_x86.elf, test_pool_x86.elf, test_uart_rx_x86.elf, test_shell_x86.elf, test_console_x86.elf, test_audit_x86.elf, test_mpu_x86.elf, test_task_info_x86.elf, test_shell_cmds_x86.elf, test_device_x86.elf, test_gpio_x86.elf, test_spi_x86.elf, test_i2c_x86.elf, test_pwm_x86.elf, test_fs_x86.elf, test_shell_fs_x86.elf, test_littlefs_x86.elf, test_fatfs_x86.elf, test_net_x86.elf]
 
   run-x86:
     deps: [bedrock_example_x86.elf]
@@ -3247,6 +3299,14 @@ targets:
     cmds:
       - "${CC} ${F4_CFLAGS} kernel/br_uart.c -o ${@}"
 
+  f4-br_user.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_user.c -o ${@}"
+
+  f4-br_usercall.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_usercall.c -o ${@}"
+
   f4-br_device.o:
     cmds:
       - "${CC} ${F4_CFLAGS} kernel/br_device.c -o ${@}"
@@ -3254,6 +3314,14 @@ targets:
   f4-br_hal_context.o:
     cmds:
       - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  f4-br_hal_fault.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/br_hal_fault.c -o ${@}"
+
+  f4-br_hal_mpu.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/br_hal_mpu.c -o ${@}"
 
   f4-br_hal_timer.o:
     cmds:
@@ -3624,12 +3692,12 @@ targets:
       - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
 
   libbedrock_kernel_f4.a:
-    deps: [f4-br_sched.o, f4-br_time.o, f4-br_task.o, f4-br_ipc.o, f4-br_panic.o, f4-br_uart.o, f4-br_device.o]
+    deps: [f4-br_sched.o, f4-br_time.o, f4-br_task.o, f4-br_ipc.o, f4-br_panic.o, f4-br_uart.o, f4-br_device.o, f4-br_user.o, f4-br_usercall.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
   libbedrock_hal_f4.a:
-    deps: [f4-br_hal_context.o, f4-br_hal_timer.o, f4-startup.o, f4-br_hal_uart.o, f4-br_hal_gpio.o, f4-br_hal_spi.o, f4-br_hal_i2c.o, f4-br_hal_pwm.o, f4-br_hal_netif.o]
+    deps: [f4-br_hal_context.o, f4-br_hal_timer.o, f4-startup.o, f4-br_hal_uart.o, f4-br_hal_gpio.o, f4-br_hal_spi.o, f4-br_hal_i2c.o, f4-br_hal_pwm.o, f4-br_hal_netif.o, f4-br_hal_fault.o, f4-br_hal_mpu.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -3759,7 +3827,7 @@ targets:
       - "${CC} ${F4_LDFLAGS} f4-test_net.o f4-board.o f4-br_libc.o -L. -Wl,--start-group -llwip_f4 -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
 
   stm32f4:
-    deps: [bedrock_example_f4.elf, test_task_delete_f4.elf, test_scheduler_f4.elf, test_semaphore_f4.elf, test_mutex_f4.elf, test_mqueue_f4.elf, test_sleep_list_f4.elf, test_pool_f4.elf, test_uart_rx_f4.elf, test_shell_f4.elf, test_console_f4.elf, test_task_info_f4.elf, test_shell_cmds_f4.elf, test_device_f4.elf, test_gpio_f4.elf, test_spi_f4.elf, test_i2c_f4.elf, test_pwm_f4.elf, test_fs_f4.elf, test_shell_fs_f4.elf, test_littlefs_f4.elf, test_fatfs_f4.elf, test_net_f4.elf]
+    deps: [bedrock_example_f4.elf, test_task_delete_f4.elf, test_scheduler_f4.elf, test_semaphore_f4.elf, test_mutex_f4.elf, test_mqueue_f4.elf, test_sleep_list_f4.elf, test_pool_f4.elf, test_uart_rx_f4.elf, test_shell_f4.elf, test_console_f4.elf, test_audit_f4.elf, test_mpu_f4.elf, test_task_info_f4.elf, test_shell_cmds_f4.elf, test_device_f4.elf, test_gpio_f4.elf, test_spi_f4.elf, test_i2c_f4.elf, test_pwm_f4.elf, test_fs_f4.elf, test_shell_fs_f4.elf, test_littlefs_f4.elf, test_fatfs_f4.elf, test_net_f4.elf]
 
   defconfig-stm32f4:
     cmds:
@@ -3770,8 +3838,537 @@ targets:
     cmds:
       - "qemu-system-arm -M olimex-stm32-h405 -nographic -kernel bedrock_example_f4.elf"
 
+  mpu-br_sched.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_sched.c -o ${@}"
+
+  mpu-br_time.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_time.c -o ${@}"
+
+  mpu-br_task.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_task.c -o ${@}"
+
+  mpu-br_ipc.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_ipc.c -o ${@}"
+
+  mpu-br_panic.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_panic.c -o ${@}"
+
+  mpu-br_uart.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_uart.c -o ${@}"
+
+  mpu-br_device.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_device.c -o ${@}"
+
+  mpu-br_user.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_user.c -o ${@}"
+
+  mpu-br_usercall.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 kernel/br_usercall.c -o ${@}"
+
+  mpu-br_hal_context.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  mpu-br_hal_timer.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_timer.c -o ${@}"
+
+  mpu-startup.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/startup.c -o ${@}"
+
+  mpu-br_hal_fault.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_fault.c -o ${@}"
+
+  mpu-br_hal_mpu.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_mpu.c -o ${@}"
+
+  mpu-br_hal_uart.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_hal_uart.c -o ${@}"
+
+  mpu-board.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/board.c -o ${@}"
+
+  mpu-test_mpu.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 examples/test_mpu.c -o ${@}"
+
+  mpu-br_string.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  mpu-br_hal_gpio.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_hal_gpio.c -o ${@}"
+
+  mpu-br_hal_spi.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_hal_spi.c -o ${@}"
+
+  mpu-br_hal_i2c.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_hal_i2c.c -o ${@}"
+
+  mpu-br_hal_pwm.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_hal_pwm.c -o ${@}"
+
+  mpu-br_netif_enet.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_netif_enet.c -o ${@}"
+
+  test_mpu.elf:
+    deps: [mpu-br_sched.o, mpu-br_time.o, mpu-br_task.o, mpu-br_ipc.o, mpu-br_panic.o, mpu-br_uart.o, mpu-br_device.o, mpu-br_user.o, mpu-br_usercall.o, mpu-br_hal_context.o, mpu-br_hal_timer.o, mpu-startup.o, mpu-br_hal_fault.o, mpu-br_hal_mpu.o, mpu-br_hal_uart.o, mpu-br_string.o, mpu-br_hal_gpio.o, mpu-br_hal_spi.o, mpu-br_hal_i2c.o, mpu-br_hal_pwm.o, mpu-br_netif_enet.o, mpu-board.o, mpu-test_mpu.o]
+    cmds:
+      - "${CC} ${LDFLAGS} mpu-test_mpu.o mpu-board.o mpu-br_sched.o mpu-br_time.o mpu-br_task.o mpu-br_ipc.o mpu-br_panic.o mpu-br_uart.o mpu-br_device.o mpu-br_user.o mpu-br_usercall.o mpu-br_hal_context.o mpu-br_hal_timer.o mpu-startup.o mpu-br_hal_fault.o mpu-br_hal_mpu.o mpu-br_hal_uart.o mpu-br_string.o mpu-br_hal_gpio.o mpu-br_hal_spi.o mpu-br_hal_i2c.o mpu-br_hal_pwm.o mpu-br_netif_enet.o -lgcc -o ${@}"
+
+  test-mpu:
+    deps: [test_mpu.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_mpu.elf -nographic"
+
+  mpurv-br_sched.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_sched.c -o ${@}"
+
+  mpurv-br_time.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_time.c -o ${@}"
+
+  mpurv-br_task.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_task.c -o ${@}"
+
+  mpurv-br_ipc.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_ipc.c -o ${@}"
+
+  mpurv-br_panic.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_panic.c -o ${@}"
+
+  mpurv-br_uart.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_uart.c -o ${@}"
+
+  mpurv-br_device.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_device.c -o ${@}"
+
+  mpurv-br_user.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_user.c -o ${@}"
+
+  mpurv-br_usercall.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 kernel/br_usercall.c -o ${@}"
+
+  mpurv-br_hal_context.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 arch/riscv32/br_hal_context.c -o ${@}"
+
+  mpurv-br_hal_timer.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 arch/riscv32/br_hal_timer.c -o ${@}"
+
+  mpurv-startup.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 arch/riscv32/startup.c -o ${@}"
+
+  mpurv-br_hal_mpu.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 arch/riscv32/br_hal_mpu.c -o ${@}"
+
+  mpurv-br_hal_uart.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 boards/qemu-riscv32-virt/br_hal_uart.c -o ${@}"
+
+  mpurv-br_hal_periph.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 boards/qemu-riscv32-virt/br_hal_periph.c -o ${@}"
+
+  mpurv-br_netif_virtio.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 boards/qemu-riscv32-virt/br_netif_virtio.c -o ${@}"
+
+  mpurv-board.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 boards/qemu-riscv32-virt/board.c -o ${@}"
+
+  mpurv-br_string.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  mpurv-test_mpu.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x10000000UL -DTEST_CODE_ADDR=0x80000100UL examples/test_mpu.c -o ${@}"
+
+  test_mpu_riscv32.elf:
+    deps: [mpurv-br_sched.o, mpurv-br_time.o, mpurv-br_task.o, mpurv-br_ipc.o, mpurv-br_panic.o, mpurv-br_uart.o, mpurv-br_device.o, mpurv-br_user.o, mpurv-br_usercall.o, mpurv-br_hal_context.o, mpurv-br_hal_timer.o, mpurv-startup.o, mpurv-br_hal_mpu.o, mpurv-br_hal_uart.o, mpurv-br_hal_periph.o, mpurv-br_netif_virtio.o, mpurv-br_string.o, mpurv-board.o, mpurv-test_mpu.o]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} mpurv-test_mpu.o mpurv-board.o mpurv-br_sched.o mpurv-br_time.o mpurv-br_task.o mpurv-br_ipc.o mpurv-br_panic.o mpurv-br_uart.o mpurv-br_device.o mpurv-br_user.o mpurv-br_usercall.o mpurv-br_hal_context.o mpurv-br_hal_timer.o mpurv-startup.o mpurv-br_hal_mpu.o mpurv-br_hal_uart.o mpurv-br_hal_periph.o mpurv-br_netif_virtio.o mpurv-br_string.o -lgcc -o ${@}"
+
+  test-mpu-riscv32:
+    deps: [test_mpu_riscv32.elf]
+    cmds:
+      - "qemu-system-riscv32 -M virt -bios none -nographic -kernel test_mpu_riscv32.elf"
+
+  mpurp-br_sched.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_sched.c -o ${@}"
+
+  mpurp-br_time.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_time.c -o ${@}"
+
+  mpurp-br_task.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_task.c -o ${@}"
+
+  mpurp-br_ipc.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_ipc.c -o ${@}"
+
+  mpurp-br_panic.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_panic.c -o ${@}"
+
+  mpurp-br_uart.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_uart.c -o ${@}"
+
+  mpurp-br_device.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_device.c -o ${@}"
+
+  mpurp-br_user.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_user.c -o ${@}"
+
+  mpurp-br_usercall.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 kernel/br_usercall.c -o ${@}"
+
+  mpurp-br_hal_context.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m0plus/br_hal_context.c -o ${@}"
+
+  mpurp-br_hal_timer.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m0plus/br_hal_timer.c -o ${@}"
+
+  mpurp-startup.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m0plus/startup.c -o ${@}"
+
+  mpurp-br_hal_fault.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m0plus/br_hal_fault.c -o ${@}"
+
+  mpurp-br_hal_mpu.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_mpu.c -o ${@}"
+
+  mpurp-br_hal_uart.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m0plus/br_hal_uart.c -o ${@}"
+
+  mpurp-br_hal_gpio.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_gpio.c -o ${@}"
+
+  mpurp-br_hal_spi.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_spi.c -o ${@}"
+
+  mpurp-br_hal_i2c.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_i2c.c -o ${@}"
+
+  mpurp-br_hal_pwm.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_pwm.c -o ${@}"
+
+  mpurp-br_hal_netif.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_netif.c -o ${@}"
+
+  mpurp-br_string.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  mpurp-test_mpu.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x40034000UL -DTEST_CODE_ADDR=0x10000100UL examples/test_mpu.c -o ${@}"
+
+  test_mpu_rp2040.elf:
+    deps: [mpurp-br_sched.o, mpurp-br_time.o, mpurp-br_task.o, mpurp-br_ipc.o, mpurp-br_panic.o, mpurp-br_uart.o, mpurp-br_device.o, mpurp-br_user.o, mpurp-br_usercall.o, mpurp-br_hal_context.o, mpurp-br_hal_timer.o, mpurp-startup.o, mpurp-br_hal_fault.o, mpurp-br_hal_mpu.o, mpurp-br_hal_uart.o, mpurp-br_hal_gpio.o, mpurp-br_hal_spi.o, mpurp-br_hal_i2c.o, mpurp-br_hal_pwm.o, mpurp-br_hal_netif.o, mpurp-br_string.o, mpurp-test_mpu.o, rp2040-boot2_crc.o]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} mpurp-test_mpu.o rp2040-boot2_crc.o mpurp-br_sched.o mpurp-br_time.o mpurp-br_task.o mpurp-br_ipc.o mpurp-br_panic.o mpurp-br_uart.o mpurp-br_device.o mpurp-br_user.o mpurp-br_usercall.o mpurp-br_hal_context.o mpurp-br_hal_timer.o mpurp-startup.o mpurp-br_hal_fault.o mpurp-br_hal_mpu.o mpurp-br_hal_uart.o mpurp-br_hal_gpio.o mpurp-br_hal_spi.o mpurp-br_hal_i2c.o mpurp-br_hal_pwm.o mpurp-br_hal_netif.o mpurp-br_string.o -lgcc -o ${@}"
+
+  mpux-br_sched.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_sched.c -o ${@}"
+
+  mpux-br_time.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_time.c -o ${@}"
+
+  mpux-br_task.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_task.c -o ${@}"
+
+  mpux-br_ipc.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_ipc.c -o ${@}"
+
+  mpux-br_panic.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_panic.c -o ${@}"
+
+  mpux-br_uart.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_uart.c -o ${@}"
+
+  mpux-br_device.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_device.c -o ${@}"
+
+  mpux-br_user.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_user.c -o ${@}"
+
+  mpux-br_usercall.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 kernel/br_usercall.c -o ${@}"
+
+  mpux-br_hal_context.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 arch/x86/br_hal_context.c -o ${@}"
+
+  mpux-br_hal_timer.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 arch/x86/br_hal_timer.c -o ${@}"
+
+  mpux-startup.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 arch/x86/startup.c -o ${@}"
+
+  mpux-br_hal_mpu.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 arch/x86/br_hal_mpu.c -o ${@}"
+
+  mpux-br_hal_uart.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 boards/qemu-x86/br_hal_uart.c -o ${@}"
+
+  mpux-br_hal_periph.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 boards/qemu-x86/br_hal_periph.c -o ${@}"
+
+  mpux-board.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 boards/qemu-x86/board.c -o ${@}"
+
+  mpux-br_string.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  mpux-test_mpu.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x200000UL -DTEST_CODE_ADDR=0x100000UL -DTEST_STACK_SIZE=4096 -DTEST_GRANT_BASE=0x300000UL examples/test_mpu.c -o ${@}"
+
+  test_mpu_x86.elf:
+    deps: [mpux-br_sched.o, mpux-br_time.o, mpux-br_task.o, mpux-br_ipc.o, mpux-br_panic.o, mpux-br_uart.o, mpux-br_device.o, mpux-br_user.o, mpux-br_usercall.o, mpux-br_hal_context.o, mpux-br_hal_timer.o, mpux-startup.o, mpux-br_hal_mpu.o, mpux-br_hal_uart.o, mpux-br_hal_periph.o, mpux-br_string.o, mpux-board.o, mpux-test_mpu.o]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} mpux-test_mpu.o mpux-board.o mpux-br_sched.o mpux-br_time.o mpux-br_task.o mpux-br_ipc.o mpux-br_panic.o mpux-br_uart.o mpux-br_device.o mpux-br_user.o mpux-br_usercall.o mpux-br_hal_context.o mpux-br_hal_timer.o mpux-startup.o mpux-br_hal_mpu.o mpux-br_hal_uart.o mpux-br_hal_periph.o mpux-br_string.o -lgcc -o ${@}"
+
+  test_audit.o:
+    cmds:
+      - "${CC} ${CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit.elf:
+    deps: [test_audit.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_audit.o lm3s-board.o -L. -Wl,--start-group -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  test-audit:
+    deps: [test_audit.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_audit.elf -nographic"
+
+  host-test_audit.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit_host:
+    deps: [host-test_audit.o, host-br_shell.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_audit.o host-br_shell.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
+
+  test-audit-host:
+    deps: [test_audit_host]
+    cmds:
+      - "timeout 5 ./test_audit_host; true"
+
+  riscv32-test_audit.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit_riscv32.elf:
+    deps: [riscv32-test_audit.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_audit.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
+  test-audit-riscv32:
+    deps: [test_audit_riscv32.elf]
+    cmds:
+      - "qemu-system-riscv32 -M virt -bios none -nographic -kernel test_audit_riscv32.elf"
+
+  rp2040-test_audit.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit_rp2040.elf:
+    deps: [rp2040-test_audit.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} rp2040-test_audit.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
+
+  test_audit_stm32f103.elf:
+    deps: [test_audit.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_audit.o stm32f103-board.o -L. -Wl,--start-group -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
+  x86-test_audit.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit_x86.elf:
+    deps: [x86-test_audit.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_audit.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  f4-test_audit.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_audit.c -o ${@}"
+
+  test_audit_f4.elf:
+    deps: [f4-test_audit.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_audit.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  mpuf4-br_sched.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_sched.c -o ${@}"
+
+  mpuf4-br_time.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_time.c -o ${@}"
+
+  mpuf4-br_task.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_task.c -o ${@}"
+
+  mpuf4-br_ipc.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_ipc.c -o ${@}"
+
+  mpuf4-br_panic.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_panic.c -o ${@}"
+
+  mpuf4-br_uart.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_uart.c -o ${@}"
+
+  mpuf4-br_device.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_device.c -o ${@}"
+
+  mpuf4-br_user.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_user.c -o ${@}"
+
+  mpuf4-br_usercall.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 kernel/br_usercall.c -o ${@}"
+
+  mpuf4-br_hal_context.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  mpuf4-br_hal_timer.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_timer.c -o ${@}"
+
+  mpuf4-startup.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/startup.c -o ${@}"
+
+  mpuf4-br_hal_fault.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_fault.c -o ${@}"
+
+  mpuf4-br_hal_mpu.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 arch/arm-cortex-m/br_hal_mpu.c -o ${@}"
+
+  mpuf4-br_hal_uart.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_uart.c -o ${@}"
+
+  mpuf4-br_hal_gpio.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_gpio.c -o ${@}"
+
+  mpuf4-br_hal_spi.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_spi.c -o ${@}"
+
+  mpuf4-br_hal_i2c.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_i2c.c -o ${@}"
+
+  mpuf4-br_hal_pwm.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_pwm.c -o ${@}"
+
+  mpuf4-br_hal_netif.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/br_hal_netif.c -o ${@}"
+
+  mpuf4-board.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/board.c -o ${@}"
+
+  mpuf4-br_string.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  mpuf4-test_mpu.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x40011000UL -DTEST_CODE_ADDR=0x08000100UL examples/test_mpu.c -o ${@}"
+
+  test_mpu_f4.elf:
+    deps: [mpuf4-br_sched.o, mpuf4-br_time.o, mpuf4-br_task.o, mpuf4-br_ipc.o, mpuf4-br_panic.o, mpuf4-br_uart.o, mpuf4-br_device.o, mpuf4-br_user.o, mpuf4-br_usercall.o, mpuf4-br_hal_context.o, mpuf4-br_hal_timer.o, mpuf4-startup.o, mpuf4-br_hal_fault.o, mpuf4-br_hal_mpu.o, mpuf4-br_hal_uart.o, mpuf4-br_hal_gpio.o, mpuf4-br_hal_spi.o, mpuf4-br_hal_i2c.o, mpuf4-br_hal_pwm.o, mpuf4-br_hal_netif.o, mpuf4-br_string.o, mpuf4-board.o, mpuf4-test_mpu.o]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} mpuf4-test_mpu.o mpuf4-board.o mpuf4-br_sched.o mpuf4-br_time.o mpuf4-br_task.o mpuf4-br_ipc.o mpuf4-br_panic.o mpuf4-br_uart.o mpuf4-br_device.o mpuf4-br_user.o mpuf4-br_usercall.o mpuf4-br_hal_context.o mpuf4-br_hal_timer.o mpuf4-startup.o mpuf4-br_hal_fault.o mpuf4-br_hal_mpu.o mpuf4-br_hal_uart.o mpuf4-br_hal_gpio.o mpuf4-br_hal_spi.o mpuf4-br_hal_i2c.o mpuf4-br_hal_pwm.o mpuf4-br_hal_netif.o mpuf4-br_string.o -lgcc -o ${@}"
+
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin *.uf2 rp2040-boot2_crc.S bootcrc bin2uf2"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host test_littlefs_host test_fatfs_host test_net_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_audit_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host test_littlefs_host test_fatfs_host test_net_host"
       - "rm -rf include/generated"

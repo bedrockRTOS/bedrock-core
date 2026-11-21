@@ -37,12 +37,12 @@ jobs:
           test_console.elf test_task_info.elf test_shell_cmds.elf
           test_device.elf test_gpio.elf test_spi.elf test_i2c.elf test_pwm.elf
           test_fs.elf test_shell_fs.elf test_littlefs.elf
-          test_net.elf test_net_qemu.elf
+          test_net.elf test_net_qemu.elf test_audit.elf test_mpu.elf
 
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs net; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs net audit; do
             echo "::group::test_${t}"
             out=$(printf 'bedrock\n' | timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel "test_${t}.elf" || true)
             echo "$out"
@@ -64,6 +64,14 @@ jobs:
           grep -q "=== All Tests Complete ===" <<< "$out"
           ! grep -q "FAIL" <<< "$out"
 
+      - name: Run the memory protection test on QEMU
+        run: |
+          out=$(timeout 40 qemu-system-arm -M lm3s6965evb -nographic -kernel test_mpu.elf < /dev/null || true)
+          echo "$out"
+          grep -q "=== All Tests Complete ===" <<< "$out"
+          ! grep -q "FAIL" <<< "$out"
+          ! grep -q "KERNEL PANIC" <<< "$out"
+
   host-tests:
     runs-on: ubuntu-24.04
     steps:
@@ -83,7 +91,7 @@ jobs:
       - name: Run tests
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net audit; do
             echo "::group::test_${t}_host"
             out=$(printf 'bedrock\n' | timeout 5 "./test_${t}_host" || true)
             echo "$out"
@@ -121,7 +129,7 @@ jobs:
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net audit; do
             echo "::group::test_${t}_riscv32"
             out=$(printf 'bedrock\n' | timeout 10 qemu-system-riscv32 -M virt -bios none -nographic -kernel "test_${t}_riscv32.elf" || true)
             echo "$out"
@@ -142,6 +150,14 @@ jobs:
           echo "$out"
           grep -q "=== All Tests Complete ===" <<< "$out"
           ! grep -q "FAIL" <<< "$out"
+
+      - name: Run the memory protection test on QEMU
+        run: |
+          out=$(timeout 40 qemu-system-riscv32 -M virt -bios none -nographic -kernel test_mpu_riscv32.elf < /dev/null || true)
+          echo "$out"
+          grep -q "=== All Tests Complete ===" <<< "$out"
+          ! grep -q "FAIL" <<< "$out"
+          ! grep -q "KERNEL PANIC" <<< "$out"
 
   x86:
     runs-on: ubuntu-24.04
@@ -167,7 +183,7 @@ jobs:
       - name: Run tests on QEMU
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net audit; do
             echo "::group::test_${t}_x86"
             out=$(printf 'bedrock\n' | timeout 15 qemu-system-i386 -kernel "test_${t}_x86.elf" -nographic -no-reboot || true)
             echo "$out"
@@ -181,6 +197,14 @@ jobs:
             fi
           done
           exit $failed
+
+      - name: Run the memory protection test on QEMU
+        run: |
+          out=$(timeout 40 qemu-system-i386 -kernel test_mpu_x86.elf -nographic -no-reboot < /dev/null || true)
+          echo "$out"
+          grep -q "=== All Tests Complete ===" <<< "$out"
+          ! grep -q "FAIL" <<< "$out"
+          ! grep -q "KERNEL PANIC" <<< "$out"
 
   rp2040:
     runs-on: ubuntu-24.04
@@ -213,7 +237,7 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs audit; do
             echo "::group::test_${t}_rp2040"
             out_file="$RUNNER_TEMP/test_${t}_rp2040.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
@@ -265,7 +289,7 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs audit; do
             echo "::group::test_${t}_stm32f103"
             out_file="$RUNNER_TEMP/test_${t}_stm32f103.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
@@ -299,7 +323,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
 
       - name: Install chorus
         run: |
@@ -317,7 +341,7 @@ jobs:
       - name: Run tests on Renode
         run: |
           failed=0
-          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net audit; do
             echo "::group::test_${t}_f4"
             out_file="$RUNNER_TEMP/test_${t}_f4.txt"
             timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
@@ -334,6 +358,14 @@ jobs:
             fi
           done
           exit $failed
+
+      - name: Run the memory protection test on QEMU
+        run: |
+          out=$(timeout 40 qemu-system-arm -M olimex-stm32-h405 -nographic -kernel test_mpu_f4.elf < /dev/null || true)
+          echo "$out"
+          grep -q "=== All Tests Complete ===" <<< "$out"
+          ! grep -q "FAIL" <<< "$out"
+          ! grep -q "KERNEL PANIC" <<< "$out"
 
       - uses: actions/upload-artifact@v4
         with:
