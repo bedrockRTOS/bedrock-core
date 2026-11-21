@@ -3,7 +3,15 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_console.h"
+
+/* Output buffer of the format tests. An AVR has little RAM and stack. */
+#ifdef __AVR__
+#  define BUF_SIZE  40
+#else
+#  define BUF_SIZE  64
+#endif
 
 static void print_result(bool pass, const char *label)
 {
@@ -22,7 +30,7 @@ static bool str_equal(const char *a, const char *b)
 
 static void run_snprintf_tests(void)
 {
-    char buf[64];
+    char buf[BUF_SIZE];
     int n;
 
     br_uart_puts("Test 1: br_snprintf formats\n");
@@ -30,7 +38,7 @@ static void run_snprintf_tests(void)
     n = br_snprintf(buf, sizeof(buf), "%d %i", -42, 7);
     print_result(str_equal(buf, "-42 7") && n == 5, "Test 1a: signed decimal");
 
-    n = br_snprintf(buf, sizeof(buf), "%u", 4000000000u);
+    n = br_snprintf(buf, sizeof(buf), "%lu", 4000000000ul);
     print_result(str_equal(buf, "4000000000") && n == 10, "Test 1b: unsigned decimal");
 
     br_snprintf(buf, sizeof(buf), "%x %X", 0xBEEFu, 0xBEEFu);
@@ -66,7 +74,7 @@ static void run_snprintf_tests(void)
     br_snprintf(buf, sizeof(buf), "%p", (void *)(uintptr_t)0x1234);
     print_result(str_equal(buf, "0x1234"), "Test 1l: pointer");
 
-    br_snprintf(buf, sizeof(buf), "%d", -2147483647 - 1);
+    br_snprintf(buf, sizeof(buf), "%ld", -2147483647L - 1);
     print_result(str_equal(buf, "-2147483648"), "Test 1m: INT_MIN");
 
     br_snprintf(buf, sizeof(buf), "%08x", 0xABCu);
@@ -101,7 +109,12 @@ static void run_printf_test(void)
     print_result(n == 23, "Test 3: returns the number of characters written");
 }
 
+/* Formatting 64-bit numbers needs a deep stack on an AVR */
+#ifdef __AVR__
+static uint8_t stack_supervisor[240];
+#else
 static uint8_t stack_supervisor[1024];
+#endif
 
 static void supervisor_task(void *arg)
 {

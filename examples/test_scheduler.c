@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
@@ -28,8 +29,11 @@ static void uart_put_uint(uint32_t v)
 
 /* Test 1: priority ordering */
 
-static uint8_t stack_prio_low[512];
-static uint8_t stack_prio_high[512];
+/* The phases run one after the other and delete their tasks, so they share
+ * the stacks. */
+#define RR_TASK_COUNT 3
+
+static uint8_t stack_pool[RR_TASK_COUNT][TEST_STACK(512)];
 
 static char    prio_log[3];
 static int     prio_log_len;
@@ -56,11 +60,14 @@ static void run_priority_test(void)
 
     br_tid_t low_tid, high_tid;
     br_task_create(&low_tid, "prio_low", prio_low_task, NULL, 6,
-                   stack_prio_low, sizeof(stack_prio_low));
+                   stack_pool[0], sizeof(stack_pool[0]));
     br_task_create(&high_tid, "prio_high", prio_high_task, NULL, 2,
-                   stack_prio_high, sizeof(stack_prio_high));
+                   stack_pool[1], sizeof(stack_pool[1]));
 
     br_sleep_ms(20);
+
+    br_task_delete(low_tid);
+    br_task_delete(high_tid);
 
     if (prio_log_len == 2 && prio_log[0] == 'H' && prio_log[1] == 'L') {
         br_uart_puts("Test 1: PASS - higher priority task ran first\n\n");
@@ -75,9 +82,6 @@ static void run_priority_test(void)
 
 /* Test 2: round-robin */
 
-#define RR_TASK_COUNT 3
-
-static uint8_t          stack_rr[RR_TASK_COUNT][512];
 static volatile uint32_t rr_counter[RR_TASK_COUNT];
 static br_tid_t          rr_tid[RR_TASK_COUNT];
 
@@ -96,13 +100,17 @@ static void run_round_robin_test(void)
     for (int i = 0; i < RR_TASK_COUNT; i++) {
         rr_counter[i] = 0;
         br_task_create(&rr_tid[i], "rr", rr_task, (void *)(uintptr_t)i, 4,
-                       stack_rr[i], sizeof(stack_rr[i]));
+                       stack_pool[i], sizeof(stack_pool[i]));
     }
 
     br_sleep_ms(80);
 
     for (int i = 0; i < RR_TASK_COUNT; i++) {
         br_task_suspend(rr_tid[i]);
+    }
+
+    for (int i = 0; i < RR_TASK_COUNT; i++) {
+        br_task_delete(rr_tid[i]);
     }
 
     bool all_ran = true;
@@ -126,8 +134,6 @@ static void run_round_robin_test(void)
 
 /* Test 3: preemption */
 
-static uint8_t           stack_preempt_low[512];
-static uint8_t           stack_preempt_high[512];
 static volatile uint32_t preempt_low_counter;
 static volatile bool     preempt_high_ran;
 static volatile uint32_t preempt_low_counter_at_high_start;
@@ -159,13 +165,15 @@ static void run_preemption_test(void)
 
     br_tid_t low_tid, high_tid;
     br_task_create(&high_tid, "preempt_high", preempt_high_task, NULL, 1,
-                   stack_preempt_high, sizeof(stack_preempt_high));
+                   stack_pool[0], sizeof(stack_pool[0]));
     br_task_create(&low_tid, "preempt_low", preempt_low_task, NULL, 6,
-                   stack_preempt_low, sizeof(stack_preempt_low));
+                   stack_pool[1], sizeof(stack_pool[1]));
 
     br_sleep_ms(60);
 
     br_task_suspend(low_tid);
+    br_task_delete(low_tid);
+    br_task_delete(high_tid);
 
     if (preempt_high_ran && preempt_low_counter_at_high_start > 0) {
         br_uart_puts("Test 3: PASS - high task preempted the busy low task\n\n");
@@ -174,7 +182,7 @@ static void run_preemption_test(void)
     }
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

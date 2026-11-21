@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_shell.h"
 
 static int  add_argc;
@@ -92,7 +93,12 @@ static void run_readline_test(void)
     print_result(err == BR_OK && bedrock_calls == 1, "Test 2: \"bedrock\" command ran");
 }
 
+/* Reading a line and running a command needs more stack than the others */
+#ifdef __AVR__
+static uint8_t stack_supervisor[256];
+#else
 static uint8_t stack_supervisor[1024];
+#endif
 
 static void supervisor_task(void *arg)
 {

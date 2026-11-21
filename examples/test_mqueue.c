@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
@@ -60,7 +61,7 @@ static void run_basic_test(void)
 
 static uint32_t         full_buf[1];
 static br_mqueue_t       full_mq;
-static uint8_t           stack_full_sender[512];
+static uint8_t           stack_full_sender[TEST_STACK(512)];
 static volatile br_err_t full_sender_result = BR_ERR_INVALID;
 static volatile bool     full_sender_done;
 
@@ -109,7 +110,7 @@ static void run_full_blocking_test(void)
 
 static uint32_t          empty_buf[1];
 static br_mqueue_t        empty_mq;
-static uint8_t            stack_empty_receiver[512];
+static uint8_t            stack_empty_receiver[TEST_STACK(512)];
 static volatile br_err_t  empty_receiver_result = BR_ERR_INVALID;
 static volatile uint32_t  empty_receiver_value;
 static volatile bool      empty_receiver_done;
@@ -173,7 +174,7 @@ static void run_timeout_test(void)
                  "Test 3: recv on an empty queue times out");
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

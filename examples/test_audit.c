@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_shell.h"
 
 static void print_result(bool pass, const char *label)
@@ -11,10 +12,10 @@ static void print_result(bool pass, const char *label)
     br_uart_puts(pass ? ": PASS\n" : ": FAIL\n");
 }
 
-static uint8_t stack_a[1024];
-static uint8_t stack_b[1024];
-static uint8_t stack_c[1024];
-static uint8_t stack_supervisor[1536];
+static uint8_t stack_a[TEST_STACK(1024)];
+static uint8_t stack_b[TEST_STACK(1024)];
+static uint8_t stack_c[TEST_STACK(1024)];
+static uint8_t stack_supervisor[TEST_STACK(1536)];
 
 static br_sem_t       sem;
 static volatile int   sem_result = 99;

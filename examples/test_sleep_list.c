@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 
@@ -15,9 +16,9 @@ static void print_result(bool pass, const char *label)
 /* Test 1: tasks inserted out of chronological order must wake up in
  * ascending wake-time order, not creation order. */
 
-static uint8_t stack_order_a[512];
-static uint8_t stack_order_b[512];
-static uint8_t stack_order_c[512];
+static uint8_t stack_order_a[TEST_STACK(512)];
+static uint8_t stack_order_b[TEST_STACK(512)];
+static uint8_t stack_order_c[TEST_STACK(512)];
 
 static char order_log[3];
 static int  order_log_len;
@@ -39,15 +40,19 @@ static void run_ordering_test(void)
 
     order_log_len = 0;
 
-    br_tid_t tid;
-    br_task_create(&tid, "order_a", order_task_a, NULL, 3,
+    br_tid_t tid_a, tid_b, tid_c;
+    br_task_create(&tid_a, "order_a", order_task_a, NULL, 3,
                    stack_order_a, sizeof(stack_order_a));
-    br_task_create(&tid, "order_c", order_task_c, NULL, 3,
+    br_task_create(&tid_c, "order_c", order_task_c, NULL, 3,
                    stack_order_c, sizeof(stack_order_c));
-    br_task_create(&tid, "order_b", order_task_b, NULL, 3,
+    br_task_create(&tid_b, "order_b", order_task_b, NULL, 3,
                    stack_order_b, sizeof(stack_order_b));
 
     br_sleep_ms(60);
+
+    br_task_delete(tid_a);
+    br_task_delete(tid_b);
+    br_task_delete(tid_c);
 
     bool order_ok = order_log_len == 3 &&
                     order_log[0] == 'B' &&
@@ -69,7 +74,7 @@ static void run_ordering_test(void)
 
 #define BATCH_TASK_COUNT 3
 
-static uint8_t           stack_batch[BATCH_TASK_COUNT][512];
+static uint8_t           stack_batch[BATCH_TASK_COUNT][TEST_STACK(512)];
 static volatile uint32_t batch_woken_count;
 
 static void batch_task(void *arg)
@@ -86,19 +91,23 @@ static void run_batch_wakeup_test(void)
 
     batch_woken_count = 0;
 
-    br_tid_t tid;
+    br_tid_t tids[BATCH_TASK_COUNT];
     for (int i = 0; i < BATCH_TASK_COUNT; i++) {
-        br_task_create(&tid, "batch", batch_task, NULL, 3,
+        br_task_create(&tids[i], "batch", batch_task, NULL, 3,
                        stack_batch[i], sizeof(stack_batch[i]));
     }
 
     br_sleep_ms(60);
 
+    for (int i = 0; i < BATCH_TASK_COUNT; i++) {
+        br_task_delete(tids[i]);
+    }
+
     print_result(batch_woken_count == BATCH_TASK_COUNT,
                  "Test 2: all same-deadline tasks woke from one alarm");
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

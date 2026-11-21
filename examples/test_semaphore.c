@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
@@ -50,7 +51,7 @@ static void run_basic_test(void)
 
 /* Test 2: timeout */
 
-static uint8_t           stack_timeout_waiter[512];
+static uint8_t           stack_timeout_waiter[TEST_STACK(512)];
 static volatile br_err_t timeout_waiter_result = BR_OK;
 static volatile br_time_t timeout_waiter_elapsed_us;
 static br_sem_t           timeout_sem;
@@ -113,7 +114,7 @@ static void run_overflow_test(void)
 
 /* Test 4: give wakes a blocked waiter directly, without touching count */
 
-static uint8_t            stack_wake_waiter[512];
+static uint8_t            stack_wake_waiter[TEST_STACK(512)];
 static volatile br_err_t  wake_waiter_result = BR_ERR_INVALID;
 static volatile bool      wake_waiter_done;
 static br_sem_t           wake_sem;
@@ -149,7 +150,7 @@ static void run_wakeup_test(void)
                  "Test 4: waiter woken by give");
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

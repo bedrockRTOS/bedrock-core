@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_uart_dev.h"
 
 static void print_result(bool pass, const char *label)
@@ -182,7 +183,7 @@ static void run_uart_tests(void)
     br_device_close(&uart_dev.dev);
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

@@ -3,10 +3,16 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_gpio.h"
 
 #define TEST_PORT  0
-#define TEST_PIN   6
+/* PB5 is the LED of an Arduino Uno. PB6 and PB7 are the crystal pins. */
+#ifdef __AVR__
+#  define TEST_PIN   5
+#else
+#  define TEST_PIN   6
+#endif
 
 static void print_result(bool pass, const char *label)
 {
@@ -25,7 +31,7 @@ static void run_gpio_tests(void)
     br_device_open(dev);
 
     br_err_t err = br_gpio_configure(dev, TEST_PIN, BR_GPIO_OUTPUT);
-    if (err == BR_ERR_INVALID) {
+    if (err == BR_ERR_INVALID || err == BR_ERR_IO) {
         br_uart_puts("Test 1: SKIP, no GPIO on this target\n");
         return;
     }
@@ -60,7 +66,7 @@ static void run_gpio_tests(void)
     br_device_close(dev);
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

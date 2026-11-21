@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 #include "br_shell.h"
 #include "br_pool.h"
 
@@ -13,7 +14,7 @@ static void print_result(bool pass, const char *label)
 }
 
 static uint8_t pool_storage[4 * 32];
-static uint8_t stack_worker[512];
+static uint8_t stack_worker[TEST_STACK(512)];
 
 static void worker_task(void *arg)
 {
@@ -49,7 +50,7 @@ static void run_command_tests(void)
     print_result(br_shell_execute(help_line) == 0, "Test 1f: help lists the built-in commands");
 }
 
-static uint8_t stack_supervisor[1536];
+static uint8_t stack_supervisor[TEST_STACK(1536)];
 
 static void supervisor_task(void *arg)
 {

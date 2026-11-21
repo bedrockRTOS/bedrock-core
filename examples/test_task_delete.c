@@ -3,12 +3,13 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 
-static uint8_t stack_supervisor[1024];
-static uint8_t stack_worker[512];
-static uint8_t stack_test[512];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
+static uint8_t stack_worker[TEST_STACK(512)];
+static uint8_t stack_test[TEST_STACK(512)];
 
 static volatile int worker_run_count = 0;
 static br_tid_t current_worker_tid = 0;

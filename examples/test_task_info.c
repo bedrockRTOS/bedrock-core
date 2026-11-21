@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 static void print_result(bool pass, const char *label)
 {
@@ -26,8 +27,12 @@ void br_hook_idle(void)
     idle_calls++;
 }
 
-static uint8_t stack_probe[512];
-static uint8_t stack_busy[512];
+/* Bytes of the probe stack the test writes: low in the stack, then higher */
+#define PROBE_LOW   (sizeof(stack_probe) * 3 / 5)
+#define PROBE_HIGH  (sizeof(stack_probe) / 5)
+
+static uint8_t stack_probe[TEST_STACK(512)];
+static uint8_t stack_busy[TEST_STACK(512)];
 
 static void probe_task(void *arg)
 {
@@ -88,14 +93,14 @@ static void run_stack_tests(void)
     print_result(info.stack_used > 0 && info.stack_used < sizeof(stack_probe) / 2,
                  "Test 2a: fresh stack is mostly unused");
 
-    stack_probe[300] = 0;
+    stack_probe[PROBE_LOW] = 0;
     br_task_get_info(probe_tid, &info);
-    print_result(info.stack_used == sizeof(stack_probe) - (300 - sizeof(uint32_t)),
+    print_result(info.stack_used == sizeof(stack_probe) - (PROBE_LOW - sizeof(uint32_t)),
                  "Test 2b: mark follows the lowest written byte");
 
-    stack_probe[100] = 0;
+    stack_probe[PROBE_HIGH] = 0;
     br_task_get_info(probe_tid, &info);
-    print_result(info.stack_used == sizeof(stack_probe) - (100 - sizeof(uint32_t)),
+    print_result(info.stack_used == sizeof(stack_probe) - (PROBE_HIGH - sizeof(uint32_t)),
                  "Test 2c: mark moves down as the stack grows");
 
     br_task_delete(probe_tid);
@@ -144,7 +149,7 @@ static void run_stats_tests(void)
     br_task_delete(busy_tid);
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 #define EXPECTED_LINE "bedrock"
 
@@ -61,7 +62,7 @@ static void run_timeout_test(void)
                  "Test 2: getc times out when no data arrives");
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {

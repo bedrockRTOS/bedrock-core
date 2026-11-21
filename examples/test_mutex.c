@@ -3,6 +3,7 @@
  */
 
 #include "bedrock/bedrock.h"
+#include "test_stack.h"
 
 extern void br_uart_puts(const char *s);
 
@@ -37,7 +38,7 @@ static void run_basic_test(void)
 /* Test 2: timeout */
 
 static br_mutex_t timeout_mtx;
-static uint8_t    stack_timeout_holder[512];
+static uint8_t    stack_timeout_holder[TEST_STACK(512)];
 
 static void timeout_holder_task(void *arg)
 {
@@ -62,6 +63,8 @@ static void run_timeout_test(void)
     br_err_t err = br_mutex_lock(&timeout_mtx, BR_MSEC(30));
     br_time_t elapsed = br_uptime_us() - start;
 
+    br_task_delete(tid);
+
     print_result(err == BR_ERR_TIMEOUT && elapsed >= BR_MSEC(30),
                  "Test 2: lock on a held mutex times out");
 }
@@ -70,7 +73,7 @@ static void run_timeout_test(void)
 
 static br_mutex_t pi_mtx;
 
-static uint8_t stack_pi_low[512];
+static uint8_t stack_pi_low[TEST_STACK(512)];
 static volatile br_err_t pi_low_lock_result = BR_ERR_INVALID;
 
 static void pi_low_task(void *arg)
@@ -83,7 +86,7 @@ static void pi_low_task(void *arg)
     br_task_suspend(br_task_self());
 }
 
-static uint8_t stack_pi_medium[512];
+static uint8_t stack_pi_medium[TEST_STACK(512)];
 static volatile uint32_t pi_medium_counter;
 
 static void pi_medium_task(void *arg)
@@ -94,7 +97,7 @@ static void pi_medium_task(void *arg)
     }
 }
 
-static uint8_t           stack_pi_high[512];
+static uint8_t           stack_pi_high[TEST_STACK(512)];
 static volatile br_err_t pi_high_result = BR_ERR_INVALID;
 
 static void pi_high_task(void *arg)
@@ -128,8 +131,13 @@ static void run_priority_inheritance_test(void)
 
     br_sleep_ms(200);
 
-    print_result(pi_low_lock_result == BR_OK && pi_high_result == BR_OK &&
-                 pi_medium_counter > 0,
+    bool inherited = pi_low_lock_result == BR_OK && pi_high_result == BR_OK &&
+                     pi_medium_counter > 0;
+    br_task_delete(med_tid);
+    br_task_delete(high_tid);
+    br_task_delete(low_tid);
+
+    print_result(inherited,
                  "Test 3: boosted low task hands off to high despite a busy medium task");
 }
 
@@ -155,7 +163,7 @@ static void run_isr_rejection_test(void)
 #endif
 }
 
-static uint8_t stack_supervisor[1024];
+static uint8_t stack_supervisor[TEST_STACK(1024)];
 
 static void supervisor_task(void *arg)
 {
