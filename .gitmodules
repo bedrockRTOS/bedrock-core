@@ -4,3 +4,6 @@
 [submodule "3rd/tools/kconfig"]
 	path = 3rd/tools/kconfig
 	url = https://github.com/bedrockRTOS/kconfig-tools.git
+[submodule "ports/littlefs/upstream"]
+	path = ports/littlefs/upstream
+	url = https://github.com/littlefs-project/littlefs.git
