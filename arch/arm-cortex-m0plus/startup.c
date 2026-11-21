@@ -48,6 +48,7 @@ extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void TIMER_IRQ_0_Handler(void);
 extern void UART0_IRQ_Handler(void);
+extern void IO_IRQ_BANK0_Handler(void) __attribute__((weak));
 
 static void clocks_init(void)
 {
@@ -113,5 +114,6 @@ const uint32_t vectors[] = {
     (uint32_t)PendSV_Handler,
     (uint32_t)Default_Handler,
     (uint32_t)TIMER_IRQ_0_Handler,
+    [16 + 13] = (uint32_t)IO_IRQ_BANK0_Handler,
     [16 + 20] = (uint32_t)UART0_IRQ_Handler,
 };
