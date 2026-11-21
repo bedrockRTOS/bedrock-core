@@ -54,6 +54,10 @@ uint32_t br_net_dns(void);
 
 uint32_t br_net_rx_wakeups(void);
 
+#if CONFIG_MPU
+br_err_t br_net_enable_user_calls(void);
+#endif
+
 void     br_shell_register_net(void);
 
 #endif

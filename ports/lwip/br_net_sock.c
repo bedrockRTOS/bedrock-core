@@ -434,3 +434,221 @@ uint32_t br_net_dns(void)
     UNLOCK_TCPIP_CORE();
     return ip;
 }
+
+#if CONFIG_MPU
+
+#include "bedrock/br_syscall.h"
+
+#define USER_NAME_MAX  64
+#define BLOCK_MAX      8
+
+static struct {
+    br_tid_t owner;
+    bool     used;
+} sock_owner[BR_NET_MAX_SOCKETS];
+
+static bool sock_ok(const br_tcb_t *t, uint32_t fd)
+{
+    return fd < BR_NET_MAX_SOCKETS && sock_owner[fd].used && sock_owner[fd].owner == t->id;
+}
+
+static void sock_claim(const br_tcb_t *t, int fd)
+{
+    if (fd >= 0 && fd < BR_NET_MAX_SOCKETS) {
+        sock_owner[fd].owner = t->id;
+        sock_owner[fd].used  = true;
+    }
+}
+
+static bool out_ok(const br_tcb_t *t, uint32_t ptr, size_t size)
+{
+    return ptr % 4 == 0 && br_user_access_ok(t, (const void *)ptr, size, BR_MEM_W);
+}
+
+static bool block_get(const br_tcb_t *t, uint32_t ptr, uint32_t *out, size_t words)
+{
+    if (ptr % 4 != 0 || !br_user_access_ok(t, (const void *)ptr, words * 4, BR_MEM_R)) {
+        return false;
+    }
+    for (size_t i = 0; i < words; i++) {
+        out[i] = ((const uint32_t *)ptr)[i];
+    }
+    return true;
+}
+
+static br_time_t to_time(uint32_t lo, uint32_t hi)
+{
+    return ((br_time_t)hi << 32) | lo;
+}
+
+static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
+{
+    uint32_t b[BLOCK_MAX];
+    int32_t  r = BR_ERR_INVALID;
+
+    switch (a[0]) {
+    case BR_SYS_NET_SOCKET:
+        r = br_net_socket((int)a[1]);
+        sock_claim(t, r);
+        break;
+
+    case BR_SYS_NET_BIND:
+        r = sock_ok(t, a[1]) ? br_net_bind((int)a[1], a[2], (uint16_t)a[3]) : BR_ERR_INVALID;
+        break;
+
+    case BR_SYS_NET_LISTEN:
+        r = sock_ok(t, a[1]) ? br_net_listen((int)a[1], (int)a[2]) : BR_ERR_INVALID;
+        break;
+
+    case BR_SYS_NET_CONNECT:
+        r = sock_ok(t, a[1]) ? br_net_connect((int)a[1], a[2], (uint16_t)a[3]) : BR_ERR_INVALID;
+        break;
+
+    case BR_SYS_NET_CLOSE:
+        if (sock_ok(t, a[1])) {
+            r = br_net_close((int)a[1]);
+            sock_owner[a[1]].used = false;
+        }
+        break;
+
+    case BR_SYS_NET_SEND:
+        if (!sock_ok(t, a[1])) {
+            r = BR_ERR_INVALID;
+        } else if (!br_user_access_ok(t, (const void *)a[2], a[3], BR_MEM_R)) {
+            r = BR_ERR_PERM;
+        } else {
+            r = br_net_send((int)a[1], (const void *)a[2], a[3]);
+        }
+        break;
+
+    case BR_SYS_NET_SENDTO:
+        if (!block_get(t, a[1], b, 5)) {
+            r = BR_ERR_PERM;
+        } else if (!sock_ok(t, b[0])) {
+            r = BR_ERR_INVALID;
+        } else if (!br_user_access_ok(t, (const void *)b[1], b[2], BR_MEM_R)) {
+            r = BR_ERR_PERM;
+        } else {
+            r = br_net_sendto((int)b[0], (const void *)b[1], b[2], b[3], (uint16_t)b[4]);
+        }
+        break;
+
+    case BR_SYS_NET_RECV:
+        if (!block_get(t, a[1], b, 5)) {
+            r = BR_ERR_PERM;
+        } else if (!sock_ok(t, b[0])) {
+            r = BR_ERR_INVALID;
+        } else if (!br_user_access_ok(t, (const void *)b[1], b[2], BR_MEM_W)) {
+            r = BR_ERR_PERM;
+        } else {
+            r = br_net_recv((int)b[0], (void *)b[1], b[2], to_time(b[3], b[4]));
+        }
+        break;
+
+    case BR_SYS_NET_RECVFROM:
+        if (!block_get(t, a[1], b, 7)) {
+            r = BR_ERR_PERM;
+        } else if (!sock_ok(t, b[0])) {
+            r = BR_ERR_INVALID;
+        } else if (!br_user_access_ok(t, (const void *)b[1], b[2], BR_MEM_W) ||
+                   !out_ok(t, b[5], sizeof(uint32_t)) || !out_ok(t, b[6], sizeof(uint32_t))) {
+            r = BR_ERR_PERM;
+        } else {
+            uint32_t ip = 0;
+            uint16_t port = 0;
+            r = br_net_recvfrom((int)b[0], (void *)b[1], b[2], to_time(b[3], b[4]), &ip, &port);
+            if (r >= 0) {
+                *(uint32_t *)b[5] = ip;
+                *(uint32_t *)b[6] = port;
+            }
+        }
+        break;
+
+    case BR_SYS_NET_ACCEPT:
+        if (!block_get(t, a[1], b, 5)) {
+            r = BR_ERR_PERM;
+        } else if (!sock_ok(t, b[0])) {
+            r = BR_ERR_INVALID;
+        } else if (!out_ok(t, b[3], sizeof(uint32_t)) || !out_ok(t, b[4], sizeof(uint32_t))) {
+            r = BR_ERR_PERM;
+        } else {
+            uint32_t ip = 0;
+            uint16_t port = 0;
+            r = br_net_accept((int)b[0], to_time(b[1], b[2]), &ip, &port);
+            if (r >= 0) {
+                sock_claim(t, r);
+                *(uint32_t *)b[3] = ip;
+                *(uint32_t *)b[4] = port;
+            }
+        }
+        break;
+
+    case BR_SYS_NET_PING:
+        if (!block_get(t, a[1], b, 4)) {
+            r = BR_ERR_PERM;
+        } else if (!out_ok(t, b[3], sizeof(uint32_t))) {
+            r = BR_ERR_PERM;
+        } else {
+            uint32_t rtt = 0;
+            r = br_net_ping(b[0], to_time(b[1], b[2]), &rtt);
+            if (r == BR_OK) {
+                *(uint32_t *)b[3] = rtt;
+            }
+        }
+        break;
+
+    case BR_SYS_NET_RESOLVE: {
+        char name[USER_NAME_MAX];
+        r = br_user_copy_string(t, (const void *)a[1], name, sizeof(name));
+        if (r >= 0 && !out_ok(t, a[2], sizeof(uint32_t))) {
+            r = BR_ERR_PERM;
+        } else if (r >= 0) {
+            uint32_t ip = 0;
+            r = br_net_resolve(name, &ip);
+            if (r == BR_OK) {
+                *(uint32_t *)a[2] = ip;
+            }
+        }
+        break;
+    }
+
+    case BR_SYS_NET_IFINFO: {
+        br_net_ifinfo_t info;
+        if (!out_ok(t, a[2], sizeof(info))) {
+            r = BR_ERR_PERM;
+        } else {
+            r = br_net_ifinfo(a[1], &info);
+            if (r == BR_OK) {
+                *(br_net_ifinfo_t *)a[2] = info;
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    return (uint32_t)r;
+}
+
+static void net_release(br_tid_t tid)
+{
+    for (int i = 0; i < BR_NET_MAX_SOCKETS; i++) {
+        if (sock_owner[i].used && sock_owner[i].owner == tid) {
+            br_net_close(i);
+            sock_owner[i].used = false;
+        }
+    }
+}
+
+br_err_t br_net_enable_user_calls(void)
+{
+    br_err_t err = br_syscall_register(BR_SYS_NET_SOCKET, 13, net_handler);
+    if (err == BR_OK) {
+        err = br_user_release_register(net_release);
+    }
+    return err;
+}
+
+#endif
