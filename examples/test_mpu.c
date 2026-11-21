@@ -384,7 +384,7 @@ static void uc_task(void *arg)
     uc_arg = 0;
     uc_results[i++] = br_user_fs_stat("f.txt", &uc_arg) == BR_OK && uc_arg == 5;
     uc_results[i++] = br_user_fs_open((const char *)uc_kernel_ptr, BR_FS_READ) == BR_ERR_PERM;
-    uc_results[i++] = br_user_net_socket(1) == BR_ERR_INVALID;
+    uc_results[i++] = br_user_net_socket(BR_AF_INET, 1) == BR_ERR_INVALID;
 
     uc_results[UC_RESULTS - 1] = 1;
     while (1) {
