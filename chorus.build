@@ -11,6 +11,10 @@ variables:
   M0_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft -Iinclude -Ilib -Idrivers"
   M0_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/rpi-pico/linker.ld -mcpu=cortex-m0plus -mthumb"
   TOOL_CFLAGS: "-Wall -Wextra -Werror -Os -std=c11"
+  F4_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -mcpu=cortex-m4 -mthumb -mfloat-abi=soft -DBR_HAL_SYS_CLOCK_HZ=16000000 -Iinclude -Ilib -Idrivers"
+  F4_LDFLAGS: "-nostdlib -Wl,--gc-sections -Tboards/stm32f4-discovery/linker.ld -mcpu=cortex-m4 -mthumb"
+  X86_CFLAGS: "-c -Wall -Wextra -Werror -Os -m32 -march=i686 -ffreestanding -fno-pic -fno-pie -fno-stack-protector -fcf-protection=none -mgeneral-regs-only -ffunction-sections -fdata-sections -std=c11 -Iinclude -Ilib -Idrivers -Iarch/x86"
+  X86_LDFLAGS: "-m32 -nostdlib -static -no-pie -Wl,--gc-sections -Wl,-T,boards/qemu-x86/linker.ld -Wl,-m,elf_i386"
   RV_CC: "riscv64-elf-gcc"
   RV_AR: "riscv64-elf-ar"
   RV_CFLAGS: "-c -Wall -Wextra -Werror -Os -ffreestanding -ffunction-sections -fdata-sections -std=c11 -march=rv32imac_zicsr -mabi=ilp32 -DBR_HAL_SYS_CLOCK_HZ=10000000 -Iinclude -Ilib -Idrivers"
@@ -2691,6 +2695,1080 @@ targets:
     deps: [bedrock_udp_echo_riscv32.elf]
     cmds:
       - "qemu-system-riscv32 -M virt -bios none -nographic -global virtio-mmio.force-legacy=false -netdev user,id=n0,hostfwd=udp::7777-:7 -device virtio-net-device,netdev=n0 -kernel bedrock_udp_echo_riscv32.elf"
+
+  x86-br_sched.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_sched.c -o ${@}"
+
+  x86-br_time.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_time.c -o ${@}"
+
+  x86-br_task.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_task.c -o ${@}"
+
+  x86-br_ipc.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_ipc.c -o ${@}"
+
+  x86-br_panic.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_panic.c -o ${@}"
+
+  x86-br_uart.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_uart.c -o ${@}"
+
+  x86-br_device.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} kernel/br_device.c -o ${@}"
+
+  x86-br_hal_context.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} arch/x86/br_hal_context.c -o ${@}"
+
+  x86-br_hal_timer.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} arch/x86/br_hal_timer.c -o ${@}"
+
+  x86-startup.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} arch/x86/startup.c -o ${@}"
+
+  x86-br_hal_uart.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} boards/qemu-x86/br_hal_uart.c -o ${@}"
+
+  x86-br_hal_periph.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} boards/qemu-x86/br_hal_periph.c -o ${@}"
+
+  x86-board.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} boards/qemu-x86/board.c -o ${@}"
+
+  x86-br_pool.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_pool.c -o ${@}"
+
+  x86-br_shell.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_shell.c -o ${@}"
+
+  x86-br_console.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_console.c -o ${@}"
+
+  x86-br_shell_cmds.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_shell_cmds.c -o ${@}"
+
+  x86-br_fs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_fs.c -o ${@}"
+
+  x86-br_ramdisk.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_ramdisk.c -o ${@}"
+
+  x86-br_shell_fs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} lib/br_shell_fs.c -o ${@}"
+
+  x86-br_string.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  x86-br_gpio.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_gpio.c -o ${@}"
+
+  x86-br_spi.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_spi.c -o ${@}"
+
+  x86-br_i2c.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_i2c.c -o ${@}"
+
+  x86-br_pwm.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_pwm.c -o ${@}"
+
+  x86-br_capture.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_capture.c -o ${@}"
+
+  x86-br_uart_dev.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  x86-br_netif_mock.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} drivers/br_netif_mock.c -o ${@}"
+
+  x86-br_libc.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -fno-builtin -fno-tree-loop-distribute-patterns ports/br_libc.c -o ${@}"
+
+  x86-lfs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  x86-lfs_util.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  x86-br_lfs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  x86-ff.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -w -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/upstream/ff.c -o ${@}"
+
+  x86-br_ff.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/br_ff.c -o ${@}"
+
+  x86-lwip_init.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  x86-lwip_def.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  x86-lwip_dns.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  x86-lwip_inet_chksum.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  x86-lwip_ip.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  x86-lwip_mem.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  x86-lwip_memp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  x86-lwip_netif.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  x86-lwip_pbuf.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  x86-lwip_raw.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  x86-lwip_stats.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  x86-lwip_sys.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  x86-lwip_tcp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  x86-lwip_tcp_in.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  x86-lwip_tcp_out.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  x86-lwip_timeouts.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  x86-lwip_udp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  x86-lwip_acd.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  x86-lwip_autoip.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  x86-lwip_dhcp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  x86-lwip_etharp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  x86-lwip_icmp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  x86-lwip_igmp.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  x86-lwip_ip4_frag.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  x86-lwip_ip4.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  x86-lwip_ip4_addr.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  x86-lwip_api_lib.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  x86-lwip_api_msg.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  x86-lwip_err.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  x86-lwip_if_api.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  x86-lwip_netbuf.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  x86-lwip_netdb.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  x86-lwip_netifapi.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  x86-lwip_tcpip.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  x86-lwip_ethernet.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  x86-sys_arch.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  x86-br_net.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  x86-br_net_sock.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  x86-br_shell_net.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  x86-main.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/main.c -o ${@}"
+
+  x86-test_task_delete.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_task_delete.c -o ${@}"
+
+  x86-test_scheduler.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_scheduler.c -o ${@}"
+
+  x86-test_semaphore.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_semaphore.c -o ${@}"
+
+  x86-test_mutex.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_mutex.c -o ${@}"
+
+  x86-test_mqueue.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  x86-test_sleep_list.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_sleep_list.c -o ${@}"
+
+  x86-test_pool.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_pool.c -o ${@}"
+
+  x86-test_uart_rx.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_uart_rx.c -o ${@}"
+
+  x86-test_shell.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_shell.c -o ${@}"
+
+  x86-test_console.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_console.c -o ${@}"
+
+  x86-test_task_info.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_task_info.c -o ${@}"
+
+  x86-test_shell_cmds.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_shell_cmds.c -o ${@}"
+
+  x86-test_device.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_device.c -o ${@}"
+
+  x86-test_gpio.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_gpio.c -o ${@}"
+
+  x86-test_spi.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_spi.c -o ${@}"
+
+  x86-test_i2c.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_i2c.c -o ${@}"
+
+  x86-test_pwm.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_pwm.c -o ${@}"
+
+  x86-test_fs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_fs.c -o ${@}"
+
+  x86-test_shell_fs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} examples/test_shell_fs.c -o ${@}"
+
+  x86-test_littlefs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  x86-test_fatfs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream examples/test_fatfs.c -o ${@}"
+
+  x86-test_net.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  libbedrock_kernel_x86.a:
+    deps: [x86-br_sched.o, x86-br_time.o, x86-br_task.o, x86-br_ipc.o, x86-br_panic.o, x86-br_uart.o, x86-br_device.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  libbedrock_hal_x86.a:
+    deps: [x86-br_hal_context.o, x86-br_hal_timer.o, x86-startup.o, x86-br_hal_uart.o, x86-br_hal_periph.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  libbedrock_lib_x86.a:
+    deps: [x86-br_pool.o, x86-br_shell.o, x86-br_console.o, x86-br_shell_cmds.o, x86-br_fs.o, x86-br_ramdisk.o, x86-br_shell_fs.o, x86-br_string.o, x86-br_gpio.o, x86-br_spi.o, x86-br_i2c.o, x86-br_pwm.o, x86-br_capture.o, x86-br_uart_dev.o, x86-br_netif_mock.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  liblwip_x86.a:
+    deps: [x86-lwip_init.o, x86-lwip_def.o, x86-lwip_dns.o, x86-lwip_inet_chksum.o, x86-lwip_ip.o, x86-lwip_mem.o, x86-lwip_memp.o, x86-lwip_netif.o, x86-lwip_pbuf.o, x86-lwip_raw.o, x86-lwip_stats.o, x86-lwip_sys.o, x86-lwip_tcp.o, x86-lwip_tcp_in.o, x86-lwip_tcp_out.o, x86-lwip_timeouts.o, x86-lwip_udp.o, x86-lwip_acd.o, x86-lwip_autoip.o, x86-lwip_dhcp.o, x86-lwip_etharp.o, x86-lwip_icmp.o, x86-lwip_igmp.o, x86-lwip_ip4_frag.o, x86-lwip_ip4.o, x86-lwip_ip4_addr.o, x86-lwip_api_lib.o, x86-lwip_api_msg.o, x86-lwip_err.o, x86-lwip_if_api.o, x86-lwip_netbuf.o, x86-lwip_netdb.o, x86-lwip_netifapi.o, x86-lwip_tcpip.o, x86-lwip_ethernet.o, x86-sys_arch.o, x86-br_net.o, x86-br_net_sock.o, x86-br_shell_net.o]
+    cmds:
+      - "ar rcs ${@} ${^}"
+
+  bedrock_example_x86.elf:
+    deps: [x86-main.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-main.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_task_delete_x86.elf:
+    deps: [x86-test_task_delete.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_task_delete.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_scheduler_x86.elf:
+    deps: [x86-test_scheduler.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_scheduler.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_semaphore_x86.elf:
+    deps: [x86-test_semaphore.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_semaphore.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_mutex_x86.elf:
+    deps: [x86-test_mutex.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_mutex.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_mqueue_x86.elf:
+    deps: [x86-test_mqueue.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_mqueue.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_sleep_list_x86.elf:
+    deps: [x86-test_sleep_list.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_sleep_list.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_pool_x86.elf:
+    deps: [x86-test_pool.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_pool.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_uart_rx_x86.elf:
+    deps: [x86-test_uart_rx.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_uart_rx.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_x86.elf:
+    deps: [x86-test_shell.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_shell.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_console_x86.elf:
+    deps: [x86-test_console.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_console.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_task_info_x86.elf:
+    deps: [x86-test_task_info.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_task_info.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_cmds_x86.elf:
+    deps: [x86-test_shell_cmds.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_shell_cmds.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_device_x86.elf:
+    deps: [x86-test_device.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_device.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_gpio_x86.elf:
+    deps: [x86-test_gpio.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_gpio.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_spi_x86.elf:
+    deps: [x86-test_spi.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_spi.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_i2c_x86.elf:
+    deps: [x86-test_i2c.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_i2c.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_pwm_x86.elf:
+    deps: [x86-test_pwm.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_pwm.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_fs_x86.elf:
+    deps: [x86-test_fs.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_fs.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_fs_x86.elf:
+    deps: [x86-test_shell_fs.o, x86-board.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_shell_fs.o x86-board.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_littlefs_x86.elf:
+    deps: [x86-test_littlefs.o, x86-board.o, x86-lfs.o, x86-lfs_util.o, x86-br_lfs.o, x86-br_libc.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_littlefs.o x86-board.o x86-lfs.o x86-lfs_util.o x86-br_lfs.o x86-br_libc.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_fatfs_x86.elf:
+    deps: [x86-test_fatfs.o, x86-board.o, x86-ff.o, x86-br_ff.o, x86-br_libc.o, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_fatfs.o x86-board.o x86-ff.o x86-br_ff.o x86-br_libc.o -L. -Wl,--start-group -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_x86.elf:
+    deps: [x86-test_net.o, x86-board.o, x86-br_libc.o, liblwip_x86.a, libbedrock_kernel_x86.a, libbedrock_hal_x86.a, libbedrock_lib_x86.a]
+    cmds:
+      - "${HOST_CC} ${X86_LDFLAGS} x86-test_net.o x86-board.o x86-br_libc.o -L. -Wl,--start-group -llwip_x86 -lbedrock_hal_x86 -lbedrock_kernel_x86 -lbedrock_lib_x86 -Wl,--end-group -lgcc -o ${@}"
+
+  x86:
+    deps: [bedrock_example_x86.elf, test_task_delete_x86.elf, test_scheduler_x86.elf, test_semaphore_x86.elf, test_mutex_x86.elf, test_mqueue_x86.elf, test_sleep_list_x86.elf, test_pool_x86.elf, test_uart_rx_x86.elf, test_shell_x86.elf, test_console_x86.elf, test_task_info_x86.elf, test_shell_cmds_x86.elf, test_device_x86.elf, test_gpio_x86.elf, test_spi_x86.elf, test_i2c_x86.elf, test_pwm_x86.elf, test_fs_x86.elf, test_shell_fs_x86.elf, test_littlefs_x86.elf, test_fatfs_x86.elf, test_net_x86.elf]
+
+  run-x86:
+    deps: [bedrock_example_x86.elf]
+    cmds:
+      - "qemu-system-i386 -kernel bedrock_example_x86.elf -nographic"
+
+  f4-br_sched.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_sched.c -o ${@}"
+
+  f4-br_time.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_time.c -o ${@}"
+
+  f4-br_task.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_task.c -o ${@}"
+
+  f4-br_ipc.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_ipc.c -o ${@}"
+
+  f4-br_panic.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_panic.c -o ${@}"
+
+  f4-br_uart.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_uart.c -o ${@}"
+
+  f4-br_device.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} kernel/br_device.c -o ${@}"
+
+  f4-br_hal_context.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/br_hal_context.c -o ${@}"
+
+  f4-br_hal_timer.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/br_hal_timer.c -o ${@}"
+
+  f4-startup.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} arch/arm-cortex-m/startup.c -o ${@}"
+
+  f4-br_hal_uart.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_uart.c -o ${@}"
+
+  f4-br_hal_gpio.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_gpio.c -o ${@}"
+
+  f4-br_hal_spi.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_spi.c -o ${@}"
+
+  f4-br_hal_i2c.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_i2c.c -o ${@}"
+
+  f4-br_hal_pwm.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_pwm.c -o ${@}"
+
+  f4-br_hal_netif.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/br_hal_netif.c -o ${@}"
+
+  f4-board.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} boards/stm32f4-discovery/board.c -o ${@}"
+
+  f4-br_pool.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_pool.c -o ${@}"
+
+  f4-br_shell.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_shell.c -o ${@}"
+
+  f4-br_console.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_console.c -o ${@}"
+
+  f4-br_shell_cmds.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_shell_cmds.c -o ${@}"
+
+  f4-br_fs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_fs.c -o ${@}"
+
+  f4-br_ramdisk.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_ramdisk.c -o ${@}"
+
+  f4-br_shell_fs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} lib/br_shell_fs.c -o ${@}"
+
+  f4-br_string.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
+
+  f4-br_gpio.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_gpio.c -o ${@}"
+
+  f4-br_spi.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_spi.c -o ${@}"
+
+  f4-br_i2c.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_i2c.c -o ${@}"
+
+  f4-br_pwm.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_pwm.c -o ${@}"
+
+  f4-br_capture.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_capture.c -o ${@}"
+
+  f4-br_uart_dev.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_uart_dev.c -o ${@}"
+
+  f4-br_netif_mock.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} drivers/br_netif_mock.c -o ${@}"
+
+  f4-br_libc.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -fno-builtin -fno-tree-loop-distribute-patterns ports/br_libc.c -o ${@}"
+
+  f4-lfs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  f4-lfs_util.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  f4-br_lfs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  f4-ff.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -w -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/upstream/ff.c -o ${@}"
+
+  f4-br_ff.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/br_ff.c -o ${@}"
+
+  f4-lwip_init.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/init.c -o ${@}"
+
+  f4-lwip_def.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/def.c -o ${@}"
+
+  f4-lwip_dns.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/dns.c -o ${@}"
+
+  f4-lwip_inet_chksum.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/inet_chksum.c -o ${@}"
+
+  f4-lwip_ip.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ip.c -o ${@}"
+
+  f4-lwip_mem.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/mem.c -o ${@}"
+
+  f4-lwip_memp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/memp.c -o ${@}"
+
+  f4-lwip_netif.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/netif.c -o ${@}"
+
+  f4-lwip_pbuf.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/pbuf.c -o ${@}"
+
+  f4-lwip_raw.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/raw.c -o ${@}"
+
+  f4-lwip_stats.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/stats.c -o ${@}"
+
+  f4-lwip_sys.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/sys.c -o ${@}"
+
+  f4-lwip_tcp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp.c -o ${@}"
+
+  f4-lwip_tcp_in.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_in.c -o ${@}"
+
+  f4-lwip_tcp_out.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/tcp_out.c -o ${@}"
+
+  f4-lwip_timeouts.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/timeouts.c -o ${@}"
+
+  f4-lwip_udp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/udp.c -o ${@}"
+
+  f4-lwip_acd.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/acd.c -o ${@}"
+
+  f4-lwip_autoip.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/autoip.c -o ${@}"
+
+  f4-lwip_dhcp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/dhcp.c -o ${@}"
+
+  f4-lwip_etharp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/etharp.c -o ${@}"
+
+  f4-lwip_icmp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/icmp.c -o ${@}"
+
+  f4-lwip_igmp.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/igmp.c -o ${@}"
+
+  f4-lwip_ip4_frag.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_frag.c -o ${@}"
+
+  f4-lwip_ip4.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4.c -o ${@}"
+
+  f4-lwip_ip4_addr.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
+
+  f4-lwip_api_lib.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
+
+  f4-lwip_api_msg.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_msg.c -o ${@}"
+
+  f4-lwip_err.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/err.c -o ${@}"
+
+  f4-lwip_if_api.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/if_api.c -o ${@}"
+
+  f4-lwip_netbuf.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netbuf.c -o ${@}"
+
+  f4-lwip_netdb.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netdb.c -o ${@}"
+
+  f4-lwip_netifapi.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/netifapi.c -o ${@}"
+
+  f4-lwip_tcpip.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/tcpip.c -o ${@}"
+
+  f4-lwip_ethernet.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/netif/ethernet.c -o ${@}"
+
+  f4-sys_arch.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/sys_arch.c -o ${@}"
+
+  f4-br_net.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net.c -o ${@}"
+
+  f4-br_net_sock.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_net_sock.c -o ${@}"
+
+  f4-br_shell_net.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
+
+  f4-main.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/main.c -o ${@}"
+
+  f4-test_task_delete.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_task_delete.c -o ${@}"
+
+  f4-test_scheduler.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_scheduler.c -o ${@}"
+
+  f4-test_semaphore.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_semaphore.c -o ${@}"
+
+  f4-test_mutex.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_mutex.c -o ${@}"
+
+  f4-test_mqueue.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_mqueue.c -o ${@}"
+
+  f4-test_sleep_list.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_sleep_list.c -o ${@}"
+
+  f4-test_pool.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_pool.c -o ${@}"
+
+  f4-test_uart_rx.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_uart_rx.c -o ${@}"
+
+  f4-test_shell.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_shell.c -o ${@}"
+
+  f4-test_console.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_console.c -o ${@}"
+
+  f4-test_task_info.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_task_info.c -o ${@}"
+
+  f4-test_shell_cmds.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_shell_cmds.c -o ${@}"
+
+  f4-test_device.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_device.c -o ${@}"
+
+  f4-test_gpio.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_gpio.c -o ${@}"
+
+  f4-test_spi.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_spi.c -o ${@}"
+
+  f4-test_i2c.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_i2c.c -o ${@}"
+
+  f4-test_pwm.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_pwm.c -o ${@}"
+
+  f4-test_fs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_fs.c -o ${@}"
+
+  f4-test_shell_fs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} examples/test_shell_fs.c -o ${@}"
+
+  f4-test_littlefs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  f4-test_fatfs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream examples/test_fatfs.c -o ${@}"
+
+  f4-test_net.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include examples/test_net.c -o ${@}"
+
+  libbedrock_kernel_f4.a:
+    deps: [f4-br_sched.o, f4-br_time.o, f4-br_task.o, f4-br_ipc.o, f4-br_panic.o, f4-br_uart.o, f4-br_device.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  libbedrock_hal_f4.a:
+    deps: [f4-br_hal_context.o, f4-br_hal_timer.o, f4-startup.o, f4-br_hal_uart.o, f4-br_hal_gpio.o, f4-br_hal_spi.o, f4-br_hal_i2c.o, f4-br_hal_pwm.o, f4-br_hal_netif.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  libbedrock_lib_f4.a:
+    deps: [f4-br_pool.o, f4-br_shell.o, f4-br_console.o, f4-br_shell_cmds.o, f4-br_fs.o, f4-br_ramdisk.o, f4-br_shell_fs.o, f4-br_string.o, f4-br_gpio.o, f4-br_spi.o, f4-br_i2c.o, f4-br_pwm.o, f4-br_capture.o, f4-br_uart_dev.o, f4-br_netif_mock.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  liblwip_f4.a:
+    deps: [f4-lwip_init.o, f4-lwip_def.o, f4-lwip_dns.o, f4-lwip_inet_chksum.o, f4-lwip_ip.o, f4-lwip_mem.o, f4-lwip_memp.o, f4-lwip_netif.o, f4-lwip_pbuf.o, f4-lwip_raw.o, f4-lwip_stats.o, f4-lwip_sys.o, f4-lwip_tcp.o, f4-lwip_tcp_in.o, f4-lwip_tcp_out.o, f4-lwip_timeouts.o, f4-lwip_udp.o, f4-lwip_acd.o, f4-lwip_autoip.o, f4-lwip_dhcp.o, f4-lwip_etharp.o, f4-lwip_icmp.o, f4-lwip_igmp.o, f4-lwip_ip4_frag.o, f4-lwip_ip4.o, f4-lwip_ip4_addr.o, f4-lwip_api_lib.o, f4-lwip_api_msg.o, f4-lwip_err.o, f4-lwip_if_api.o, f4-lwip_netbuf.o, f4-lwip_netdb.o, f4-lwip_netifapi.o, f4-lwip_tcpip.o, f4-lwip_ethernet.o, f4-sys_arch.o, f4-br_net.o, f4-br_net_sock.o, f4-br_shell_net.o]
+    cmds:
+      - "${AR} rcs ${@} ${^}"
+
+  bedrock_example_f4.elf:
+    deps: [f4-main.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-main.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_task_delete_f4.elf:
+    deps: [f4-test_task_delete.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_task_delete.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_scheduler_f4.elf:
+    deps: [f4-test_scheduler.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_scheduler.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_semaphore_f4.elf:
+    deps: [f4-test_semaphore.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_semaphore.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_mutex_f4.elf:
+    deps: [f4-test_mutex.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_mutex.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_mqueue_f4.elf:
+    deps: [f4-test_mqueue.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_mqueue.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_sleep_list_f4.elf:
+    deps: [f4-test_sleep_list.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_sleep_list.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_pool_f4.elf:
+    deps: [f4-test_pool.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_pool.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_uart_rx_f4.elf:
+    deps: [f4-test_uart_rx.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_uart_rx.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_f4.elf:
+    deps: [f4-test_shell.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_shell.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_console_f4.elf:
+    deps: [f4-test_console.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_console.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_task_info_f4.elf:
+    deps: [f4-test_task_info.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_task_info.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_cmds_f4.elf:
+    deps: [f4-test_shell_cmds.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_shell_cmds.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_device_f4.elf:
+    deps: [f4-test_device.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_device.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_gpio_f4.elf:
+    deps: [f4-test_gpio.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_gpio.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_spi_f4.elf:
+    deps: [f4-test_spi.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_spi.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_i2c_f4.elf:
+    deps: [f4-test_i2c.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_i2c.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_pwm_f4.elf:
+    deps: [f4-test_pwm.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_pwm.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_fs_f4.elf:
+    deps: [f4-test_fs.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_fs.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_shell_fs_f4.elf:
+    deps: [f4-test_shell_fs.o, f4-board.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_shell_fs.o f4-board.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_littlefs_f4.elf:
+    deps: [f4-test_littlefs.o, f4-board.o, f4-lfs.o, f4-lfs_util.o, f4-br_lfs.o, f4-br_libc.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_littlefs.o f4-board.o f4-lfs.o f4-lfs_util.o f4-br_lfs.o f4-br_libc.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_fatfs_f4.elf:
+    deps: [f4-test_fatfs.o, f4-board.o, f4-ff.o, f4-br_ff.o, f4-br_libc.o, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_fatfs.o f4-board.o f4-ff.o f4-br_ff.o f4-br_libc.o -L. -Wl,--start-group -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  test_net_f4.elf:
+    deps: [f4-test_net.o, f4-board.o, f4-br_libc.o, liblwip_f4.a, libbedrock_kernel_f4.a, libbedrock_hal_f4.a, libbedrock_lib_f4.a]
+    cmds:
+      - "${CC} ${F4_LDFLAGS} f4-test_net.o f4-board.o f4-br_libc.o -L. -Wl,--start-group -llwip_f4 -lbedrock_hal_f4 -lbedrock_kernel_f4 -lbedrock_lib_f4 -Wl,--end-group -lgcc -o ${@}"
+
+  stm32f4:
+    deps: [bedrock_example_f4.elf, test_task_delete_f4.elf, test_scheduler_f4.elf, test_semaphore_f4.elf, test_mutex_f4.elf, test_mqueue_f4.elf, test_sleep_list_f4.elf, test_pool_f4.elf, test_uart_rx_f4.elf, test_shell_f4.elf, test_console_f4.elf, test_task_info_f4.elf, test_shell_cmds_f4.elf, test_device_f4.elf, test_gpio_f4.elf, test_spi_f4.elf, test_i2c_f4.elf, test_pwm_f4.elf, test_fs_f4.elf, test_shell_fs_f4.elf, test_littlefs_f4.elf, test_fatfs_f4.elf, test_net_f4.elf]
+
+  defconfig-stm32f4:
+    cmds:
+      - "3rd/tools/kconfig/zig-out/bin/defconfig boards/stm32f4-discovery/defconfig"
+
+  run-stm32f4:
+    deps: [bedrock_example_f4.elf]
+    cmds:
+      - "qemu-system-arm -M olimex-stm32-h405 -nographic -kernel bedrock_example_f4.elf"
 
   clean:
     cmds:

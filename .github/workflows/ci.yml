@@ -143,6 +143,45 @@ jobs:
           grep -q "=== All Tests Complete ===" <<< "$out"
           ! grep -q "FAIL" <<< "$out"
 
+  x86:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch third-party ports
+        run: git submodule update --init ports/littlefs/upstream ports/lwip/upstream
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc gcc-multilib qemu-system-x86
+
+      - name: Install chorus
+        run: |
+          sudo curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          sudo chmod +x /usr/local/bin/chorus
+
+      - name: Build
+        run: chorus x86
+
+      - name: Run tests on QEMU
+        run: |
+          failed=0
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+            echo "::group::test_${t}_x86"
+            out=$(printf 'bedrock\n' | timeout 15 qemu-system-i386 -kernel "test_${t}_x86.elf" -nographic -no-reboot || true)
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t}_x86 did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t}_x86 reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
+
   rp2040:
     runs-on: ubuntu-24.04
     steps:
@@ -248,3 +287,55 @@ jobs:
         with:
           name: bedrock_example_stm32f103
           path: bedrock_example_stm32f103.bin
+
+  stm32f4:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch littlefs
+        run: git submodule update --init ports/littlefs/upstream ports/lwip/upstream
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Install chorus
+        run: |
+          sudo curl -sSfL -o /usr/local/bin/chorus "https://github.com/z3nnix/chorus/releases/download/${CHORUS_VERSION}/chorus.bin"
+          sudo chmod +x /usr/local/bin/chorus
+
+      - name: Install Renode
+        run: |
+          mkdir -p "$RUNNER_TEMP/renode"
+          curl -sSfL "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable-dotnet.tar.gz" | tar xz -C "$RUNNER_TEMP/renode" --strip-components=1
+
+      - name: Build
+        run: chorus stm32f4
+
+      - name: Run tests on Renode
+        run: |
+          failed=0
+          for t in task_delete scheduler semaphore mutex mqueue sleep_list pool uart_rx shell console task_info shell_cmds device gpio spi i2c pwm fs shell_fs littlefs fatfs net; do
+            echo "::group::test_${t}_f4"
+            out_file="$RUNNER_TEMP/test_${t}_f4.txt"
+            timeout 300 "$RUNNER_TEMP/renode/renode" --disable-gui --console \
+              -e "\$fw=@$PWD/test_${t}_f4.elf; \$out=@$out_file; include @$PWD/boards/stm32f4-discovery/renode.resc; emulation RunFor \"0.5\"; sysbus.usart1 WriteLine \"bedrock\"; emulation RunFor \"6\"; quit" > /dev/null 2>&1 || true
+            out=$(cat "$out_file" 2>/dev/null || true)
+            echo "$out"
+            echo "::endgroup::"
+            if ! grep -q "=== All Tests Complete ===" <<< "$out"; then
+              echo "::error::test_${t}_f4 did not complete"
+              failed=1
+            elif grep -q "FAIL" <<< "$out"; then
+              echo "::error::test_${t}_f4 reported failures"
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bedrock_example_f4
+          path: bedrock_example_f4.elf
