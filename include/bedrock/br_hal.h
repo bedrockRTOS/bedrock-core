@@ -82,6 +82,11 @@ br_err_t br_hal_capture_start(uint8_t ch, br_capture_edge_t edge);
 br_err_t br_hal_capture_stop(uint8_t ch);
 br_err_t br_hal_capture_read(uint8_t ch, uint32_t *period_us);
 
+/* Network HAL -- the board network interface, NULL if the board has none */
+
+struct br_netif;
+struct br_netif *br_hal_netif_default(void);
+
 /* Reset HAL -- restart the system, does not return */
 
 void br_hal_reset(void) __attribute__((noreturn));
