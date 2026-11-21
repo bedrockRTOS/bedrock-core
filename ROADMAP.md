@@ -127,7 +127,7 @@
   - Integer overflows in size math
   - Unchecked pointer dereferences
 - [x] Fault handlers with diagnostic output: HardFault on Cortex-M, trap handler on RISC-V and x86
-- [ ] System calls for the device model, filesystem and network
+- [x] System calls for the device model, filesystem and network
 - [ ] NX bit and PAE on x86
 
 ## 0.9.0: API freeze, docs, performance

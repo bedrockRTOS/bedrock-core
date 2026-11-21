@@ -80,7 +80,33 @@ Objects are owned by the kernel. A task gets a handle (a small integer), never a
 
 Pointers passed to the kernel are checked against the memory the task may use: a pointer outside it gives `BR_ERR_PERM`. A bad handle gives `BR_ERR_INVALID`. `br_user_uart_puts` reads at most 256 bytes.
 
-The filesystem, network, drivers and the shell are not available through system calls. An unprivileged task talks to them through a privileged task, for example over a message queue.
+### Device, file system and network calls
+
+These are not built into the kernel. Each module registers its own range of call numbers, so a firmware that does not link the file system or the network pays nothing for them.
+
+```c
+br_device_enable_user_calls();   /* kernel/br_device.c */
+br_fs_enable_user_calls();       /* lib/br_fs.c */
+br_net_enable_user_calls();      /* ports/lwip/br_net_sock.c */
+```
+
+| Area | Calls |
+|------|-------|
+| Device | `br_user_device_open`, `_close`, `_read`, `_write`, `_ioctl` |
+| File system | `br_user_fs_open`, `_read`, `_write`, `_seek`, `_close`, `_remove`, `_stat`, `_mkdir`, `_rmdir`, `_info`, `_readdir`, `_usage` |
+| Network | `br_user_net_socket`, `_bind`, `_listen`, `_accept`, `_connect`, `_send`, `_recv`, `_sendto`, `_recvfrom`, `_close`, `_ping`, `_resolve`, `_ifinfo` |
+
+Rules the kernel enforces:
+
+- A device is open to unprivileged tasks only after `br_device_set_user(dev, true)`. Names are looked up by the kernel, never by pointer.
+- `ioctl` goes through a whitelist: a command is allowed only if a driver listed it with `br_device_user_allow_ioctl(cmd, size)`, and the argument must have exactly that size. Commands whose argument holds pointers are not listed, so the kernel never follows a pointer inside a structure. The bundled GPIO, SPI, I2C, PWM and capture drivers list theirs.
+- Descriptors belong to the task that made them. Another task using or closing them gets `BR_ERR_INVALID`.
+- When a task is deleted, its devices, files and sockets are closed (`br_user_release_register` lets a module add its own cleanup).
+- Every buffer and string is checked as for the other calls. Strings are copied into the kernel before use.
+- Calls that need more than four values pass a small block of words in the task's memory. Out parameters (addresses, ports, sizes, info structures) are written by the kernel only after the pointer is checked.
+- Addresses are IPv4 in host order, as in `br_net_*`. `br_user_net_accept` and `_recvfrom` return the port in a `uint32_t`.
+
+A call to a module that was not enabled returns `BR_ERR_INVALID`.
 
 ### How a call works
 
@@ -136,13 +162,14 @@ The Cortex-M and RISC-V linker scripts of the LM3S6965, STM32F4, RP2040 and `vir
 
 ## Tests
 
-`test_mpu` runs on the Cortex-M3 (QEMU LM3S6965), the Cortex-M4 (QEMU STM32-H405), RISC-V and x86 builds with `CONFIG_MPU` on, and builds for RP2040. It checks the system calls between two unprivileged tasks, a write and a read of kernel data, a peripheral without a grant, a write to code, a write to another task's stack, a stack overflow, running code from data, granted regions, the limit of grants, and the rules for stacks. After all violations it checks that kernel data did not change.
+`test_mpu` runs on the Cortex-M3 (QEMU LM3S6965), the Cortex-M4 (QEMU STM32-H405), RISC-V and x86 builds with `CONFIG_MPU` on, and builds for RP2040. It checks the system calls between two unprivileged tasks, a write and a read of kernel data, a peripheral without a grant, a write to code, a write to another task's stack, a stack overflow, running code from data, granted regions, the limit of grants, and the rules for stacks. After all violations it checks that kernel data did not change. It then enables the device and file system calls and checks them with a mock device and a RAM disk: reads, writes, a whitelisted and a refused ioctl, a kernel pointer as a buffer and as a name, handles used by a task that does not own them, and cleanup when a task is deleted. The network calls are only compiled in this test, see Limits.
 
 Renode stops this test on the Cortex-M4: its MPU model does not seem to honor the subregion that guards the stack, and the saved context of a task that overflowed its stack overwrites a neighbor. QEMU follows the architecture, so CI runs `test_mpu_f4` there.
 
 ## Limits
 
-- Only the kernel API is reachable from user mode. Libraries, drivers and the network need a privileged server task.
+- The shell and the libraries other than the file system and the network are not reachable from user mode.
+- The network calls are built with every network firmware but no test drives them from an unprivileged task yet.
 - There is one hart or one core and no cache coherency issues. SMP is not supported.
 - x86 has no NX bit in this port, so only the segment limit keeps data from running, and the first 4 MiB are all that is mapped.
 - Cortex-M0+ is untested.

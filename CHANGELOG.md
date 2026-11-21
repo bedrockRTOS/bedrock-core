@@ -5,6 +5,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 ## [Unreleased]
 
 ### Added
+- System calls for the device model, file system and network: `br_user_device_*`, `br_user_fs_*`, `br_user_net_*`. Modules register their own call numbers with `br_syscall_register()` and enable them with `br_device_enable_user_calls()`, `br_fs_enable_user_calls()` and `br_net_enable_user_calls()`. Devices are open to unprivileged tasks only after `br_device_set_user()`, `ioctl` goes through a whitelist (`br_device_user_allow_ioctl()`), descriptors belong to their task and are closed when it is deleted (`br_user_release_register()`). Tests in `test_mpu`.
 - Interrupt-driven UART receive on all targets: `br_uart_getc(char *c, br_time_t timeout)` reads from a ring buffer that the UART RX interrupt fills (`kernel/br_uart.c`). `br_uart_putc`, `br_uart_puts` and `br_uart_getc` are declared in `bedrock.h` as experimental API.
 - `CONFIG_UART_RX_BUF_SIZE` (default 64).
 - Cortex-M3 vector table has weak `IRQ0_Handler` to `IRQ63_Handler` that boards override.
