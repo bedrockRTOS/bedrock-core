@@ -34,7 +34,9 @@ typedef enum {
     BR_ERR_BUSY      = -4,
     BR_ERR_ISR       = -5,
     BR_ERR_OVERFLOW  = -6,
-    BR_ERR_STACK_OVF = -7
+    BR_ERR_STACK_OVF = -7,
+    BR_ERR_NOENT     = -8,
+    BR_ERR_IO        = -9
 } br_err_t;
 
 /* Task states */

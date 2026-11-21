@@ -47,6 +47,22 @@
 #  define CONFIG_SHELL_MAX_ARGS     8
 #endif
 
+#ifndef CONFIG_FS_NAME_MAX
+#  define CONFIG_FS_NAME_MAX        24
+#endif
+
+#ifndef CONFIG_FS_BLOCK_MAX
+#  define CONFIG_FS_BLOCK_MAX       512
+#endif
+
+#ifndef CONFIG_FS_MAX_BLOCKS
+#  define CONFIG_FS_MAX_BLOCKS      256
+#endif
+
+#ifndef CONFIG_FS_MAX_OPEN
+#  define CONFIG_FS_MAX_OPEN        4
+#endif
+
 #ifndef CONFIG_TASK_STATS
 #  define CONFIG_TASK_STATS         1
 #endif

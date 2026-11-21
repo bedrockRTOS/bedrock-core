@@ -88,6 +88,38 @@ config TASK_STATS
       "tasks" command. Costs one 64-bit field per task and one timer
       read per context switch.
 
+config FS_NAME_MAX
+    int "File name buffer size (bytes)"
+    default 24
+    range 8 64
+    help
+      Size of the file name field in the filesystem, including the
+      terminating zero. Must be a multiple of 4. Longer names are
+      rejected by br_fs_open().
+
+config FS_BLOCK_MAX
+    int "Largest filesystem block size (bytes)"
+    default 512
+    range 64 65536
+    help
+      Size of the static buffer that the single writer uses. A block
+      device with a larger block size cannot be mounted.
+
+config FS_MAX_BLOCKS
+    int "Largest filesystem block count"
+    default 256
+    range 8 65536
+    help
+      Number of blocks the in-RAM free map covers, one bit per block.
+      A block device with more blocks cannot be mounted.
+
+config FS_MAX_OPEN
+    int "Maximum open files"
+    default 4
+    range 1 32
+    help
+      Size of the static file descriptor table.
+
 menu "Hardware"
 
 choice ARCH
