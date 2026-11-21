@@ -13,7 +13,8 @@ bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. I
 - `riscv64-elf-gcc` for RISC-V
 - [chorus](https://github.com/z3nnix/chorus) 1.1.0 or newer
 - `gcc` with 32-bit support (`gcc-multilib` on Debian and Ubuntu) for x86
-- `qemu-system-arm`, `qemu-system-riscv32` and `qemu-system-i386` to run on QEMU
+- `avr-gcc` with `avr-libc` for AVR
+- `qemu-system-arm`, `qemu-system-riscv32`, `qemu-system-i386` and `qemu-system-avr` to run on QEMU
 - `gcc` for host tests and for the RP2040 image tools
 - [Renode](https://renode.io/) 1.16.1, only to run STM32F103 and RP2040 tests without hardware, plus [Renode_RP2040](https://github.com/matgla/Renode_RP2040) for RP2040
 - [kconfig-tools](https://github.com/bedrockRTOS/kconfig-tools) and `zig`, only for Kconfig
@@ -84,6 +85,14 @@ chorus x86
 ```
 
 The result is `bedrock_example_x86.elf` and the `test_*_x86.elf` tests, 32-bit multiboot images.
+
+AVR (ATmega328P, Arduino Uno), see [the AVR guide](docs/en/avr.md):
+
+```bash
+chorus avr
+```
+
+The result is the `test_*_avr.elf` tests. There is no example for the AVR, the RAM is 2 KiB.
 
 Clean:
 

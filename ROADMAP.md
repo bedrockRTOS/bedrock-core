@@ -100,10 +100,10 @@
 ## 0.7.0: More architectures and boards
 
 - [x] Third architecture: x86 (32-bit protected mode, multiboot, QEMU)
-- [ ] AVR (ATmega328P, Arduino Uno): 8-bit
+- [x] AVR (ATmega328P, Arduino Uno): 8-bit
 - [ ] Xtensa (ESP32)
 - [x] ARM: STM32F4-Discovery (Cortex-M4) in QEMU and Renode
-- [ ] RISC-V: Sipeed Longan Nano (GD32VF103), no emulator model exists
+- [ ] RISC-V: Sipeed Longan Nano (GD32VF103)
 - [ ] x86 on real hardware: APIC, ACPI, PCI
 - [ ] STM32F4: PLL clock setup, FPU, check on a real board
 - [x] Board packages in `boards/<board>/`:

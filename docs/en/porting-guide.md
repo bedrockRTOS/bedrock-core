@@ -207,3 +207,4 @@ A board is a directory `boards/<board_name>/` on top of an existing architecture
 - `arch/arm-cortex-m0plus/` and `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), with boot2 and UF2 tools
 - `arch/arm-cortex-m/` and `boards/stm32f4-discovery/`: STM32F407 (Cortex-M4 without the FPU)
 - `arch/x86/` and `boards/qemu-x86/`: 32-bit x86 in QEMU, started by the multiboot loader
+- `arch/avr/` and `boards/arduino-uno/`: ATmega328P, an 8-bit target with 2 KiB of RAM, see [avr.md](avr.md)
