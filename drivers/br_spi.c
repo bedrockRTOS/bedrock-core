@@ -90,6 +90,8 @@ br_err_t br_spi_register(br_spi_dev_t *spi, const char *name, uint8_t bus)
     spi->hz   = SPI_DEFAULT_HZ;
     spi->mode = 0;
     br_mutex_init(&spi->lock);
+    br_device_user_allow_ioctl(BR_SPI_IOCTL_SET_SPEED, sizeof(uint32_t));
+    br_device_user_allow_ioctl(BR_SPI_IOCTL_SET_MODE, sizeof(uint8_t));
     return br_device_register(&spi->dev, name, &spi_ops, spi);
 }
 

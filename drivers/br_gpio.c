@@ -45,6 +45,10 @@ br_err_t br_gpio_register(br_gpio_dev_t *gpio, const char *name, uint8_t port)
         return BR_ERR_INVALID;
     }
     gpio->port = port;
+    br_device_user_allow_ioctl(BR_GPIO_IOCTL_CONFIGURE, sizeof(br_gpio_arg_t));
+    br_device_user_allow_ioctl(BR_GPIO_IOCTL_WRITE, sizeof(br_gpio_arg_t));
+    br_device_user_allow_ioctl(BR_GPIO_IOCTL_READ, sizeof(br_gpio_arg_t));
+    br_device_user_allow_ioctl(BR_GPIO_IOCTL_TOGGLE, sizeof(br_gpio_arg_t));
     return br_device_register(&gpio->dev, name, &gpio_ops, gpio);
 }
 

@@ -24,6 +24,7 @@ typedef struct br_device {
     const br_device_ops_t *ops;
     void                  *priv;
     uint8_t                open_count;
+    bool                   user_ok;
     struct br_device      *next;
 } br_device_t;
 

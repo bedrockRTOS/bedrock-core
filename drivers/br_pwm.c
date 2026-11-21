@@ -42,6 +42,8 @@ br_err_t br_pwm_register(br_pwm_dev_t *pwm, const char *name, uint8_t ch)
         return BR_ERR_INVALID;
     }
     pwm->ch = ch;
+    br_device_user_allow_ioctl(BR_PWM_IOCTL_SET, sizeof(br_pwm_config_t));
+    br_device_user_allow_ioctl(BR_PWM_IOCTL_STOP, 0);
     return br_device_register(&pwm->dev, name, &pwm_ops, pwm);
 }
 

@@ -107,6 +107,8 @@ br_err_t br_i2c_register(br_i2c_dev_t *i2c, const char *name, uint8_t bus)
     i2c->addr = 0;
     i2c->hz   = I2C_DEFAULT_HZ;
     br_mutex_init(&i2c->lock);
+    br_device_user_allow_ioctl(BR_I2C_IOCTL_SET_ADDR, sizeof(uint8_t));
+    br_device_user_allow_ioctl(BR_I2C_IOCTL_SET_SPEED, sizeof(uint32_t));
     return br_device_register(&i2c->dev, name, &i2c_ops, i2c);
 }
 

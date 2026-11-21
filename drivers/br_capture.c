@@ -77,6 +77,7 @@ br_err_t br_capture_register(br_capture_dev_t *cap, const char *name, uint8_t ch
     }
     cap->ch   = ch;
     cap->edge = BR_CAPTURE_RISING;
+    br_device_user_allow_ioctl(BR_CAPTURE_IOCTL_SET_EDGE, sizeof(br_capture_edge_t));
     return br_device_register(&cap->dev, name, &capture_ops, cap);
 }
 
