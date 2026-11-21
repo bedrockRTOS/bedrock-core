@@ -24,6 +24,11 @@ typedef struct br_netif {
     uint16_t               mtu;
     const br_netif_ops_t  *ops;
     void                  *priv;
+
+    /* Set by a driver whose receive interrupt calls rx_notify(). The stack
+     * sets rx_notify when the interface is added. */
+    bool                   irq;
+    void                 (*rx_notify)(struct br_netif *netif);
 } br_netif_t;
 
 #endif

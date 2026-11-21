@@ -84,10 +84,12 @@ br_err_t br_netif_mock_init(br_netif_mock_t *mock, const char *name,
     mock->rx_count = 0;
     mock->link     = true;
 
-    mock->netif.name = name;
-    mock->netif.mtu  = 1500;
-    mock->netif.ops  = &mock_ops;
-    mock->netif.priv = mock;
+    mock->netif.name      = name;
+    mock->netif.mtu       = 1500;
+    mock->netif.ops       = &mock_ops;
+    mock->netif.priv      = mock;
+    mock->netif.irq       = false;
+    mock->netif.rx_notify = NULL;
     copy(mock->netif.mac, mac, BR_NETIF_MAC_LEN);
     return BR_OK;
 }

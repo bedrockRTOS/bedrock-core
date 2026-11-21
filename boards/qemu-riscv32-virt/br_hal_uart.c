@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define UART0_RBR       (*(volatile uint8_t *)0x10000000UL)
@@ -21,6 +23,7 @@
 #define MIE_MEIE        (1UL << 11)
 
 extern void br_uart_rx_push(char c);
+extern bool br_hal_netif_irq(uint32_t irq) __attribute__((weak));
 
 void br_uart_init(void)
 {
@@ -41,6 +44,8 @@ void br_hal_external_isr(void)
         while (UART0_LSR & UART_LSR_DR) {
             br_uart_rx_push((char)UART0_RBR);
         }
+    } else if (irq != 0 && br_hal_netif_irq != NULL) {
+        br_hal_netif_irq(irq);
     }
 
     PLIC_CLAIM_CTX0 = irq;

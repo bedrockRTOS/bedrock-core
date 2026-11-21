@@ -7,6 +7,8 @@
 #include "lm3s_regs.h"
 
 #define MAC_BASE        0x40048000UL
+#define MAC_RIS         LM3S_REG(MAC_BASE + 0x000UL)
+#define MAC_IM          LM3S_REG(MAC_BASE + 0x004UL)
 #define MAC_RCTL        LM3S_REG(MAC_BASE + 0x008UL)
 #define MAC_TCTL        LM3S_REG(MAC_BASE + 0x00CUL)
 #define MAC_DATA        LM3S_REG(MAC_BASE + 0x010UL)
@@ -26,12 +28,25 @@
 #define MAC_TCTL_CRC         (1UL << 2)
 #define MAC_TCTL_DUPLEX      (1UL << 4)
 #define MAC_TR_NEWTX         (1UL << 0)
+#define MAC_INT_RX           (1UL << 0)
+
+#define NVIC_ISER1           LM3S_REG(0xE000E104UL)
+#define ENET_IRQ             42
 
 #define ETH_HEADER_LEN       14U
 #define RX_OVERHEAD          6U
 
 static br_netif_t netif;
 static bool       ready;
+
+void IRQ42_Handler(void)
+{
+    MAC_RIS = MAC_INT_RX;
+
+    if (netif.rx_notify != NULL) {
+        netif.rx_notify(&netif);
+    }
+}
 
 static br_err_t enet_send(br_netif_t *dev, const void *frame, size_t len)
 {
@@ -133,7 +148,12 @@ br_netif_t *br_hal_netif_default(void)
         netif.mtu  = 1500;
         netif.ops  = &enet_ops;
         netif.priv = NULL;
+        netif.irq  = true;
         ready      = true;
+
+        MAC_RIS = MAC_INT_RX;
+        MAC_IM  = MAC_INT_RX;
+        NVIC_ISER1 = 1UL << (ENET_IRQ - 32);
     }
     return &netif;
 }

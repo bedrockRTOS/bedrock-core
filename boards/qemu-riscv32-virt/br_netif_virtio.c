@@ -28,6 +28,8 @@
 #define REG_QUEUE_NUM           0x038UL
 #define REG_QUEUE_READY         0x044UL
 #define REG_QUEUE_NOTIFY        0x050UL
+#define REG_INTERRUPT_STATUS    0x060UL
+#define REG_INTERRUPT_ACK       0x064UL
 #define REG_STATUS              0x070UL
 #define REG_QUEUE_DESC_LOW      0x080UL
 #define REG_QUEUE_DESC_HIGH     0x084UL
@@ -91,9 +93,29 @@ static virtqueue_t txq __attribute__((aligned(4096)));
 static uint8_t     rx_buf[QUEUE_SIZE][BUF_SIZE] __attribute__((aligned(16)));
 static uint8_t     tx_buf[BUF_SIZE] __attribute__((aligned(16)));
 
+#define PLIC_PRIORITY(irq)  (*(volatile uint32_t *)(0x0C000000UL + 4UL * (irq)))
+#define PLIC_ENABLE_CTX0    (*(volatile uint32_t *)0x0C002000UL)
+
 static br_netif_t netif;
 static uintptr_t  base;
+static uint32_t   irq_number;
 static bool       ready;
+
+bool br_hal_netif_irq(uint32_t irq);
+
+bool br_hal_netif_irq(uint32_t irq)
+{
+    if (!ready || irq != irq_number) {
+        return false;
+    }
+
+    VIRTIO_REG(base, REG_INTERRUPT_ACK) = VIRTIO_REG(base, REG_INTERRUPT_STATUS);
+
+    if (netif.rx_notify != NULL) {
+        netif.rx_notify(&netif);
+    }
+    return true;
+}
 
 static void barrier(void)
 {
@@ -217,7 +239,8 @@ static bool find_device(void)
         if (VIRTIO_REG(b, REG_MAGIC) == VIRTIO_MAGIC &&
             VIRTIO_REG(b, REG_DEVICE_ID) == VIRTIO_ID_NET &&
             VIRTIO_REG(b, REG_VERSION) == 2) {
-            base = b;
+            base       = b;
+            irq_number = 1 + i;
             return true;
         }
     }
@@ -276,6 +299,10 @@ br_netif_t *br_hal_netif_default(void)
     netif.mtu  = 1500;
     netif.ops  = &virtio_ops;
     netif.priv = NULL;
+    netif.irq  = true;
     ready      = true;
+
+    PLIC_PRIORITY(irq_number) = 1;
+    PLIC_ENABLE_CTX0 |= 1UL << irq_number;
     return &netif;
 }
