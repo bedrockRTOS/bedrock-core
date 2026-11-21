@@ -10,20 +10,29 @@
 
 static int ls_handler(int argc, char **argv)
 {
-    (void)argc;
-    (void)argv;
+    const char *dir = argc > 1 ? argv[1] : "";
 
     br_fs_info_t info;
-    for (uint32_t i = 0; br_fs_list(i, &info) == BR_OK; i++) {
+    br_err_t err = BR_OK;
+    for (uint32_t i = 0; (err = br_fs_readdir(dir, i, &info)) == BR_OK; i++) {
         size_t n = 0;
         while (info.name[n] != '\0') {
             n++;
         }
-        br_printf("%s", info.name);
-        for (; n < CONFIG_FS_NAME_MAX - 1; n++) {
+        br_printf("%s%s", info.name, info.dir ? "/" : "");
+        for (n += info.dir; n < CONFIG_FS_NAME_MAX - 1; n++) {
             br_uart_putc(' ');
         }
-        br_printf(" %6zu\n", info.size);
+        if (info.dir) {
+            br_printf("   <dir>\n");
+        } else {
+            br_printf(" %6zu\n", info.size);
+        }
+    }
+
+    if (err != BR_ERR_NOENT || (argc > 1 && br_fs_info(dir, &info) != BR_OK)) {
+        br_printf("cannot list %s\n", dir);
+        return -1;
     }
 
     br_fs_usage_t usage;
@@ -34,6 +43,40 @@ static int ls_handler(int argc, char **argv)
     br_printf("%u of %u blocks free, block size %u\n",
               (unsigned)usage.free_blocks, (unsigned)usage.total_blocks,
               (unsigned)usage.block_size);
+    return 0;
+}
+
+static int mkdir_handler(int argc, char **argv)
+{
+    if (argc != 2) {
+        br_printf("usage: mkdir <dir>\n");
+        return -1;
+    }
+
+    br_err_t err = br_fs_mkdir(argv[1]);
+    if (err != BR_OK) {
+        br_printf("cannot create %s: %d\n", argv[1], (int)err);
+        return -1;
+    }
+    return 0;
+}
+
+static int rm_handler(int argc, char **argv)
+{
+    if (argc != 2) {
+        br_printf("usage: rm <file or empty dir>\n");
+        return -1;
+    }
+
+    br_fs_info_t info;
+    br_err_t err = br_fs_info(argv[1], &info);
+    if (err == BR_OK) {
+        err = info.dir ? br_fs_rmdir(argv[1]) : br_fs_remove(argv[1]);
+    }
+    if (err != BR_OK) {
+        br_printf("cannot remove %s: %d\n", argv[1], (int)err);
+        return -1;
+    }
     return 0;
 }
 
@@ -107,8 +150,20 @@ static int write_handler(int argc, char **argv)
 
 static br_shell_cmd_t ls_cmd = {
     .name    = "ls",
-    .help    = "list files",
+    .help    = "list a directory",
     .handler = ls_handler,
+};
+
+static br_shell_cmd_t mkdir_cmd = {
+    .name    = "mkdir",
+    .help    = "create a directory",
+    .handler = mkdir_handler,
+};
+
+static br_shell_cmd_t rm_cmd = {
+    .name    = "rm",
+    .help    = "remove a file or an empty directory",
+    .handler = rm_handler,
 };
 
 static br_shell_cmd_t cat_cmd = {
@@ -128,4 +183,6 @@ void br_shell_register_fs(void)
     br_shell_register(&ls_cmd);
     br_shell_register(&cat_cmd);
     br_shell_register(&write_cmd);
+    br_shell_register(&mkdir_cmd);
+    br_shell_register(&rm_cmd);
 }

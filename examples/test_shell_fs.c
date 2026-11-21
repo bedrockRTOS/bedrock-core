@@ -59,6 +59,22 @@ static void run_tests(void)
                  "Test 1h: write without text creates an empty file");
 
     print_result(br_shell_execute(ls_line) == 0, "Test 1i: ls");
+
+    char mkdir_line[] = "mkdir logs";
+    char write_in[] = "write logs/a.txt text";
+    char ls_dir[] = "ls logs";
+    char ls_missing[] = "ls nothing";
+    print_result(br_shell_execute(mkdir_line) == 0 && br_shell_execute(write_in) == 0 &&
+                 br_shell_execute(ls_dir) == 0 && br_shell_execute(ls_missing) == -1,
+                 "Test 1j: mkdir, a file in it, ls of a directory");
+
+    char rm_busy[] = "rm logs";
+    char rm_file[] = "rm logs/a.txt";
+    char rm_dir[] = "rm logs";
+    char rm_missing[] = "rm nothing";
+    print_result(br_shell_execute(rm_busy) == -1 && br_shell_execute(rm_file) == 0 &&
+                 br_shell_execute(rm_dir) == 0 && br_shell_execute(rm_missing) == -1,
+                 "Test 1k: rm of a file and of an empty directory");
 }
 
 static uint8_t stack_supervisor[2048];
