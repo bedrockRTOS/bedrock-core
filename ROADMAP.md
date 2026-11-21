@@ -79,6 +79,7 @@
 - [x] RAM block device for tests under QEMU
 - [x] Shell commands: `ls`, `cat`, `write`
 - [x] Filesystem unit tests
+- [x] Optional ports of littlefs and FatFs on `br_blkdev_t` in `ports/`
 - [ ] Block device drivers for real flash (SPI NOR, on-chip flash)
 - [ ] Append, seek and directories
 

@@ -32,6 +32,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `CONFIG_FS_NAME_MAX`, `CONFIG_FS_BLOCK_MAX`, `CONFIG_FS_MAX_BLOCKS` and `CONFIG_FS_MAX_OPEN`.
 - Shell commands `ls`, `cat` and `write`, registered with `br_shell_register_fs()`.
 - `test_fs` and `test_shell_fs` on every target.
+- Optional ports in `ports/`: littlefs v2.11.3 (`ports/littlefs/`, submodule) and FatFs R0.16 (`ports/fatfs/`) on `br_blkdev_t`, without dynamic allocation and with bedrock mutexes. See `docs/en/ports.md`.
+- `test_littlefs` on every target, `test_fatfs` on the host, RISC-V and RP2040.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.
