@@ -145,6 +145,8 @@ cat /tmp/uart.txt
 
 Flash `bedrock_example_f4.elf` at `0x08000000`, for example with `st-flash write` after `arm-none-eabi-objcopy -O binary`. The core runs from the 16 MHz internal oscillator, the PLL is not set up. Output goes to USART1: TX on PA9, RX on PA10, 115200 8N1. The port has been tested in QEMU and Renode only, not on hardware yet.
 
+The Renode model clocks SysTick at 72 MHz while the board runs at 16 MHz, so the firmware clock runs 4.5 times faster than Renode time. Send console input in the first 0.4 simulated seconds, as the CI does at 0.2.
+
 QEMU (`olimex-stm32-h405`) runs the example and every test except `test_pwm`, which stalls in the QEMU timer model during the capture case. CI runs all tests in Renode.
 
 In Renode:
