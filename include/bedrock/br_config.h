@@ -47,6 +47,10 @@
 #  define CONFIG_SHELL_MAX_ARGS     8
 #endif
 
+#ifndef CONFIG_TASK_STATS
+#  define CONFIG_TASK_STATS         1
+#endif
+
 #ifndef BR_HAL_SYS_CLOCK_HZ
 #  ifdef CONFIG_SYS_CLOCK_HZ
 #    define BR_HAL_SYS_CLOCK_HZ    CONFIG_SYS_CLOCK_HZ

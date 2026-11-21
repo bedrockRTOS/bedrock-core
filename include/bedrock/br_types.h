@@ -22,6 +22,9 @@ typedef uint64_t br_time_t;
 /* Stack overflow detection canary value */
 #define BR_STACK_CANARY   0xDEADBEEF
 
+/* Byte a new stack is filled with, used to find the high-water mark */
+#define BR_STACK_FILL     0xA5
+
 /* Error codes */
 typedef enum {
     BR_OK            =  0,
@@ -81,7 +84,21 @@ typedef struct br_tcb {
      * `next` above) and the sleep list at once -- they need independent
      * storage or inserting into one corrupts the other. */
     struct br_tcb      *sleep_next;
+
+#if CONFIG_TASK_STATS
+    br_time_t           run_time_us;   /* Accumulated running time */
+#endif
 } br_tcb_t;
+
+/* Snapshot of a task returned by br_task_get_info() */
+typedef struct {
+    const char         *name;
+    br_task_state_t     state;
+    uint8_t             priority;
+    size_t              stack_size;    /* Total stack size in bytes */
+    size_t              stack_used;    /* High-water mark in bytes */
+    br_time_t           cpu_time_us;   /* 0 unless CONFIG_TASK_STATS */
+} br_task_info_t;
 
 /* Semaphore */
 typedef struct {

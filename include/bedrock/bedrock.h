@@ -44,6 +44,8 @@ BR_STABLE void     br_task_yield(void);
 BR_STABLE br_tid_t br_task_self(void);
 
 BR_EXPERIMENTAL br_err_t br_task_delete(br_tid_t tid);
+BR_EXPERIMENTAL br_err_t br_task_get_info(br_tid_t tid, br_task_info_t *info);
+BR_EXPERIMENTAL void     br_hook_idle(void);
 
 BR_STABLE void      br_sleep_us(br_time_t us);
 BR_STABLE br_time_t br_uptime_us(void);

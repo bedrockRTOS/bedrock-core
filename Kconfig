@@ -78,6 +78,16 @@ config SHELL_MAX_ARGS
       br_shell_execute() splits a line into. Longer lines are
       rejected with "too many arguments".
 
+config TASK_STATS
+    bool "Per-task CPU time accounting"
+    default y
+    help
+      When enabled, the scheduler adds the time each task spends
+      running to a per-task counter on every context switch. The
+      counter is reported by br_task_get_info() and the shell
+      "tasks" command. Costs one 64-bit field per task and one timer
+      read per context switch.
+
 menu "Hardware"
 
 choice ARCH

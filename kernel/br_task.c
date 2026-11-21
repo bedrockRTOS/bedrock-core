@@ -11,16 +11,23 @@ extern void     br_sched_reschedule(void);
 extern void     br_sched_start(void);
 extern br_tcb_t *br_sched_current(void);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
+extern void     br_sched_account(void);
 
 /* Static TCB pool (zero dynamic memory) */
 static br_tcb_t tcb_pool[CONFIG_MAX_TASKS];
 
 static uint8_t idle_stack[CONFIG_DEFAULT_STACK_SIZE];
 
+__attribute__((weak)) void br_hook_idle(void)
+{
+}
+
 static void idle_entry(void *arg)
 {
     (void)arg;
-    while (1) { }
+    while (1) {
+        br_hook_idle();
+    }
 }
 
 void br_kernel_init(void)
@@ -89,8 +96,18 @@ br_err_t br_task_create(br_tid_t *tid,
     tcb->next        = NULL;
     tcb->sleep_next  = NULL;
 
+#if CONFIG_TASK_STATS
+    tcb->run_time_us = 0;
+#endif
+
     tcb->stack_canary = (uint32_t *)stack;
     *(tcb->stack_canary) = BR_STACK_CANARY;
+
+    uint8_t *fill = (uint8_t *)stack + sizeof(*tcb->stack_canary);
+    uint8_t *fill_end = (uint8_t *)stack + stack_size;
+    while (fill < fill_end) {
+        *fill++ = BR_STACK_FILL;
+    }
 
     void *stack_top = (uint8_t *)stack + stack_size;
     tcb->sp = br_hal_stack_init(stack_top, entry, arg);
@@ -202,4 +219,45 @@ br_tid_t br_task_self(void)
 {
     br_tcb_t *cur = br_sched_current();
     return cur ? cur->id : 0;
+}
+
+br_err_t br_task_get_info(br_tid_t tid, br_task_info_t *info)
+{
+    if (tid >= CONFIG_MAX_TASKS || info == NULL) {
+        return BR_ERR_INVALID;
+    }
+
+    uint32_t key = br_hal_irq_disable();
+
+    br_tcb_t *tcb = &tcb_pool[tid];
+
+    if (tcb->state == BR_TASK_INACTIVE) {
+        br_hal_irq_restore(key);
+        return BR_ERR_INVALID;
+    }
+
+#if CONFIG_TASK_STATS
+    br_sched_account();
+    info->cpu_time_us = tcb->run_time_us;
+#else
+    info->cpu_time_us = 0;
+#endif
+    info->name       = tcb->name;
+    info->state      = tcb->state;
+    info->priority   = tcb->priority;
+    info->stack_size = tcb->stack_size;
+
+    const uint8_t *scan = (const uint8_t *)tcb->stack_base + sizeof(*tcb->stack_canary);
+    const uint8_t *end  = (const uint8_t *)tcb->stack_base + tcb->stack_size;
+
+    br_hal_irq_restore(key);
+
+    size_t untouched = 0;
+    while (scan < end && *scan == BR_STACK_FILL) {
+        scan++;
+        untouched++;
+    }
+    info->stack_used = info->stack_size - untouched;
+
+    return BR_OK;
 }

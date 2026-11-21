@@ -13,6 +13,20 @@ static br_tcb_t *current_task;
 /* Scheduler lock depth (for nested critical sections) */
 static volatile uint32_t sched_lock;
 
+#if CONFIG_TASK_STATS
+static br_time_t last_switch_us;
+
+void br_sched_account(void)
+{
+    br_time_t now = br_hal_timer_get_us();
+
+    if (current_task != NULL) {
+        current_task->run_time_us += now - last_switch_us;
+    }
+    last_switch_us = now;
+}
+#endif
+
 void br_sched_init(void)
 {
     for (int i = 0; i < CONFIG_NUM_PRIORITIES; i++) {
@@ -160,6 +174,10 @@ void br_sched_reschedule(void)
         br_sched_ready(prev);
     }
 
+#if CONFIG_TASK_STATS
+    br_sched_account();
+#endif
+
     next->state  = BR_TASK_RUNNING;
     next->rr_remaining = CONFIG_RR_TIME_SLICE_US;  /* Initialize time slice */
     current_task = next;
@@ -189,6 +207,9 @@ void br_sched_start(void)
     first->state = BR_TASK_RUNNING;
     first->rr_remaining = CONFIG_RR_TIME_SLICE_US;
     current_task = first;
+#if CONFIG_TASK_STATS
+    last_switch_us = br_hal_timer_get_us();
+#endif
 
     br_hal_start_first_task(first->sp);
 }
