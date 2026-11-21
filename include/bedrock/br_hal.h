@@ -87,6 +87,20 @@ br_err_t br_hal_capture_read(uint8_t ch, uint32_t *period_us);
 struct br_netif;
 struct br_netif *br_hal_netif_default(void);
 
+#if CONFIG_MPU
+
+/* Memory protection HAL */
+
+void     br_hal_mpu_init(void);
+bool     br_hal_mpu_region_valid(const br_region_t *r);
+void     br_hal_mpu_code_region(br_region_t *r);
+void     br_hal_mpu_user_data_region(br_region_t *r);
+uint32_t br_hal_syscall(uint32_t num, uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3);
+void    *br_hal_stack_init_user(void *kstack_top, void *stack_top,
+                                br_task_entry_t entry, void *arg);
+
+#endif
+
 /* Reset HAL -- restart the system, does not return */
 
 void br_hal_reset(void) __attribute__((noreturn));

@@ -120,6 +120,53 @@ config FS_MAX_OPEN
     help
       Size of the static file descriptor table.
 
+config MPU
+    bool "Memory protection and user tasks"
+    default n
+    help
+      When enabled, the kernel programs the memory protection unit
+      (MPU on Cortex-M, PMP on RISC-V, paging on x86) and tasks can
+      be created as unprivileged with br_task_create_user(). An
+      unprivileged task can only touch its own stack, the shared
+      user data section and the regions granted to it, and reaches
+      the kernel through system calls. A task that breaks the rules
+      is stopped and the system keeps running.
+
+config MAX_USER_TASKS
+    int "Maximum unprivileged tasks"
+    default 4
+    range 1 32
+    depends on MPU
+    help
+      Number of unprivileged tasks. Each one gets a kernel stack for
+      its system calls.
+
+config USER_OBJECTS
+    int "Kernel objects per type for unprivileged tasks"
+    default 8
+    range 1 64
+    depends on MPU
+    help
+      Number of semaphores, mutexes and message queues that
+      unprivileged tasks can create, each type counted separately.
+
+config USER_MQ_ARENA
+    int "Message queue buffer arena (bytes)"
+    default 512
+    range 64 16384
+    depends on MPU
+    help
+      Memory that the message queues of unprivileged tasks are carved
+      from. It is never given back.
+
+config KSTACK_SIZE
+    int "Kernel stack of an unprivileged task (bytes)"
+    default 768
+    range 256 4096
+    depends on MPU
+    help
+      Stack that system calls run on, one per unprivileged task.
+
 menu "Hardware"
 
 choice ARCH

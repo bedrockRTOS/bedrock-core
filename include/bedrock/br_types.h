@@ -25,6 +25,10 @@ typedef uint64_t br_time_t;
 /* Byte a new stack is filled with, used to find the high-water mark */
 #define BR_STACK_FILL     0xA5
 
+/* Smallest stack br_task_create() accepts: the initial frame, the canary
+ * and a little room to run */
+#define BR_STACK_MIN      256
+
 /* Error codes */
 typedef enum {
     BR_OK            =  0,
@@ -36,7 +40,8 @@ typedef enum {
     BR_ERR_OVERFLOW  = -6,
     BR_ERR_STACK_OVF = -7,
     BR_ERR_NOENT     = -8,
-    BR_ERR_IO        = -9
+    BR_ERR_IO        = -9,
+    BR_ERR_PERM      = -10
 } br_err_t;
 
 /* Task states */
@@ -51,6 +56,24 @@ typedef enum {
 /* Task ID & entry point */
 typedef uint8_t  br_tid_t;
 typedef void (*br_task_entry_t)(void *arg);
+
+/* Memory access rights of a region */
+#define BR_MEM_R   0x01
+#define BR_MEM_W   0x02
+#define BR_MEM_X   0x04
+
+#define BR_TASK_REGIONS  4
+
+/* The lowest eighth of a user stack is a guard no one may touch, the
+ * kernel saves context into it when the stack has overflowed. */
+#define BR_USER_STACK_MIN       512
+#define BR_USER_STACK_GUARD(n)  ((n) / 8)
+
+typedef struct {
+    uintptr_t base;
+    size_t    size;
+    uint8_t   perms;
+} br_region_t;
 
 /* Task Control Block (TCB) */
 typedef struct br_tcb {
@@ -90,6 +113,20 @@ typedef struct br_tcb {
 #if CONFIG_TASK_STATS
     br_time_t           run_time_us;   /* Accumulated running time */
 #endif
+
+#if CONFIG_MPU
+    bool                user;          /* Runs unprivileged */
+    bool                in_syscall;    /* Runs privileged on its kernel stack */
+    bool                faulted;
+    uint8_t             nregions;      /* regions[0] is the stack */
+    uint8_t             fault_kind;
+    br_region_t         regions[BR_TASK_REGIONS];
+    void               *kstack_top;
+    void               *user_frame;    /* HAL: saved user context in a syscall */
+    uint32_t            ctx_save[32];  /* HAL: where the user context waits */
+    uint32_t            sysargs[5];
+    uintptr_t           fault_addr;
+#endif
 } br_tcb_t;
 
 /* Snapshot of a task returned by br_task_get_info() */
@@ -100,6 +137,8 @@ typedef struct {
     size_t              stack_size;    /* Total stack size in bytes */
     size_t              stack_used;    /* High-water mark in bytes */
     br_time_t           cpu_time_us;   /* 0 unless CONFIG_TASK_STATS */
+    bool                faulted;       /* stopped by a memory fault */
+    bool                user;
 } br_task_info_t;
 
 /* Semaphore */

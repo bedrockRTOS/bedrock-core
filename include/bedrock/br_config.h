@@ -63,6 +63,26 @@
 #  define CONFIG_FS_MAX_OPEN        4
 #endif
 
+#ifndef CONFIG_MPU
+#  define CONFIG_MPU                0
+#endif
+
+#ifndef CONFIG_MAX_USER_TASKS
+#  define CONFIG_MAX_USER_TASKS     4
+#endif
+
+#ifndef CONFIG_USER_OBJECTS
+#  define CONFIG_USER_OBJECTS       8
+#endif
+
+#ifndef CONFIG_USER_MQ_ARENA
+#  define CONFIG_USER_MQ_ARENA      512
+#endif
+
+#ifndef CONFIG_KSTACK_SIZE
+#  define CONFIG_KSTACK_SIZE        768
+#endif
+
 #ifndef CONFIG_TASK_STATS
 #  define CONFIG_TASK_STATS         1
 #endif

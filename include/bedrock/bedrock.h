@@ -10,6 +10,7 @@
 #include "br_hal.h"
 #include "br_assert.h"
 #include "br_version.h"
+#include "br_user.h"
 
 #define BR_STABLE
 
@@ -45,6 +46,13 @@ BR_STABLE void     br_task_yield(void);
 BR_STABLE br_tid_t br_task_self(void);
 
 BR_EXPERIMENTAL br_err_t br_task_delete(br_tid_t tid);
+#if CONFIG_MPU
+BR_EXPERIMENTAL br_err_t br_task_create_user(br_tid_t *tid, const char *name,
+                                             br_task_entry_t entry, void *arg,
+                                             uint8_t priority, void *stack,
+                                             size_t stack_size);
+BR_EXPERIMENTAL br_err_t br_task_grant(br_tid_t tid, void *base, size_t size, uint8_t perms);
+#endif
 BR_EXPERIMENTAL br_err_t br_task_get_info(br_tid_t tid, br_task_info_t *info);
 BR_EXPERIMENTAL void     br_hook_idle(void);
 

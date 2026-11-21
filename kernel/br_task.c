@@ -12,6 +12,10 @@ extern void     br_sched_start(void);
 extern br_tcb_t *br_sched_current(void);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
 extern void     br_sched_account(void);
+#if CONFIG_MPU
+extern void    *br_user_kstack_alloc(void);
+extern void     br_user_kstack_free(void *top);
+#endif
 
 /* Static TCB pool (zero dynamic memory) */
 static br_tcb_t tcb_pool[CONFIG_MAX_TASKS];
@@ -39,6 +43,9 @@ void br_kernel_init(void)
 
     br_hal_timer_init();
     br_sched_init();
+#if CONFIG_MPU
+    br_hal_mpu_init();
+#endif
 
     br_tid_t idle_tid;
     br_err_t err = br_task_create(&idle_tid, "idle", idle_entry, NULL,
@@ -55,20 +62,31 @@ void br_kernel_start(void)
     __builtin_unreachable();
 }
 
-br_err_t br_task_create(br_tid_t *tid,
-                        const char *name,
-                        br_task_entry_t entry,
-                        void *arg,
-                        uint8_t priority,
-                        void *stack,
-                        size_t stack_size)
+static br_err_t create_task(br_tid_t *tid, const char *name, br_task_entry_t entry,
+                            void *arg, uint8_t priority, void *stack, size_t stack_size,
+                            bool user)
 {
-    if (entry == NULL || stack == NULL || stack_size == 0) {
+    if (entry == NULL || stack == NULL || stack_size < BR_STACK_MIN) {
         return BR_ERR_INVALID;
     }
     if (priority >= CONFIG_NUM_PRIORITIES) {
         return BR_ERR_INVALID;
     }
+#if CONFIG_MPU
+    void *kstack_top = NULL;
+    if (user) {
+        br_region_t r = { (uintptr_t)stack, stack_size, BR_MEM_R | BR_MEM_W };
+        if (stack_size < BR_USER_STACK_MIN || !br_hal_mpu_region_valid(&r)) {
+            return BR_ERR_INVALID;
+        }
+        kstack_top = br_user_kstack_alloc();
+        if (kstack_top == NULL) {
+            return BR_ERR_NOMEM;
+        }
+    }
+#else
+    (void)user;
+#endif
 
     uint32_t key = br_hal_irq_disable();
 
@@ -83,6 +101,9 @@ br_err_t br_task_create(br_tid_t *tid,
 
     if (tcb == NULL) {
         br_hal_irq_restore(key);
+#if CONFIG_MPU
+        br_user_kstack_free(kstack_top);
+#endif
         return BR_ERR_NOMEM;
     }
     tcb->name        = name;
@@ -100,6 +121,23 @@ br_err_t br_task_create(br_tid_t *tid,
     tcb->run_time_us = 0;
 #endif
 
+#if CONFIG_MPU
+    tcb->user       = user;
+    tcb->in_syscall = false;
+    tcb->faulted    = false;
+    tcb->fault_kind = 0;
+    tcb->fault_addr = 0;
+    tcb->user_frame = NULL;
+    tcb->kstack_top = kstack_top;
+    tcb->nregions   = 0;
+    if (user) {
+        tcb->regions[0].base  = (uintptr_t)stack;
+        tcb->regions[0].size  = stack_size;
+        tcb->regions[0].perms = BR_MEM_R | BR_MEM_W;
+        tcb->nregions = 1;
+    }
+#endif
+
     tcb->stack_canary = (uint32_t *)stack;
     *(tcb->stack_canary) = BR_STACK_CANARY;
 
@@ -110,7 +148,14 @@ br_err_t br_task_create(br_tid_t *tid,
     }
 
     void *stack_top = (uint8_t *)stack + stack_size;
-    tcb->sp = br_hal_stack_init(stack_top, entry, arg);
+#if CONFIG_MPU
+    if (user) {
+        tcb->sp = br_hal_stack_init_user(kstack_top, stack_top, entry, arg);
+    } else
+#endif
+    {
+        tcb->sp = br_hal_stack_init(stack_top, entry, arg);
+    }
 
     if (tid != NULL) {
         *tid = tcb->id;
@@ -121,6 +166,25 @@ br_err_t br_task_create(br_tid_t *tid,
 
     return BR_OK;
 }
+
+br_err_t br_task_create(br_tid_t *tid, const char *name, br_task_entry_t entry,
+                        void *arg, uint8_t priority, void *stack, size_t stack_size)
+{
+    return create_task(tid, name, entry, arg, priority, stack, stack_size, false);
+}
+
+#if CONFIG_MPU
+br_err_t br_task_create_user(br_tid_t *tid, const char *name, br_task_entry_t entry,
+                             void *arg, uint8_t priority, void *stack, size_t stack_size)
+{
+    return create_task(tid, name, entry, arg, priority, stack, stack_size, true);
+}
+
+br_tcb_t *br_task_lookup(br_tid_t tid)
+{
+    return tid < CONFIG_MAX_TASKS ? &tcb_pool[tid] : NULL;
+}
+#endif
 
 br_err_t br_task_suspend(br_tid_t tid)
 {
@@ -209,6 +273,11 @@ br_err_t br_task_delete(br_tid_t tid)
     tcb->sp = NULL;
     tcb->next = NULL;
     tcb->sleep_next = NULL;
+#if CONFIG_MPU
+    br_user_kstack_free(tcb->kstack_top);
+    tcb->kstack_top = NULL;
+    tcb->user = false;
+#endif
 
     br_hal_irq_restore(key);
 
@@ -246,6 +315,13 @@ br_err_t br_task_get_info(br_tid_t tid, br_task_info_t *info)
     info->state      = tcb->state;
     info->priority   = tcb->priority;
     info->stack_size = tcb->stack_size;
+#if CONFIG_MPU
+    info->faulted    = tcb->faulted;
+    info->user       = tcb->user;
+#else
+    info->faulted    = false;
+    info->user       = false;
+#endif
 
     const uint8_t *scan = (const uint8_t *)tcb->stack_base + sizeof(*tcb->stack_canary);
     const uint8_t *end  = (const uint8_t *)tcb->stack_base + tcb->stack_size;
