@@ -2,13 +2,15 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#include "br_net.h"
+#include "br_net_priv.h"
 
 #include "lwip/api.h"
 #include "lwip/dns.h"
 #include "lwip/tcpip.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/prot/icmp.h"
+#include "lwip/prot/icmp6.h"
+#include "lwip/raw.h"
 #include "lwip/prot/ip.h"
 #include "lwip/prot/ip4.h"
 
@@ -17,6 +19,7 @@
 typedef struct {
     bool           used;
     int            type;
+    int            family;
     struct netconn *conn;
     struct netbuf  *nb;
     size_t         off;
@@ -58,7 +61,7 @@ static slot_t *slot_get(int fd)
     return &slots[fd];
 }
 
-static int slot_alloc(struct netconn *conn, int type)
+static int slot_alloc(struct netconn *conn, int type, int family)
 {
     br_mutex_lock(&br_net_slot_lock, BR_TIME_INFINITE);
 
@@ -67,6 +70,7 @@ static int slot_alloc(struct netconn *conn, int type)
         if (!slots[i].used) {
             slots[i].used = true;
             slots[i].type = type;
+            slots[i].family = family;
             slots[i].conn = conn;
             slots[i].nb   = NULL;
             slots[i].off  = 0;
@@ -79,14 +83,20 @@ static int slot_alloc(struct netconn *conn, int type)
     return fd;
 }
 
-static void to_lwip_addr(ip_addr_t *dst, uint32_t ip)
+static br_err_t addr_in(const slot_t *s, const br_ip_t *ip, ip_addr_t *out, bool allow_null)
 {
-    IP_ADDR4(dst, (ip >> 24) & 0xFF, (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF);
-}
-
-static uint32_t from_lwip_addr(const ip_addr_t *a)
-{
-    return lwip_ntohl(ip4_addr_get_u32(ip_2_ip4(a)));
+    if (ip == NULL) {
+        if (!allow_null) {
+            return BR_ERR_INVALID;
+        }
+        br_ip_t any = br_ip_any(s->family);
+        br_net_to_lwip(out, &any);
+        return BR_OK;
+    }
+    if ((int)ip->family != s->family) {
+        return BR_ERR_INVALID;
+    }
+    return br_net_to_lwip(out, ip) ? BR_OK : BR_ERR_INVALID;
 }
 
 static int timeout_ms(br_time_t timeout)
@@ -101,25 +111,32 @@ static int timeout_ms(br_time_t timeout)
     return ms > 0x7FFFFFFFU ? 0x7FFFFFFF : (int)ms;
 }
 
-int br_net_socket(int type)
+int br_net_socket(int family, int type)
 {
-    if (br_hal_in_isr() || (type != BR_NET_DGRAM && type != BR_NET_STREAM)) {
+    if (br_hal_in_isr() || (family != BR_AF_INET && family != BR_AF_INET6) ||
+        (type != BR_NET_DGRAM && type != BR_NET_STREAM)) {
         return BR_ERR_INVALID;
     }
 
-    struct netconn *conn = netconn_new(type == BR_NET_DGRAM ? NETCONN_UDP : NETCONN_TCP);
+    enum netconn_type nt = type == BR_NET_DGRAM
+                               ? (family == BR_AF_INET ? NETCONN_UDP : NETCONN_UDP_IPV6)
+                               : (family == BR_AF_INET ? NETCONN_TCP : NETCONN_TCP_IPV6);
+    struct netconn *conn = netconn_new(nt);
     if (conn == NULL) {
         return BR_ERR_NOMEM;
     }
+    if (family == BR_AF_INET6) {
+        netconn_set_ipv6only(conn, 1);
+    }
 
-    int fd = slot_alloc(conn, type);
+    int fd = slot_alloc(conn, type, family);
     if (fd < 0) {
         netconn_delete(conn);
     }
     return fd;
 }
 
-br_err_t br_net_bind(int fd, uint32_t ip, uint16_t port)
+br_err_t br_net_bind(int fd, const br_ip_t *ip, uint16_t port)
 {
     slot_t *s = slot_get(fd);
     if (s == NULL) {
@@ -127,7 +144,10 @@ br_err_t br_net_bind(int fd, uint32_t ip, uint16_t port)
     }
 
     ip_addr_t addr;
-    to_lwip_addr(&addr, ip);
+    br_err_t err = addr_in(s, ip, &addr, true);
+    if (err != BR_OK) {
+        return err;
+    }
     return map_err(netconn_bind(s->conn, &addr, port));
 }
 
@@ -142,7 +162,7 @@ br_err_t br_net_listen(int fd, int backlog)
     return map_err(netconn_listen(s->conn));
 }
 
-int br_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint16_t *port)
+int br_net_accept(int fd, br_time_t timeout, br_ip_t *ip, uint16_t *port)
 {
     slot_t *s = slot_get(fd);
     if (s == NULL || s->type != BR_NET_STREAM) {
@@ -157,7 +177,7 @@ int br_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint16_t *port)
         return map_err(err);
     }
 
-    int nfd = slot_alloc(nc, BR_NET_STREAM);
+    int nfd = slot_alloc(nc, BR_NET_STREAM, s->family);
     if (nfd < 0) {
         netconn_delete(nc);
         return nfd;
@@ -167,7 +187,7 @@ int br_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint16_t *port)
     u16_t peer_port = 0;
     if (netconn_peer(nc, &addr, &peer_port) == ERR_OK) {
         if (ip != NULL) {
-            *ip = from_lwip_addr(&addr);
+            br_net_from_lwip(ip, &addr);
         }
         if (port != NULL) {
             *port = peer_port;
@@ -176,7 +196,7 @@ int br_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint16_t *port)
     return nfd;
 }
 
-br_err_t br_net_connect(int fd, uint32_t ip, uint16_t port)
+br_err_t br_net_connect(int fd, const br_ip_t *ip, uint16_t port)
 {
     slot_t *s = slot_get(fd);
     if (s == NULL) {
@@ -184,7 +204,10 @@ br_err_t br_net_connect(int fd, uint32_t ip, uint16_t port)
     }
 
     ip_addr_t addr;
-    to_lwip_addr(&addr, ip);
+    br_err_t err = addr_in(s, ip, &addr, false);
+    if (err != BR_OK) {
+        return err;
+    }
     return map_err(netconn_connect(s->conn, &addr, port));
 }
 
@@ -227,7 +250,7 @@ int br_net_send(int fd, const void *buf, size_t len)
     return (int)written;
 }
 
-int br_net_sendto(int fd, const void *buf, size_t len, uint32_t ip, uint16_t port)
+int br_net_sendto(int fd, const void *buf, size_t len, const br_ip_t *ip, uint16_t port)
 {
     slot_t *s = slot_get(fd);
     if (s == NULL || buf == NULL || s->type != BR_NET_DGRAM) {
@@ -235,12 +258,15 @@ int br_net_sendto(int fd, const void *buf, size_t len, uint32_t ip, uint16_t por
     }
 
     ip_addr_t addr;
-    to_lwip_addr(&addr, ip);
+    br_err_t err = addr_in(s, ip, &addr, false);
+    if (err != BR_OK) {
+        return err;
+    }
     return udp_send(s, buf, len, &addr, port);
 }
 
 int br_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout,
-                    uint32_t *ip, uint16_t *port)
+                    br_ip_t *ip, uint16_t *port)
 {
     slot_t *s = slot_get(fd);
     if (s == NULL || buf == NULL) {
@@ -263,7 +289,7 @@ int br_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout,
     }
 
     if (ip != NULL) {
-        *ip = from_lwip_addr(netbuf_fromaddr(s->nb));
+        br_net_from_lwip(ip, netbuf_fromaddr(s->nb));
     }
     if (port != NULL) {
         *port = netbuf_fromport(s->nb);
@@ -313,29 +339,91 @@ br_err_t br_net_close(int fd)
     return map_err(err);
 }
 
-br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
-{
-    struct netconn *conn = netconn_new_with_proto_and_callback(NETCONN_RAW, IP_PROTO_ICMP, NULL);
-    if (conn == NULL) {
-        return BR_ERR_NOMEM;
-    }
+#define PING_ID  0xB3D0
 
-    uint8_t packet[sizeof(struct icmp_echo_hdr) + PING_PAYLOAD];
+static size_t ping_build4(uint8_t *packet, uint16_t seq)
+{
     struct icmp_echo_hdr *echo = (struct icmp_echo_hdr *)packet;
-    uint16_t seq = ++ping_seq;
 
     ICMPH_TYPE_SET(echo, ICMP_ECHO);
     ICMPH_CODE_SET(echo, 0);
     echo->chksum = 0;
-    echo->id     = lwip_htons(0xB3D0);
+    echo->id     = lwip_htons(PING_ID);
     echo->seqno  = lwip_htons(seq);
     for (int i = 0; i < PING_PAYLOAD; i++) {
         packet[sizeof(*echo) + i] = (uint8_t)('a' + i % 23);
     }
-    echo->chksum = inet_chksum(packet, sizeof(packet));
+    size_t len = sizeof(*echo) + PING_PAYLOAD;
+    echo->chksum = inet_chksum(packet, (u16_t)len);
+    return len;
+}
+
+static size_t ping_build6(uint8_t *packet, uint16_t seq)
+{
+    struct icmp6_echo_hdr *echo = (struct icmp6_echo_hdr *)packet;
+
+    echo->type   = ICMP6_TYPE_EREQ;
+    echo->code   = 0;
+    echo->chksum = 0;
+    echo->id     = lwip_htons(PING_ID);
+    echo->seqno  = lwip_htons(seq);
+    for (int i = 0; i < PING_PAYLOAD; i++) {
+        packet[sizeof(*echo) + i] = (uint8_t)('a' + i % 23);
+    }
+    return sizeof(*echo) + PING_PAYLOAD;
+}
+
+static bool ping_reply_ok(struct netbuf *reply, bool v6, uint16_t seq)
+{
+    uint8_t head[sizeof(struct ip_hdr)];
+    size_t  total = netbuf_len(reply);
+    size_t  off = 0;
+
+    if (total < sizeof(head)) {
+        return false;
+    }
+    netbuf_copy_partial(reply, head, sizeof(head), 0);
+
+    if (!v6) {
+        off = (size_t)(head[0] & 0x0F) * 4;
+    } else if ((head[0] >> 4) == 6) {
+        off = IP6_HLEN;
+    }
+    if (total < off + sizeof(struct icmp_echo_hdr)) {
+        return false;
+    }
+
+    struct icmp_echo_hdr r;
+    netbuf_copy_partial(reply, &r, sizeof(r), (u16_t)off);
+    uint8_t want = v6 ? ICMP6_TYPE_EREP : ICMP_ER;
+    return ICMPH_TYPE(&r) == want && r.id == lwip_htons(PING_ID) && r.seqno == lwip_htons(seq);
+}
+
+br_err_t br_net_ping(const br_ip_t *ip, br_time_t timeout, uint32_t *rtt_us)
+{
+    if (ip == NULL || (ip->family != BR_AF_INET && ip->family != BR_AF_INET6)) {
+        return BR_ERR_INVALID;
+    }
+
+    bool v6 = ip->family == BR_AF_INET6;
+    struct netconn *conn = v6 ? netconn_new_with_proto_and_callback(NETCONN_RAW_IPV6, IP6_NEXTH_ICMP6, NULL)
+                              : netconn_new_with_proto_and_callback(NETCONN_RAW, IP_PROTO_ICMP, NULL);
+    if (conn == NULL) {
+        return BR_ERR_NOMEM;
+    }
+    if (v6) {
+        LOCK_TCPIP_CORE();
+        conn->pcb.raw->chksum_reqd   = 1;
+        conn->pcb.raw->chksum_offset = 2;
+        UNLOCK_TCPIP_CORE();
+    }
+
+    uint8_t  packet[sizeof(struct icmp_echo_hdr) + PING_PAYLOAD];
+    uint16_t seq = ++ping_seq;
+    size_t   len = v6 ? ping_build6(packet, seq) : ping_build4(packet, seq);
 
     struct netbuf *nb = netbuf_new();
-    if (nb == NULL || netbuf_ref(nb, packet, sizeof(packet)) != ERR_OK) {
+    if (nb == NULL || netbuf_ref(nb, packet, (u16_t)len) != ERR_OK) {
         if (nb != NULL) {
             netbuf_delete(nb);
         }
@@ -344,7 +432,7 @@ br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
     }
 
     ip_addr_t dest;
-    to_lwip_addr(&dest, ip);
+    br_net_to_lwip(&dest, ip);
 
     br_time_t start = br_uptime_us();
     err_t err = netconn_sendto(conn, nb, &dest, 0);
@@ -368,22 +456,13 @@ br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
             break;
         }
 
-        uint8_t head[sizeof(struct ip_hdr)];
-        if (netbuf_len(reply) >= sizeof(head) + sizeof(struct icmp_echo_hdr)) {
-            netbuf_copy_partial(reply, head, sizeof(head), 0);
-            size_t ihl = (size_t)(head[0] & 0x0F) * 4;
-            struct icmp_echo_hdr r;
-            if (netbuf_len(reply) >= ihl + sizeof(r)) {
-                netbuf_copy_partial(reply, &r, sizeof(r), (u16_t)ihl);
-                if (ICMPH_TYPE(&r) == ICMP_ER && r.id == lwip_htons(0xB3D0) &&
-                    r.seqno == lwip_htons(seq) &&
-                    from_lwip_addr(netbuf_fromaddr(reply)) == ip) {
-                    if (rtt_us != NULL) {
-                        *rtt_us = (uint32_t)(br_uptime_us() - start);
-                    }
-                    result = BR_OK;
-                }
+        br_ip_t from;
+        br_net_from_lwip(&from, netbuf_fromaddr(reply));
+        if (ping_reply_ok(reply, v6, seq) && br_ip_equal(&from, ip)) {
+            if (rtt_us != NULL) {
+                *rtt_us = (uint32_t)(br_uptime_us() - start);
             }
+            result = BR_OK;
         }
         netbuf_delete(reply);
     }
@@ -392,9 +471,10 @@ br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
     return result;
 }
 
-br_err_t br_net_resolve(const char *name, uint32_t *ip)
+br_err_t br_net_resolve(const char *name, int family, br_ip_t *ip)
 {
-    if (name == NULL || ip == NULL || br_hal_in_isr()) {
+    if (name == NULL || ip == NULL || br_hal_in_isr() ||
+        (family != BR_AF_ANY && family != BR_AF_INET && family != BR_AF_INET6)) {
         return BR_ERR_INVALID;
     }
 
@@ -406,19 +486,32 @@ br_err_t br_net_resolve(const char *name, uint32_t *ip)
         return BR_ERR_INVALID;
     }
 
+    br_ip_t literal;
+    if (br_ip_parse(name, &literal)) {
+        if (family != BR_AF_ANY && (int)literal.family != family) {
+            return BR_ERR_NOENT;
+        }
+        *ip = literal;
+        return BR_OK;
+    }
+
+    u8_t type = family == BR_AF_INET ? NETCONN_DNS_IPV4
+              : family == BR_AF_INET6 ? NETCONN_DNS_IPV6 : NETCONN_DNS_IPV4_IPV6;
     ip_addr_t addr;
-    err_t err = netconn_gethostbyname_addrtype(name, &addr, NETCONN_DNS_IPV4);
+    err_t err = netconn_gethostbyname_addrtype(name, &addr, type);
     if (err == ERR_OK) {
-        *ip = from_lwip_addr(&addr);
+        br_net_from_lwip(ip, &addr);
         return BR_OK;
     }
     return err == ERR_VAL ? BR_ERR_NOENT : map_err(err);
 }
 
-br_err_t br_net_set_dns(uint32_t ip)
+br_err_t br_net_set_dns(const br_ip_t *ip)
 {
     ip_addr_t addr;
-    to_lwip_addr(&addr, ip);
+    if (ip == NULL || !br_net_to_lwip(&addr, ip)) {
+        return BR_ERR_INVALID;
+    }
 
     LOCK_TCPIP_CORE();
     dns_setserver(0, &addr);
@@ -426,13 +519,25 @@ br_err_t br_net_set_dns(uint32_t ip)
     return BR_OK;
 }
 
-uint32_t br_net_dns(void)
+br_err_t br_net_dns(br_ip_t *ip)
 {
+    if (ip == NULL) {
+        return BR_ERR_INVALID;
+    }
+
     LOCK_TCPIP_CORE();
     const ip_addr_t *addr = dns_getserver(0);
-    uint32_t ip = ip_addr_isany(addr) ? 0 : from_lwip_addr(addr);
+    bool none = ip_addr_isany(addr);
+    if (!none) {
+        br_net_from_lwip(ip, addr);
+    }
     UNLOCK_TCPIP_CORE();
-    return ip;
+
+    if (none) {
+        *ip = br_ip_any(BR_AF_ANY);
+        return BR_ERR_NOENT;
+    }
+    return BR_OK;
 }
 
 #if CONFIG_MPU
@@ -476,6 +581,28 @@ static bool block_get(const br_tcb_t *t, uint32_t ptr, uint32_t *out, size_t wor
     return true;
 }
 
+static int32_t ip_in(const br_tcb_t *t, uint32_t ptr, br_ip_t *out, bool allow_null)
+{
+    if (ptr == 0) {
+        return allow_null ? BR_OK : BR_ERR_INVALID;
+    }
+    if (ptr % 4 != 0 || !br_user_access_ok(t, (const void *)ptr, sizeof(*out), BR_MEM_R)) {
+        return BR_ERR_PERM;
+    }
+    *out = *(const br_ip_t *)ptr;
+    return out->family == BR_AF_INET || out->family == BR_AF_INET6 ? BR_OK : BR_ERR_INVALID;
+}
+
+static bool ip_out_ok(const br_tcb_t *t, uint32_t ptr)
+{
+    return ptr == 0 || out_ok(t, ptr, sizeof(br_ip_t));
+}
+
+static bool u32_out_ok(const br_tcb_t *t, uint32_t ptr)
+{
+    return ptr == 0 || out_ok(t, ptr, sizeof(uint32_t));
+}
+
 static br_time_t to_time(uint32_t lo, uint32_t hi)
 {
     return ((br_time_t)hi << 32) | lo;
@@ -488,21 +615,32 @@ static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
 
     switch (a[0]) {
     case BR_SYS_NET_SOCKET:
-        r = br_net_socket((int)a[1]);
+        r = br_net_socket((int)a[1], (int)a[2]);
         sock_claim(t, r);
         break;
 
-    case BR_SYS_NET_BIND:
-        r = sock_ok(t, a[1]) ? br_net_bind((int)a[1], a[2], (uint16_t)a[3]) : BR_ERR_INVALID;
+    case BR_SYS_NET_BIND: {
+        br_ip_t ip;
+        r = ip_in(t, a[2], &ip, true);
+        if (r == BR_OK) {
+            r = sock_ok(t, a[1]) ? br_net_bind((int)a[1], a[2] != 0 ? &ip : NULL, (uint16_t)a[3])
+                                 : BR_ERR_INVALID;
+        }
         break;
+    }
 
     case BR_SYS_NET_LISTEN:
         r = sock_ok(t, a[1]) ? br_net_listen((int)a[1], (int)a[2]) : BR_ERR_INVALID;
         break;
 
-    case BR_SYS_NET_CONNECT:
-        r = sock_ok(t, a[1]) ? br_net_connect((int)a[1], a[2], (uint16_t)a[3]) : BR_ERR_INVALID;
+    case BR_SYS_NET_CONNECT: {
+        br_ip_t ip;
+        r = ip_in(t, a[2], &ip, false);
+        if (r == BR_OK) {
+            r = sock_ok(t, a[1]) ? br_net_connect((int)a[1], &ip, (uint16_t)a[3]) : BR_ERR_INVALID;
+        }
         break;
+    }
 
     case BR_SYS_NET_CLOSE:
         if (sock_ok(t, a[1])) {
@@ -521,7 +659,8 @@ static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
         }
         break;
 
-    case BR_SYS_NET_SENDTO:
+    case BR_SYS_NET_SENDTO: {
+        br_ip_t ip;
         if (!block_get(t, a[1], b, 5)) {
             r = BR_ERR_PERM;
         } else if (!sock_ok(t, b[0])) {
@@ -529,9 +668,13 @@ static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
         } else if (!br_user_access_ok(t, (const void *)b[1], b[2], BR_MEM_R)) {
             r = BR_ERR_PERM;
         } else {
-            r = br_net_sendto((int)b[0], (const void *)b[1], b[2], b[3], (uint16_t)b[4]);
+            r = ip_in(t, b[3], &ip, false);
+            if (r == BR_OK) {
+                r = br_net_sendto((int)b[0], (const void *)b[1], b[2], &ip, (uint16_t)b[4]);
+            }
         }
         break;
+    }
 
     case BR_SYS_NET_RECV:
         if (!block_get(t, a[1], b, 5)) {
@@ -551,15 +694,19 @@ static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
         } else if (!sock_ok(t, b[0])) {
             r = BR_ERR_INVALID;
         } else if (!br_user_access_ok(t, (const void *)b[1], b[2], BR_MEM_W) ||
-                   !out_ok(t, b[5], sizeof(uint32_t)) || !out_ok(t, b[6], sizeof(uint32_t))) {
+                   !ip_out_ok(t, b[5]) || !u32_out_ok(t, b[6])) {
             r = BR_ERR_PERM;
         } else {
-            uint32_t ip = 0;
+            br_ip_t  ip;
             uint16_t port = 0;
             r = br_net_recvfrom((int)b[0], (void *)b[1], b[2], to_time(b[3], b[4]), &ip, &port);
             if (r >= 0) {
-                *(uint32_t *)b[5] = ip;
-                *(uint32_t *)b[6] = port;
+                if (b[5] != 0) {
+                    *(br_ip_t *)b[5] = ip;
+                }
+                if (b[6] != 0) {
+                    *(uint32_t *)b[6] = port;
+                }
             }
         }
         break;
@@ -569,44 +716,53 @@ static uint32_t net_handler(br_tcb_t *t, const uint32_t *a)
             r = BR_ERR_PERM;
         } else if (!sock_ok(t, b[0])) {
             r = BR_ERR_INVALID;
-        } else if (!out_ok(t, b[3], sizeof(uint32_t)) || !out_ok(t, b[4], sizeof(uint32_t))) {
+        } else if (!ip_out_ok(t, b[3]) || !u32_out_ok(t, b[4])) {
             r = BR_ERR_PERM;
         } else {
-            uint32_t ip = 0;
+            br_ip_t  ip;
             uint16_t port = 0;
             r = br_net_accept((int)b[0], to_time(b[1], b[2]), &ip, &port);
             if (r >= 0) {
                 sock_claim(t, r);
-                *(uint32_t *)b[3] = ip;
-                *(uint32_t *)b[4] = port;
+                if (b[3] != 0) {
+                    *(br_ip_t *)b[3] = ip;
+                }
+                if (b[4] != 0) {
+                    *(uint32_t *)b[4] = port;
+                }
             }
         }
         break;
 
-    case BR_SYS_NET_PING:
+    case BR_SYS_NET_PING: {
+        br_ip_t ip;
         if (!block_get(t, a[1], b, 4)) {
             r = BR_ERR_PERM;
-        } else if (!out_ok(t, b[3], sizeof(uint32_t))) {
+        } else if (!u32_out_ok(t, b[3])) {
             r = BR_ERR_PERM;
         } else {
-            uint32_t rtt = 0;
-            r = br_net_ping(b[0], to_time(b[1], b[2]), &rtt);
+            r = ip_in(t, b[0], &ip, false);
             if (r == BR_OK) {
-                *(uint32_t *)b[3] = rtt;
+                uint32_t rtt = 0;
+                r = br_net_ping(&ip, to_time(b[1], b[2]), &rtt);
+                if (r == BR_OK && b[3] != 0) {
+                    *(uint32_t *)b[3] = rtt;
+                }
             }
         }
         break;
+    }
 
     case BR_SYS_NET_RESOLVE: {
         char name[USER_NAME_MAX];
         r = br_user_copy_string(t, (const void *)a[1], name, sizeof(name));
-        if (r >= 0 && !out_ok(t, a[2], sizeof(uint32_t))) {
+        if (r >= 0 && !out_ok(t, a[3], sizeof(br_ip_t))) {
             r = BR_ERR_PERM;
         } else if (r >= 0) {
-            uint32_t ip = 0;
-            r = br_net_resolve(name, &ip);
+            br_ip_t ip;
+            r = br_net_resolve(name, (int)a[2], &ip);
             if (r == BR_OK) {
-                *(uint32_t *)a[2] = ip;
+                *(br_ip_t *)a[3] = ip;
             }
         }
         break;
