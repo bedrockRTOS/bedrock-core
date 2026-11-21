@@ -43,6 +43,7 @@ br_err_t br_fs_unmount(void);
 
 int      br_fs_open(const char *name, uint8_t flags);
 int      br_fs_read(int fd, void *buf, size_t len);
+br_err_t br_fs_seek(int fd, size_t offset);
 int      br_fs_write(int fd, const void *buf, size_t len);
 br_err_t br_fs_close(int fd);
 
@@ -50,6 +51,11 @@ br_err_t br_fs_remove(const char *name);
 br_err_t br_fs_stat(const char *name, size_t *size);
 br_err_t br_fs_list(uint32_t index, br_fs_info_t *info);
 br_err_t br_fs_usage(br_fs_usage_t *usage);
+
+br_err_t br_fs_mkdir(const char *path);
+br_err_t br_fs_rmdir(const char *path);
+br_err_t br_fs_info(const char *path, br_fs_info_t *info);
+br_err_t br_fs_readdir(const char *dir, uint32_t index, br_fs_info_t *info);
 ```
 
 | Function | Behavior |
@@ -57,22 +63,27 @@ br_err_t br_fs_usage(br_fs_usage_t *usage);
 | `br_fs_format` | Erase every block and write the superblock. `BR_ERR_BUSY` while a filesystem is mounted. |
 | `br_fs_mount` | Check the superblock (`BR_ERR_IO` if there is none), find the newest version of each file and build the free map. `BR_ERR_BUSY` if already mounted, `BR_ERR_INVALID` if the device does not fit the limits below. |
 | `br_fs_unmount` | `BR_ERR_BUSY` while a file is open. |
-| `br_fs_open` | `flags` is `BR_FS_READ` or `BR_FS_WRITE`, not both. Returns a descriptor or a negative `br_err_t`. |
-| `br_fs_read` | Sequential. Returns the bytes read, `0` at the end of the file. |
+| `br_fs_open` | `flags` is `BR_FS_READ`, `BR_FS_WRITE`, or `BR_FS_WRITE \| BR_FS_APPEND`. Returns a descriptor or a negative `br_err_t`. Creating a file needs its parent directory, `BR_ERR_NOENT` otherwise. |
+| `br_fs_read` | Returns the bytes read, `0` at the end of the file. |
+| `br_fs_seek` | Move a read descriptor to an absolute offset from `0` to the file size. A write descriptor cannot seek, `BR_ERR_INVALID`. Going back to the start of a file and then forward walks the block chain, so it takes time proportional to the offset. |
 | `br_fs_write` | Sequential. Returns the bytes accepted. A short count or an error means the file is damaged and `br_fs_close` will reject it. |
 | `br_fs_close` | For a write descriptor this commits the file. |
 | `br_fs_remove` | `BR_ERR_NOENT` if the file does not exist, `BR_ERR_BUSY` if it is open. |
 | `br_fs_stat` | File size. |
-| `br_fs_list` | The `index`-th file, `BR_ERR_NOENT` past the last one. Files are in block order, not in name order. |
+| `br_fs_list` | The `index`-th entry of the whole filesystem, files and directories with their full paths, `BR_ERR_NOENT` past the last one. In block order, not in name order. |
+| `br_fs_mkdir` | Create a directory. `BR_ERR_NOENT` if the parent does not exist, `BR_ERR_BUSY` if a file or a directory has the name. |
+| `br_fs_rmdir` | Remove an empty directory. `BR_ERR_BUSY` if it has entries or is open. |
+| `br_fs_info` | Kind and size of a file or a directory. `info->name` is the last component of the path. |
+| `br_fs_readdir` | The `index`-th direct child of `dir`, with `""` for the root. `info->name` is the leaf name and `info->dir` tells directories apart. `BR_ERR_NOENT` past the last one or for a missing directory. |
 | `br_fs_usage` | Block size, total blocks and free blocks. |
 
 Common errors: `BR_ERR_INVALID` for a bad name, flags, descriptor or a filesystem that is not mounted, `BR_ERR_NOENT` for a missing file, `BR_ERR_NOMEM` when the descriptor table or the free blocks run out, `BR_ERR_BUSY` for a conflicting open, `BR_ERR_IO` for a device error or damaged data.
 
-Names are 1 to `CONFIG_FS_NAME_MAX - 1` printable characters without spaces. There are no directories.
+A path is 1 to `CONFIG_FS_NAME_MAX - 1` printable characters without spaces, with `/` between components. It does not start or end with `/`, and has no empty component. The limit is on the whole path, and a directory path is one shorter, because its marker file carries a trailing `/`.
 
 ### Rules for open files
 
-- Opening for write replaces the whole file when it is closed. There is no append and no seek.
+- Opening for write replaces the whole file when it is closed. With `BR_FS_APPEND` the old content is copied into the new version first, so an append needs room for the whole file and takes time proportional to its size, and it is atomic like any write.
 - Only one file can be open for write at a time.
 - A file that is open cannot be opened for write, removed, or read while it is being written.
 - A write descriptor does nothing visible until `br_fs_close` returns `BR_OK`. If the write fails, or the system loses power before the commit, the old version of the file stays.
@@ -110,6 +121,10 @@ All numbers are 32-bit, in the byte order of the CPU. `next` is `0xFFFFFFFF` in 
 
 A file counts only if its head has the commit value and an erased `dead` slot. A power loss before the commit slot leaves a head that no one refers to, and its blocks are free again at the next mount. A power loss between the commit and the `dead` slot leaves two committed versions, and mount keeps the one with the higher generation and marks the other dead. At every point the file is either the old or the new version. `test_fs` cuts power at every program of a rewrite and checks that.
 
+### Directories
+
+A directory is a file of size 0 whose name is the path with a trailing `/`, for example `logs/`. A file inside is an ordinary file named `logs/a.txt`. Creating a file checks that the marker of its parent exists, removing a directory checks that no file starts with its path. Nothing else about the format changed, so a device written by an earlier version mounts and has no directories.
+
 ### Free space
 
 Mount and every change rebuild an in-RAM map of used blocks by walking the chain of every live file. Blocks are allocated round-robin and erased when allocated, which spreads the wear without a counter.
@@ -118,7 +133,9 @@ Mount and every change rebuild an in-RAM map of used blocks by walking the chain
 
 - A lookup scans the head of every block, so `open` takes time proportional to the block count.
 - There is no data checksum. A bit flip in the middle of a file is not detected.
-- Rewriting a file needs free space for the new version while the old one still exists.
+- Rewriting or appending to a file needs free space for the new version while the old one still exists.
+- A lookup in a directory scans every block, so a directory is not faster than a flat namespace.
+- Directories cannot be renamed, and there is no `rename` for files either.
 - Bad blocks are not tracked.
 
 ## Shell commands
@@ -127,7 +144,9 @@ Mount and every change rebuild an in-RAM map of used blocks by walking the chain
 
 | Command | Behavior |
 |---------|----------|
-| `ls` | List files with sizes, then the number of free blocks |
+| `ls [dir]` | List a directory (the root by default), then the number of free blocks |
+| `mkdir <dir>` | Create a directory |
+| `rm <path>` | Remove a file or an empty directory |
 | `cat <file>` | Print a file |
 | `write <file> [text...]` | Write the arguments, joined by single spaces, to a file |
 

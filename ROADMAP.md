@@ -81,7 +81,8 @@
 - [x] Filesystem unit tests
 - [x] Optional ports of littlefs and FatFs on `br_blkdev_t` in `ports/`
 - [ ] Block device drivers for real flash (SPI NOR, on-chip flash)
-- [ ] Append, seek and directories
+- [x] Append, seek and directories in the filesystem
+- [ ] Rename and truncate in the filesystem
 
 ## 0.6.0: Networking (optional module)
 
