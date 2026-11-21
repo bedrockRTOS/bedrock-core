@@ -34,7 +34,80 @@ static user_mq_t    mqs[CONFIG_USER_OBJECTS];
 static uint8_t      mq_arena[CONFIG_USER_MQ_ARENA] __attribute__((aligned(4)));
 static size_t       mq_arena_used;
 
-#define UART_PUTS_MAX  256
+#define UART_PUTS_MAX     256
+#define SYSCALL_RANGES    6
+#define RELEASE_HOOKS     4
+
+static struct {
+    uint32_t             first;
+    uint32_t             count;
+    br_syscall_handler_t handler;
+} ranges[SYSCALL_RANGES];
+static uint8_t           range_count;
+
+static br_user_release_t release_hooks[RELEASE_HOOKS];
+static uint8_t           release_count;
+
+br_err_t br_syscall_register(uint32_t first, uint32_t count, br_syscall_handler_t handler)
+{
+    if (handler == NULL || count == 0 || first < BR_SYS_COUNT || first + count < first) {
+        return BR_ERR_INVALID;
+    }
+
+    uint32_t key = br_hal_irq_disable();
+    br_err_t err = BR_OK;
+
+    for (int i = 0; i < range_count; i++) {
+        if (first < ranges[i].first + ranges[i].count && ranges[i].first < first + count) {
+            err = ranges[i].handler == handler ? BR_OK : BR_ERR_BUSY;
+            br_hal_irq_restore(key);
+            return err;
+        }
+    }
+    if (range_count == SYSCALL_RANGES) {
+        err = BR_ERR_NOMEM;
+    } else {
+        ranges[range_count].first   = first;
+        ranges[range_count].count   = count;
+        ranges[range_count].handler = handler;
+        range_count++;
+    }
+
+    br_hal_irq_restore(key);
+    return err;
+}
+
+br_err_t br_user_release_register(br_user_release_t hook)
+{
+    if (hook == NULL) {
+        return BR_ERR_INVALID;
+    }
+
+    uint32_t key = br_hal_irq_disable();
+    br_err_t err = BR_OK;
+
+    for (int i = 0; i < release_count; i++) {
+        if (release_hooks[i] == hook) {
+            br_hal_irq_restore(key);
+            return BR_OK;
+        }
+    }
+    if (release_count == RELEASE_HOOKS) {
+        err = BR_ERR_NOMEM;
+    } else {
+        release_hooks[release_count++] = hook;
+    }
+
+    br_hal_irq_restore(key);
+    return err;
+}
+
+void br_user_release_all(br_tid_t tid)
+{
+    for (int i = 0; i < release_count; i++) {
+        release_hooks[i](tid);
+    }
+}
 
 void *br_user_kstack_alloc(void)
 {
@@ -127,6 +200,27 @@ static bool access_ok(const br_tcb_t *t, uintptr_t p, size_t len, uint8_t need)
         return region_allows(&code, p, len, need);
     }
     return false;
+}
+
+bool br_user_access_ok(const br_tcb_t *t, const void *ptr, size_t len, uint8_t need)
+{
+    return access_ok(t, (uintptr_t)ptr, len, need);
+}
+
+int br_user_copy_string(const br_tcb_t *t, const void *src, char *dst, size_t max)
+{
+    const char *s = src;
+
+    for (size_t i = 0; i < max; i++) {
+        if (!access_ok(t, (uintptr_t)(s + i), 1, BR_MEM_R)) {
+            return BR_ERR_PERM;
+        }
+        dst[i] = s[i];
+        if (s[i] == '\0') {
+            return (int)i;
+        }
+    }
+    return BR_ERR_INVALID;
 }
 
 static br_time_t make_time(uint32_t lo, uint32_t hi)
@@ -323,6 +417,11 @@ uint32_t br_syscall_dispatch(const uint32_t *a)
         }
         break;
     default:
+        for (int i = 0; i < range_count; i++) {
+            if (a[0] >= ranges[i].first && a[0] - ranges[i].first < ranges[i].count) {
+                return ranges[i].handler(t, a);
+            }
+        }
         r = BR_ERR_INVALID;
         break;
     }

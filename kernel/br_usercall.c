@@ -103,4 +103,87 @@ br_err_t br_user_uart_getc(char *c, br_time_t timeout)
                                     HI(timeout), 0);
 }
 
+int br_user_device_open(const char *name)
+{
+    return (int)br_hal_syscall(BR_SYS_DEV_OPEN, (uint32_t)(uintptr_t)name, 0, 0, 0);
+}
+
+br_err_t br_user_device_close(int dev)
+{
+    return (br_err_t)br_hal_syscall(BR_SYS_DEV_CLOSE, (uint32_t)dev, 0, 0, 0);
+}
+
+int br_user_device_read(int dev, void *buf, size_t len, br_time_t timeout)
+{
+    uint32_t block[5] = { (uint32_t)dev, (uint32_t)(uintptr_t)buf, (uint32_t)len, LO(timeout), HI(timeout) };
+    return (int)br_hal_syscall(BR_SYS_DEV_READ, (uint32_t)(uintptr_t)block, 0, 0, 0);
+}
+
+int br_user_device_write(int dev, const void *buf, size_t len, br_time_t timeout)
+{
+    uint32_t block[5] = { (uint32_t)dev, (uint32_t)(uintptr_t)buf, (uint32_t)len, LO(timeout), HI(timeout) };
+    return (int)br_hal_syscall(BR_SYS_DEV_WRITE, (uint32_t)(uintptr_t)block, 0, 0, 0);
+}
+
+br_err_t br_user_device_ioctl(int dev, uint32_t cmd, void *arg, size_t size)
+{
+    return (br_err_t)br_hal_syscall(BR_SYS_DEV_IOCTL, (uint32_t)dev, cmd, (uint32_t)(uintptr_t)arg,
+                                    (uint32_t)size);
+}
+
+#define P(x) ((uint32_t)(uintptr_t)(x))
+#define SYS4(n, a, b, c, d) br_hal_syscall((n), (a), (b), (c), (d))
+
+int br_user_fs_open(const char *name, uint8_t flags) { return (int)SYS4(BR_SYS_FS_OPEN, P(name), flags, 0, 0); }
+int br_user_fs_read(int fd, void *buf, size_t len) { return (int)SYS4(BR_SYS_FS_READ, (uint32_t)fd, P(buf), (uint32_t)len, 0); }
+int br_user_fs_write(int fd, const void *buf, size_t len) { return (int)SYS4(BR_SYS_FS_WRITE, (uint32_t)fd, P(buf), (uint32_t)len, 0); }
+br_err_t br_user_fs_seek(int fd, size_t offset) { return (br_err_t)SYS4(BR_SYS_FS_SEEK, (uint32_t)fd, (uint32_t)offset, 0, 0); }
+br_err_t br_user_fs_close(int fd) { return (br_err_t)SYS4(BR_SYS_FS_CLOSE, (uint32_t)fd, 0, 0, 0); }
+br_err_t br_user_fs_remove(const char *name) { return (br_err_t)SYS4(BR_SYS_FS_REMOVE, P(name), 0, 0, 0); }
+br_err_t br_user_fs_mkdir(const char *path) { return (br_err_t)SYS4(BR_SYS_FS_MKDIR, P(path), 0, 0, 0); }
+br_err_t br_user_fs_rmdir(const char *path) { return (br_err_t)SYS4(BR_SYS_FS_RMDIR, P(path), 0, 0, 0); }
+br_err_t br_user_fs_stat(const char *name, uint32_t *size) { return (br_err_t)SYS4(BR_SYS_FS_STAT, P(name), P(size), 0, 0); }
+br_err_t br_user_fs_info(const char *path, void *info) { return (br_err_t)SYS4(BR_SYS_FS_INFO, P(path), P(info), 0, 0); }
+br_err_t br_user_fs_readdir(const char *dir, uint32_t index, void *info) { return (br_err_t)SYS4(BR_SYS_FS_READDIR, P(dir), index, P(info), 0); }
+br_err_t br_user_fs_usage(void *usage) { return (br_err_t)SYS4(BR_SYS_FS_USAGE, P(usage), 0, 0, 0); }
+
+int br_user_net_socket(int type) { return (int)SYS4(BR_SYS_NET_SOCKET, (uint32_t)type, 0, 0, 0); }
+br_err_t br_user_net_bind(int fd, uint32_t ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_BIND, (uint32_t)fd, ip, port, 0); }
+br_err_t br_user_net_listen(int fd, int backlog) { return (br_err_t)SYS4(BR_SYS_NET_LISTEN, (uint32_t)fd, (uint32_t)backlog, 0, 0); }
+br_err_t br_user_net_connect(int fd, uint32_t ip, uint16_t port) { return (br_err_t)SYS4(BR_SYS_NET_CONNECT, (uint32_t)fd, ip, port, 0); }
+int br_user_net_send(int fd, const void *buf, size_t len) { return (int)SYS4(BR_SYS_NET_SEND, (uint32_t)fd, P(buf), (uint32_t)len, 0); }
+br_err_t br_user_net_close(int fd) { return (br_err_t)SYS4(BR_SYS_NET_CLOSE, (uint32_t)fd, 0, 0, 0); }
+br_err_t br_user_net_resolve(const char *name, uint32_t *ip) { return (br_err_t)SYS4(BR_SYS_NET_RESOLVE, P(name), P(ip), 0, 0); }
+br_err_t br_user_net_ifinfo(uint32_t index, void *info) { return (br_err_t)SYS4(BR_SYS_NET_IFINFO, index, P(info), 0, 0); }
+
+int br_user_net_accept(int fd, br_time_t timeout, uint32_t *ip, uint32_t *port)
+{
+    uint32_t b[5] = { (uint32_t)fd, LO(timeout), HI(timeout), P(ip), P(port) };
+    return (int)SYS4(BR_SYS_NET_ACCEPT, P(b), 0, 0, 0);
+}
+
+int br_user_net_recv(int fd, void *buf, size_t len, br_time_t timeout)
+{
+    uint32_t b[5] = { (uint32_t)fd, P(buf), (uint32_t)len, LO(timeout), HI(timeout) };
+    return (int)SYS4(BR_SYS_NET_RECV, P(b), 0, 0, 0);
+}
+
+int br_user_net_sendto(int fd, const void *buf, size_t len, uint32_t ip, uint16_t port)
+{
+    uint32_t b[5] = { (uint32_t)fd, P(buf), (uint32_t)len, ip, port };
+    return (int)SYS4(BR_SYS_NET_SENDTO, P(b), 0, 0, 0);
+}
+
+int br_user_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout, uint32_t *ip, uint32_t *port)
+{
+    uint32_t b[7] = { (uint32_t)fd, P(buf), (uint32_t)len, LO(timeout), HI(timeout), P(ip), P(port) };
+    return (int)SYS4(BR_SYS_NET_RECVFROM, P(b), 0, 0, 0);
+}
+
+br_err_t br_user_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
+{
+    uint32_t b[4] = { ip, LO(timeout), HI(timeout), P(rtt_us) };
+    return (br_err_t)SYS4(BR_SYS_NET_PING, P(b), 0, 0, 0);
+}
+
 #endif

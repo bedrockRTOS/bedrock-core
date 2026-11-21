@@ -13,6 +13,7 @@ extern br_tcb_t *br_sched_current(void);
 extern void     br_time_sleep_list_remove(br_tcb_t *tcb);
 extern void     br_sched_account(void);
 #if CONFIG_MPU
+extern void     br_user_release_all(br_tid_t tid);
 extern void    *br_user_kstack_alloc(void);
 extern void     br_user_kstack_free(void *top);
 #endif
@@ -239,6 +240,13 @@ br_err_t br_task_delete(br_tid_t tid)
     if (tid >= CONFIG_MAX_TASKS) {
         return BR_ERR_INVALID;
     }
+
+#if CONFIG_MPU
+    if (tcb_pool[tid].user && tcb_pool[tid].state != BR_TASK_INACTIVE &&
+        &tcb_pool[tid] != br_sched_current()) {
+        br_user_release_all(tid);
+    }
+#endif
 
     uint32_t key = br_hal_irq_disable();
 

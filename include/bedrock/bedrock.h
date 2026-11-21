@@ -47,6 +47,24 @@ BR_STABLE br_tid_t br_task_self(void);
 
 BR_EXPERIMENTAL br_err_t br_task_delete(br_tid_t tid);
 #if CONFIG_MPU
+typedef uint32_t (*br_syscall_handler_t)(br_tcb_t *task, const uint32_t *args);
+typedef void     (*br_user_release_t)(br_tid_t tid);
+
+BR_EXPERIMENTAL br_err_t br_syscall_register(uint32_t first, uint32_t count,
+                                             br_syscall_handler_t handler);
+BR_EXPERIMENTAL br_err_t br_user_release_register(br_user_release_t hook);
+BR_EXPERIMENTAL bool     br_user_access_ok(const br_tcb_t *task, const void *ptr,
+                                           size_t len, uint8_t need);
+BR_EXPERIMENTAL int      br_user_copy_string(const br_tcb_t *task, const void *src,
+                                             char *dst, size_t max);
+BR_EXPERIMENTAL void     br_device_set_user(br_device_t *dev, bool allowed);
+BR_EXPERIMENTAL void     br_device_user_allow_ioctl(uint32_t cmd, size_t size);
+BR_EXPERIMENTAL br_err_t br_device_enable_user_calls(void);
+#else
+static inline void br_device_user_allow_ioctl(uint32_t cmd, size_t size) { (void)cmd; (void)size; }
+#endif
+
+#if CONFIG_MPU
 BR_EXPERIMENTAL br_err_t br_task_create_user(br_tid_t *tid, const char *name,
                                              br_task_entry_t entry, void *arg,
                                              uint8_t priority, void *stack,
