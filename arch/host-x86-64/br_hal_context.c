@@ -107,6 +107,12 @@ void br_hal_board_init(void)
 {
 }
 
+void br_hal_reset(void)
+{
+    fflush(stdout);
+    exit(0);
+}
+
 void br_hal_panic(const char *msg, const char *file, int line)
 {
     fprintf(stderr, "\n*** KERNEL PANIC ***\n");

@@ -39,6 +39,10 @@ void br_hal_check_stack_overflow(br_tcb_t *tcb);
 
 void br_hal_board_init(void);
 
+/* Reset HAL -- restart the system, does not return */
+
+void br_hal_reset(void) __attribute__((noreturn));
+
 /* Panic HAL -- architecture-level unrecoverable halt */
 
 void br_hal_panic(const char *msg, const char *file, int line)

@@ -5,7 +5,11 @@
 #include "bedrock/br_hal.h"
 
 #define SCB_ICSR    (*(volatile uint32_t *)0xE000ED04)
+#define SCB_AIRCR   (*(volatile uint32_t *)0xE000ED0C)
 #define ICSR_PENDSVSET  (1UL << 28)
+
+#define AIRCR_VECTKEY       (0x5FAUL << 16)
+#define AIRCR_SYSRESETREQ   (1UL << 2)
 
 /* Global pointers used by PendSV_Handler to perform the actual switch */
 volatile void **br_hal_old_sp_ptr;
@@ -139,6 +143,17 @@ void br_hal_panic(const char *msg, const char *file, int line)
     while (1) {
         __asm volatile ("wfi");
     }
+}
+
+__attribute__((noreturn))
+void br_hal_reset(void)
+{
+    __asm volatile ("cpsid i" ::: "memory");
+    __asm volatile ("dsb" ::: "memory");
+    SCB_AIRCR = AIRCR_VECTKEY | AIRCR_SYSRESETREQ;
+    __asm volatile ("dsb" ::: "memory");
+
+    while (1) { }
 }
 
 void br_hal_check_stack_overflow(br_tcb_t *tcb)
