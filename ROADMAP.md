@@ -38,7 +38,6 @@
 - [ ] RP2040: check on a real Raspberry Pi Pico
 - [x] STM32F103C8: `boards/stm32f103c8-bluepill/` with clocks, USART1, linker script, defconfig
 - [x] STM32F103C8: tests in Renode in CI
-- [ ] STM32F103C8: check on a real Blue Pill
 
 ## 0.3.0: Shell and debugging
 
@@ -66,10 +65,9 @@
 - [x] I2C HAL and driver
 - [x] Interrupt-driven UART on the driver model
 - [x] GPIO and UART implementations for Cortex-M
-- [ ] GPIO, SPI, I2C and PWM implementations for RISC-V: QEMU `virt` has none of these devices, needs a real board (see 0.7.0)
+- [ ] GPIO, SPI, I2C and PWM implementations for RISC-V: QEMU `virt` has none of these devices.
 - [x] Timer/counter driver for user code: PWM, capture
 - [x] Driver guide in `docs/en/driver-guide.md`
-- [ ] Check GPIO, SPI, I2C, PWM and capture on real STM32F103C8, RP2040 and LM3S6965-class hardware
 
 ## 0.5.0: Filesystem (optional module)
 
@@ -95,8 +93,9 @@
 - [x] Example: UDP echo server
 - [x] Shell commands: `ifconfig`, `ping`
 - [x] Interrupt-driven receive instead of polling
-- [ ] Network drivers for real hardware (STM32F103 has none on the Blue Pill, RP2040 needs a module)
-- [ ] DNS, IPv6
+- [ ] Network drivers for real hardware
+- [x] DNS
+- [ ] IPv6
 
 ## 0.7.0: More architectures and boards
 
@@ -128,7 +127,6 @@
   - Integer overflows in size math
   - Unchecked pointer dereferences
 - [x] Fault handlers with diagnostic output: HardFault on Cortex-M, trap handler on RISC-V and x86
-- [ ] Run the Cortex-M0+ (RP2040) memory protection on a model or a board
 - [ ] System calls for the device model, filesystem and network
 - [ ] NX bit and PAE on x86
 

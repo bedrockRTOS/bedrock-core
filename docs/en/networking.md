@@ -74,6 +74,11 @@ int      br_net_recvfrom(int fd, void *buf, size_t len, br_time_t timeout,
 br_err_t br_net_close(int fd);
 
 br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us);
+
+br_err_t br_net_resolve(const char *name, uint32_t *ip);
+br_err_t br_net_set_dns(uint32_t ip);
+uint32_t br_net_dns(void);
+
 void     br_shell_register_net(void);
 ```
 
@@ -91,6 +96,9 @@ IPv4 addresses are `uint32_t` in host byte order. `BR_IP4(a, b, c, d)` builds on
 | `br_net_send` | UDP: sends to the address set with `br_net_connect`. TCP: returns the bytes queued. |
 | `br_net_recv`, `br_net_recvfrom` | Wait up to `timeout`, `BR_TIME_INFINITE` for no limit. UDP returns one datagram and drops what does not fit in `len`. TCP returns up to `len` bytes of the stream and `0` when the peer has closed. `BR_ERR_TIMEOUT` on timeout. |
 | `br_net_close` | Close and free the descriptor. |
+| `br_net_resolve` | Turn a name into an IPv4 address. A dotted address is returned as is, without a query. Blocks until the answer or until lwIP gives up, which takes up to about four seconds without a reply. `BR_ERR_NOENT` if the name does not exist, `BR_ERR_TIMEOUT` if the server does not answer, `BR_ERR_INVALID` for a name that is empty or 64 characters or longer. Answers are cached for their lifetime, in a table of 4 names. |
+| `br_net_set_dns` | Set the DNS server, for an interface with a static address. DHCP sets it by itself. |
+| `br_net_dns` | The DNS server in use, or `0` if there is none. |
 | `br_net_ping` | Send an ICMP echo and wait for the reply. `BR_ERR_TIMEOUT` if there is none, `rtt_us` gets the round trip time. |
 
 Timeouts are rounded up to whole milliseconds, and a timeout of `0` waits 1 ms. The calls must not be made from an ISR.
@@ -99,7 +107,7 @@ Descriptors are not safe to use from two tasks at once. Different descriptors ca
 
 ## Configuration
 
-`ports/lwip/lwipopts.h` holds the lwIP settings: IPv4 only, UDP, TCP, ICMP, DHCP and ARP, no DNS, no IGMP, no sockets API, an 8 KiB heap, 12 packet buffers of 592 bytes and TCP segments of 536 bytes. The sizes are meant for a 64 KiB part and are the first thing to change for a larger one. The constants in `br_net.h` (`BR_NET_MAX_SOCKETS`, `BR_NET_MAX_NETIFS`, `BR_NET_POLL_MS`) can be overridden at build time.
+`ports/lwip/lwipopts.h` holds the lwIP settings: IPv4 only, UDP, TCP, ICMP, DHCP, DNS and ARP, no IGMP, no sockets API, an 8 KiB heap, 12 packet buffers of 592 bytes and TCP segments of 536 bytes. The sizes are meant for a 64 KiB part and are the first thing to change for a larger one. The constants in `br_net.h` (`BR_NET_MAX_SOCKETS`, `BR_NET_MAX_NETIFS`, `BR_NET_POLL_MS`) can be overridden at build time.
 
 `test_net` needs about 52 KiB of RAM and runs on the LM3S6965, so the stack fits in 64 KiB. The STM32F103C8 has 20 KiB and does not run it.
 
@@ -111,6 +119,7 @@ Descriptors are not safe to use from two tasks at once. Different descriptors ca
 |---------|----------|
 | `ifconfig` | Each interface with state, MAC, address, mask and gateway |
 | `ping <a.b.c.d> [count]` | Ping 1 to 100 times, 1 second timeout, then print how many replies arrived |
+| `nslookup <name>` | Resolve a name and print the address |
 
 ## Example: UDP echo server
 
@@ -131,14 +140,14 @@ echo hello | nc -u -w1 127.0.0.1 7777
 
 | Test | Targets | Covers |
 |------|---------|--------|
-| `test_net` | host, LM3S6965, RISC-V, RP2040 | Loopback UDP and TCP, socket limits, ARP and ICMP through the mock interface, ping, shell commands |
-| `test_net_qemu` | LM3S6965 and RISC-V in QEMU | The real drivers: DHCP lease, ping of the gateway, the receive interrupt wakeups, a datagram sent through it. Prints `SKIP` on a target without an interface |
+| `test_net` | host, LM3S6965, RISC-V, RP2040 | Loopback UDP and TCP, socket limits, ARP and ICMP through the mock interface, ping, shell commands, DNS against a peer that answers queries |
+| `test_net_qemu` | LM3S6965 and RISC-V in QEMU | The real drivers: DHCP lease, ping of the gateway, the DNS server from DHCP, the receive interrupt wakeups, a datagram sent through it. Prints `SKIP` on a target without an interface |
 
 `test_net_qemu` needs the QEMU options above (`-nic user,model=stellaris` or the virtio-net options). `test_net_rp2040` is built but is not run in CI.
 
 ## Limits
 
-- No DNS, no IPv6, no TLS.
+- No IPv6, no TLS. DNS has one server at a time for `br_net_set_dns`, and only A records.
 - Receive is interrupt driven on the two QEMU drivers. An interface without an interrupt is polled every 5 ms.
 - One TCP connection at a time per descriptor, with `BR_NET_MAX_SOCKETS` in the whole system.
 - The drivers were run on QEMU only. The Stellaris driver follows the QEMU model and the StellarisWare driver as far as the frame format goes, and has not been tried on real hardware.
