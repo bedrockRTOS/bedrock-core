@@ -336,6 +336,33 @@ br_err_t br_mqueue_recv(br_mqueue_t *mq, void *msg, br_time_t timeout);
 
 Receive a message. If the queue is empty, block until a message arrives or timeout expires.
 
+## Device Model
+
+Experimental. Declared in `include/bedrock/br_device.h` and `bedrock.h`. Described in the [driver guide](driver-guide.md).
+
+```c
+br_err_t     br_device_register(br_device_t *dev, const char *name,
+                                const br_device_ops_t *ops, void *priv);
+br_device_t *br_device_find(const char *name);
+br_err_t     br_device_open(br_device_t *dev);
+br_err_t     br_device_close(br_device_t *dev);
+int          br_device_read(br_device_t *dev, void *buf, size_t len, br_time_t timeout);
+int          br_device_write(br_device_t *dev, const void *buf, size_t len, br_time_t timeout);
+br_err_t     br_device_ioctl(br_device_t *dev, uint32_t cmd, void *arg);
+```
+
+| Function | Result |
+|----------|--------|
+| `br_device_register` | `BR_OK`, `BR_ERR_BUSY` for a duplicate name or object, `BR_ERR_INVALID` for `NULL` arguments |
+| `br_device_find` | The device or `NULL` |
+| `br_device_open`, `br_device_close` | `BR_OK`, `BR_ERR_INVALID` for `NULL`, a closed device or an ISR (open), `BR_ERR_OVERFLOW` after 255 opens, or the driver error |
+| `br_device_read`, `br_device_write` | Bytes transferred or a negative `br_err_t`. `BR_ERR_INVALID` if the device is closed or lacks the operation |
+| `br_device_ioctl` | `BR_OK`, `BR_ERR_INVALID` if the device is closed or lacks the operation, or the driver error |
+
+## Peripheral HAL
+
+Declared in `include/bedrock/br_hal.h`. Applications use the drivers in `drivers/` instead, see the [driver guide](driver-guide.md).
+
 ## UART
 
 Experimental. Declared in `include/bedrock/bedrock.h`.

@@ -57,17 +57,19 @@
 
 ## 0.4.0: Drivers
 
-- [ ] Driver model:
+- [x] Driver model:
   - `br_device_t` with a name, an ops table and private data
   - `br_device_register()` and `br_device_find()`
   - Ops: `open`, `close`, `read`, `write`, `ioctl`
-- [ ] GPIO HAL and driver
-- [ ] SPI HAL and driver
-- [ ] I2C HAL and driver
-- [ ] Interrupt-driven UART on the driver model
-- [ ] GPIO and UART implementations for Cortex-M and RISC-V
-- [ ] Timer/counter driver for user code: PWM, capture
-- [ ] Driver guide in `docs/en/driver-guide.md`
+- [x] GPIO HAL and driver
+- [x] SPI HAL and driver
+- [x] I2C HAL and driver
+- [x] Interrupt-driven UART on the driver model
+- [x] GPIO and UART implementations for Cortex-M
+- [ ] GPIO, SPI, I2C and PWM implementations for RISC-V: QEMU `virt` has none of these devices, needs a real board (see 0.7.0)
+- [x] Timer/counter driver for user code: PWM, capture
+- [x] Driver guide in `docs/en/driver-guide.md`
+- [ ] Check GPIO, SPI, I2C, PWM and capture on real STM32F103C8, RP2040 and LM3S6965-class hardware
 
 ## 0.5.0: Filesystem (optional module)
 

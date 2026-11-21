@@ -21,6 +21,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - Shell commands `tasks`, `mem`, `uptime`, `version` and `reboot`, registered with `br_shell_register_builtin()` (`lib/br_shell_cmds.c`).
 - `br_pool_count()`, `br_pool_get()` and `br_pool_block_size()` to enumerate memory pools.
 - `test_console`, `test_task_info` and `test_shell_cmds` on every target.
+- Device model: `br_device_t`, `br_device_register()`, `br_device_find()`, `br_device_open()`, `br_device_close()`, `br_device_read()`, `br_device_write()` and `br_device_ioctl()` (`kernel/br_device.c`).
+- Drivers in `drivers/`: UART, GPIO, SPI, I2C, PWM and input capture on the device model.
+- HAL functions `br_hal_gpio_*`, `br_hal_spi_*`, `br_hal_i2c_*`, `br_hal_pwm_*` and `br_hal_capture_*`. Implemented for LM3S6965, STM32F103C8 and RP2040 from the reference manuals, as a model on the host, and as `BR_ERR_INVALID` stubs for RISC-V `virt`, which has none of these devices.
+- `docs/en/driver-guide.md`.
+- `test_device`, `test_gpio`, `test_spi`, `test_i2c` and `test_pwm` on every target.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

@@ -121,7 +121,7 @@ chorus host
 ./test_scheduler_host
 ```
 
-The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore_host`, `test_mutex_host`, `test_mqueue_host`, `test_sleep_list_host`, `test_pool_host`, `test_uart_rx_host`, `test_shell_host`, `test_console_host`, `test_task_info_host` and `test_shell_cmds_host`. Each one prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end.
+The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore_host`, `test_mutex_host`, `test_mqueue_host`, `test_sleep_list_host`, `test_pool_host`, `test_uart_rx_host`, `test_shell_host`, `test_console_host`, `test_task_info_host` and `test_shell_cmds_host`, `test_device_host`, `test_gpio_host`, `test_spi_host`, `test_i2c_host` and `test_pwm_host`. Each one prints `PASS` or `FAIL` per case and `=== All Tests Complete ===` at the end.
 
 `test_uart_rx` and `test_shell` wait for the line `bedrock` on the console: `printf 'bedrock\n' | ./test_uart_rx_host`, the same pipe into `qemu-system-*`, or `sysbus.uart0 WriteLine "bedrock"` (`sysbus.usart1` on STM32F103) in Renode after `emulation RunFor "0.5"`.
 

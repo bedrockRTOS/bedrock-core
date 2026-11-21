@@ -118,6 +118,18 @@ void br_hal_reset(void) __attribute__((noreturn));
 
 Reset the system. Disable interrupts, trigger the hardware reset and never return. It is used by the shell `reboot` command. Cortex-M writes `SYSRESETREQ` to `SCB->AIRCR` (`br_hal_context.c`). On the QEMU `virt` machine the RISC-V port writes the reset code to the SiFive test device (`boards/qemu-riscv32-virt/board.c`), real RISC-V boards need their own reset source. The host port exits the process.
 
+## Step 5b: Implement Peripheral HAL
+
+```c
+br_err_t br_hal_gpio_configure(uint8_t port, uint8_t pin, br_gpio_mode_t mode);
+br_err_t br_hal_spi_init(uint8_t bus, uint32_t hz, uint8_t mode);
+br_err_t br_hal_i2c_init(uint8_t bus, uint32_t hz);
+br_err_t br_hal_pwm_start(uint8_t ch, uint32_t freq_hz, uint16_t duty_permille);
+br_err_t br_hal_capture_start(uint8_t ch, br_capture_edge_t edge);
+```
+
+and the rest of the GPIO, SPI, I2C, PWM and capture functions listed in `include/bedrock/br_hal.h`. Put them in `boards/<board_name>/br_hal_gpio.c`, `br_hal_spi.c`, `br_hal_i2c.c` and `br_hal_pwm.c`. A target without a peripheral still provides the functions and returns `BR_ERR_INVALID` (`boards/qemu-riscv32-virt/br_hal_periph.c`). The contract of each function and the pin and channel numbering of the existing targets are in the [driver guide](driver-guide.md).
+
 ## Step 6: Startup Code
 
 Provide a `startup.c` (or `.s`) that sets up the stack, initializes `.data` and `.bss`, installs the interrupt entry and calls `main()`.
