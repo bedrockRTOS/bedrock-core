@@ -188,6 +188,26 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} examples/test_fs.c -o ${@}"
 
+  lfs.o:
+    cmds:
+      - "${CC} ${CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  lfs_util.o:
+    cmds:
+      - "${CC} ${CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  br_lfs.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  test_littlefs.o:
+    cmds:
+      - "${CC} ${CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  br_libc.o:
+    cmds:
+      - "${CC} ${CFLAGS} -fno-builtin -fno-tree-loop-distribute-patterns ports/br_libc.c -o ${@}"
+
   test_i2c.o:
     cmds:
       - "${CC} ${CFLAGS} examples/test_i2c.c -o ${@}"
@@ -295,6 +315,11 @@ targets:
     cmds:
       - "${CC} ${LDFLAGS} test_fs.o lm3s-board.o -L. -Wl,--start-group -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
 
+  test_littlefs.elf:
+    deps: [test_littlefs.o, lfs.o, lfs_util.o, br_lfs.o, br_libc.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${LDFLAGS} test_littlefs.o lfs.o lfs_util.o br_lfs.o br_libc.o lm3s-board.o -L. -Wl,--start-group -lbedrock_hal -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
   test_i2c.elf:
     deps: [test_i2c.o, libbedrock_kernel.a, lm3s-board.o, libbedrock_hal.a, libbedrock_lib.a]
     cmds:
@@ -394,6 +419,11 @@ targets:
     deps: [test_fs.elf]
     cmds:
       - "qemu-system-arm -M lm3s6965evb -kernel test_fs.elf -nographic"
+
+  test-littlefs:
+    deps: [test_littlefs.elf]
+    cmds:
+      - "qemu-system-arm -M lm3s6965evb -kernel test_littlefs.elf -nographic"
 
   test-i2c:
     deps: [test_i2c.elf]
@@ -555,6 +585,34 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_fs.c -o ${@}"
 
+  host-lfs.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  host-lfs_util.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  host-br_lfs.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  host-test_littlefs.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  host-ff.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -w -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/upstream/ff.c -o ${@}"
+
+  host-br_ff.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/br_ff.c -o ${@}"
+
+  host-test_fatfs.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream examples/test_fatfs.c -o ${@}"
+
   host-test_i2c.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} examples/test_i2c.c -o ${@}"
@@ -657,6 +715,16 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_fs.o host-br_fs.o host-br_ramdisk.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
+  test_fatfs_host:
+    deps: [host-test_fatfs.o, host-ff.o, host-br_ff.o, host-br_ramdisk.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_fatfs.o host-ff.o host-br_ff.o host-br_ramdisk.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
+
+  test_littlefs_host:
+    deps: [host-test_littlefs.o, host-lfs.o, host-lfs_util.o, host-br_lfs.o, host-br_ramdisk.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
+    cmds:
+      - "${HOST_CC} ${HOST_LDFLAGS} host-test_littlefs.o host-lfs.o host-lfs_util.o host-br_lfs.o host-br_ramdisk.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
+
   test_i2c_host:
     deps: [host-test_i2c.o, host-br_i2c.o, libbedrock_kernel_host.a, libbedrock_hal_host.a]
     cmds:
@@ -750,7 +818,7 @@ targets:
       - "${HOST_CC} ${HOST_LDFLAGS} host-test_pool.o host-br_pool.o -L. -Wl,--start-group -lbedrock_kernel_host -lbedrock_hal_host -Wl,--end-group -o ${@}"
 
   host:
-    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host]
+    deps: [bedrock_example_host, test_task_delete_host, test_scheduler_host, test_semaphore_host, test_mutex_host, test_mqueue_host, test_sleep_list_host, test_pool_host, test_uart_rx_host, test_shell_host, test_console_host, test_task_info_host, test_shell_cmds_host, test_device_host, test_gpio_host, test_spi_host, test_i2c_host, test_pwm_host, test_fs_host, test_shell_fs_host, test_littlefs_host, test_fatfs_host]
 
   run-host:
     deps: [bedrock_example_host]
@@ -811,6 +879,16 @@ targets:
     deps: [test_fs_host]
     cmds:
       - "timeout 5 ./test_fs_host; true"
+
+  test-fatfs-host:
+    deps: [test_fatfs_host]
+    cmds:
+      - "timeout 5 ./test_fatfs_host; true"
+
+  test-littlefs-host:
+    deps: [test_littlefs_host]
+    cmds:
+      - "timeout 5 ./test_littlefs_host; true"
 
   test-i2c-host:
     deps: [test_i2c_host]
@@ -1008,6 +1086,38 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} examples/test_fs.c -o ${@}"
 
+  riscv32-lfs.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  riscv32-lfs_util.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  riscv32-br_lfs.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  riscv32-test_littlefs.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  riscv32-br_libc.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -fno-builtin -fno-tree-loop-distribute-patterns ports/br_libc.c -o ${@}"
+
+  riscv32-ff.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -w -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/upstream/ff.c -o ${@}"
+
+  riscv32-br_ff.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/br_ff.c -o ${@}"
+
+  riscv32-test_fatfs.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream examples/test_fatfs.c -o ${@}"
+
   riscv32-test_i2c.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} examples/test_i2c.c -o ${@}"
@@ -1115,6 +1225,16 @@ targets:
     cmds:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_fs.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
+  test_fatfs_riscv32.elf:
+    deps: [riscv32-test_fatfs.o, riscv32-ff.o, riscv32-br_ff.o, riscv32-br_libc.o, riscv32-br_ramdisk.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_fatfs.o riscv32-ff.o riscv32-br_ff.o riscv32-br_libc.o riscv32-br_ramdisk.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
+  test_littlefs_riscv32.elf:
+    deps: [riscv32-test_littlefs.o, riscv32-lfs.o, riscv32-lfs_util.o, riscv32-br_lfs.o, riscv32-br_libc.o, riscv32-br_ramdisk.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
+    cmds:
+      - "${RV_CC} ${RV_LDFLAGS} riscv32-test_littlefs.o riscv32-lfs.o riscv32-lfs_util.o riscv32-br_lfs.o riscv32-br_libc.o riscv32-br_ramdisk.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
+
   test_i2c_riscv32.elf:
     deps: [riscv32-test_i2c.o, riscv32-board.o, libbedrock_kernel_riscv32.a, libbedrock_hal_riscv32.a, libbedrock_lib_riscv32.a]
     cmds:
@@ -1156,7 +1276,7 @@ targets:
       - "${RV_CC} ${RV_LDFLAGS} riscv32-test_pool.o riscv32-board.o -L. -Wl,--start-group -lbedrock_hal_riscv32 -lbedrock_kernel_riscv32 -lbedrock_lib_riscv32 -Wl,--end-group -lgcc -o ${@}"
 
   riscv32:
-    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf]
+    deps: [bedrock_example_riscv32.elf, test_task_delete_riscv32.elf, test_scheduler_riscv32.elf, test_semaphore_riscv32.elf, test_mutex_riscv32.elf, test_mqueue_riscv32.elf, test_sleep_list_riscv32.elf, test_pool_riscv32.elf, test_uart_rx_riscv32.elf, test_shell_riscv32.elf, test_console_riscv32.elf, test_task_info_riscv32.elf, test_shell_cmds_riscv32.elf, test_device_riscv32.elf, test_gpio_riscv32.elf, test_spi_riscv32.elf, test_i2c_riscv32.elf, test_pwm_riscv32.elf, test_fs_riscv32.elf, test_shell_fs_riscv32.elf, test_littlefs_riscv32.elf, test_fatfs_riscv32.elf]
 
   run-riscv32:
     deps: [bedrock_example_riscv32.elf]
@@ -1434,6 +1554,38 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} examples/test_fs.c -o ${@}"
 
+  rp2040-lfs.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs.c -o ${@}"
+
+  rp2040-lfs_util.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -w -DLFS_DEFINES=br_lfs_config.h -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/upstream/lfs_util.c -o ${@}"
+
+  rp2040-br_lfs.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream ports/littlefs/br_lfs.c -o ${@}"
+
+  rp2040-test_littlefs.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/littlefs -Iports/littlefs/upstream examples/test_littlefs.c -o ${@}"
+
+  rp2040-br_libc.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -fno-builtin -fno-tree-loop-distribute-patterns ports/br_libc.c -o ${@}"
+
+  rp2040-ff.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -w -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/upstream/ff.c -o ${@}"
+
+  rp2040-br_ff.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream ports/fatfs/br_ff.c -o ${@}"
+
+  rp2040-test_fatfs.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -Iports/fatfs -Iports/fatfs/upstream examples/test_fatfs.c -o ${@}"
+
   rp2040-test_i2c.o:
     cmds:
       - "${CC} ${M0_CFLAGS} examples/test_i2c.c -o ${@}"
@@ -1560,6 +1712,16 @@ targets:
     cmds:
       - "${CC} ${M0_LDFLAGS} rp2040-test_fs.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
 
+  test_fatfs_rp2040.elf:
+    deps: [rp2040-test_fatfs.o, rp2040-ff.o, rp2040-br_ff.o, rp2040-br_libc.o, rp2040-br_ramdisk.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} rp2040-test_fatfs.o rp2040-ff.o rp2040-br_ff.o rp2040-br_libc.o rp2040-br_ramdisk.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
+
+  test_littlefs_rp2040.elf:
+    deps: [rp2040-test_littlefs.o, rp2040-lfs.o, rp2040-lfs_util.o, rp2040-br_lfs.o, rp2040-br_libc.o, rp2040-br_ramdisk.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
+    cmds:
+      - "${CC} ${M0_LDFLAGS} rp2040-test_littlefs.o rp2040-lfs.o rp2040-lfs_util.o rp2040-br_lfs.o rp2040-br_libc.o rp2040-br_ramdisk.o rp2040-boot2_crc.o -L. -Wl,--start-group -lbedrock_hal_rp2040 -lbedrock_kernel_rp2040 -lbedrock_lib_rp2040 -Wl,--end-group -lgcc -o ${@}"
+
   test_i2c_rp2040.elf:
     deps: [rp2040-test_i2c.o, rp2040-boot2_crc.o, libbedrock_kernel_rp2040.a, libbedrock_hal_rp2040.a, libbedrock_lib_rp2040.a]
     cmds:
@@ -1607,7 +1769,7 @@ targets:
       - "./bin2uf2 bedrock_example_rp2040.bin ${@} 0x10000000 0xe48bff56"
 
   rp2040:
-    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf]
+    deps: [bedrock_example_rp2040.uf2, test_task_delete_rp2040.elf, test_scheduler_rp2040.elf, test_semaphore_rp2040.elf, test_mutex_rp2040.elf, test_mqueue_rp2040.elf, test_sleep_list_rp2040.elf, test_pool_rp2040.elf, test_uart_rx_rp2040.elf, test_shell_rp2040.elf, test_console_rp2040.elf, test_task_info_rp2040.elf, test_shell_cmds_rp2040.elf, test_device_rp2040.elf, test_gpio_rp2040.elf, test_spi_rp2040.elf, test_i2c_rp2040.elf, test_pwm_rp2040.elf, test_fs_rp2040.elf, test_shell_fs_rp2040.elf, test_littlefs_rp2040.elf, test_fatfs_rp2040.elf]
 
   defconfig-rp2040:
     cmds:
@@ -1706,6 +1868,11 @@ targets:
     cmds:
       - "${CC} ${STM32F1_LDFLAGS} test_fs.o stm32f103-board.o -L. -Wl,--start-group -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
 
+  test_littlefs_stm32f103.elf:
+    deps: [test_littlefs.o, lfs.o, lfs_util.o, br_lfs.o, br_libc.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
+    cmds:
+      - "${CC} ${STM32F1_LDFLAGS} test_littlefs.o lfs.o lfs_util.o br_lfs.o br_libc.o stm32f103-board.o -L. -Wl,--start-group -lbedrock_hal_stm32f103 -lbedrock_kernel -lbedrock_lib -Wl,--end-group -lgcc -o ${@}"
+
   test_i2c_stm32f103.elf:
     deps: [test_i2c.o, stm32f103-board.o, libbedrock_hal_stm32f103.a, libbedrock_kernel.a, libbedrock_lib.a]
     cmds:
@@ -1752,7 +1919,7 @@ targets:
       - "${OBJCOPY} -O binary bedrock_example_stm32f103.elf ${@}"
 
   stm32f103:
-    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf, test_shell_stm32f103.elf, test_console_stm32f103.elf, test_task_info_stm32f103.elf, test_shell_cmds_stm32f103.elf, test_device_stm32f103.elf, test_gpio_stm32f103.elf, test_spi_stm32f103.elf, test_i2c_stm32f103.elf, test_pwm_stm32f103.elf, test_fs_stm32f103.elf, test_shell_fs_stm32f103.elf]
+    deps: [bedrock_example_stm32f103.bin, test_task_delete_stm32f103.elf, test_scheduler_stm32f103.elf, test_semaphore_stm32f103.elf, test_mutex_stm32f103.elf, test_mqueue_stm32f103.elf, test_sleep_list_stm32f103.elf, test_pool_stm32f103.elf, test_uart_rx_stm32f103.elf, test_shell_stm32f103.elf, test_console_stm32f103.elf, test_task_info_stm32f103.elf, test_shell_cmds_stm32f103.elf, test_device_stm32f103.elf, test_gpio_stm32f103.elf, test_spi_stm32f103.elf, test_i2c_stm32f103.elf, test_pwm_stm32f103.elf, test_fs_stm32f103.elf, test_shell_fs_stm32f103.elf, test_littlefs_stm32f103.elf]
 
   defconfig-stm32f103:
     cmds:
@@ -1761,5 +1928,5 @@ targets:
   clean:
     cmds:
       - "rm -f *.o *.a *.elf *.bin *.uf2 rp2040-boot2_crc.S bootcrc bin2uf2"
-      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host"
+      - "rm -f bedrock_example_host test_task_delete_host test_scheduler_host test_semaphore_host test_mutex_host test_mqueue_host test_sleep_list_host test_pool_host test_uart_rx_host test_shell_host test_console_host test_task_info_host test_shell_cmds_host test_device_host test_gpio_host test_spi_host test_i2c_host test_pwm_host test_fs_host test_shell_fs_host test_littlefs_host test_fatfs_host"
       - "rm -rf include/generated"
