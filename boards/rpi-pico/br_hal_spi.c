@@ -22,6 +22,7 @@
 #define SSP_SR_BSY      (1UL << 4)
 
 #define SSP_CPSR_MAX    254UL
+#define SSP_FIFO_DEPTH  8U
 #define SSP_IDLE_BYTE   0xFF
 
 #define PIN_SPI_RX      16
@@ -62,6 +63,10 @@ br_err_t br_hal_spi_init(uint8_t bus, uint32_t hz, uint8_t mode)
                 ((mode & BR_SPI_CPOL) ? SSP_CR0_SPO : 0) |
                 ((mode & BR_SPI_CPHA) ? SSP_CR0_SPH : 0);
     SPI0_CR1  = SSP_CR1_SSE | ((mode & BR_SPI_LOOP) ? SSP_CR1_LBM : 0);
+
+    for (uint32_t i = 0; i < SSP_FIFO_DEPTH && (SPI0_SR & SSP_SR_RNE); i++) {
+        (void)SPI0_DR;
+    }
 
     initialized = true;
     return BR_OK;

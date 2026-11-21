@@ -23,6 +23,7 @@
 #define SSI_SR_RNE      (1UL << 2)
 
 #define SSI_CPSR_MAX    254UL
+#define SSI_FIFO_DEPTH  8U
 #define SSI_IDLE_BYTE   0xFF
 
 #define PORT_A          0
@@ -65,6 +66,10 @@ br_err_t br_hal_spi_init(uint8_t bus, uint32_t hz, uint8_t mode)
                 ((mode & BR_SPI_CPOL) ? SSI_CR0_SPO : 0) |
                 ((mode & BR_SPI_CPHA) ? SSI_CR0_SPH : 0);
     SSI0_CR1  = SSI_CR1_SSE | ((mode & BR_SPI_LOOP) ? SSI_CR1_LBM : 0);
+
+    for (uint32_t i = 0; i < SSI_FIFO_DEPTH && (SSI0_SR & SSI_SR_RNE); i++) {
+        (void)SSI0_DR;
+    }
 
     initialized = true;
     return BR_OK;

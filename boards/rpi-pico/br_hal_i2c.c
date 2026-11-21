@@ -133,10 +133,14 @@ static br_err_t wait_status(uint32_t flag)
 static br_err_t wait_stop(void)
 {
     uint32_t spins = RP_WAIT_LIMIT;
-    while (!(IC_RAW_INTR_STAT & IC_INTR_STOP_DET)) {
+    while (1) {
         br_err_t err = fail_if_aborted();
         if (err != BR_OK) {
+            (void)IC_CLR_STOP_DET;
             return err;
+        }
+        if (IC_RAW_INTR_STAT & IC_INTR_STOP_DET) {
+            break;
         }
         if (--spins == 0) {
             return BR_ERR_TIMEOUT;
