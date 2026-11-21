@@ -58,6 +58,10 @@ br_err_t br_shell_readline(char *buf, size_t size, br_time_t timeout)
 {
     size_t len = 0;
 
+    if (buf == NULL || size == 0) {
+        return BR_ERR_INVALID;
+    }
+
     while (1) {
         char c;
         br_err_t err = br_uart_getc(&c, timeout);

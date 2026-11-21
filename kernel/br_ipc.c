@@ -59,7 +59,8 @@ static void block_on_wq(br_tcb_t **wq, br_tcb_t *tcb, br_time_t timeout)
     wq_insert(wq, tcb);
 
     if (timeout != BR_TIME_INFINITE) {
-        tcb->wake_time = br_hal_timer_get_us() + timeout;
+        br_time_t now  = br_hal_timer_get_us();
+        tcb->wake_time = timeout > BR_TIME_INFINITE - now ? BR_TIME_INFINITE : now + timeout;
         br_time_sleep_list_insert(tcb);
         br_time_reprogram_alarm();
     }
@@ -246,7 +247,8 @@ br_err_t br_mutex_unlock(br_mutex_t *mtx)
 br_err_t br_mqueue_init(br_mqueue_t *mq, void *buffer,
                         size_t msg_size, size_t max_msgs)
 {
-    if (mq == NULL || buffer == NULL || msg_size == 0 || max_msgs == 0) {
+    if (mq == NULL || buffer == NULL || msg_size == 0 || max_msgs == 0 ||
+        max_msgs > SIZE_MAX / msg_size) {
         return BR_ERR_INVALID;
     }
     mq->buffer    = (uint8_t *)buffer;

@@ -65,7 +65,8 @@ void br_sleep_us(br_time_t us)
 
     br_tcb_t *tcb = br_sched_current();
     tcb->state     = BR_TASK_BLOCKED;
-    tcb->wake_time = br_hal_timer_get_us() + us;
+    br_time_t now  = br_hal_timer_get_us();
+    tcb->wake_time = us > BR_TIME_INFINITE - now ? BR_TIME_INFINITE : now + us;
 
     br_time_sleep_list_insert(tcb);
     reprogram_alarm();

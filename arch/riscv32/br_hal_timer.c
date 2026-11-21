@@ -53,6 +53,10 @@ static void program_next_irq(void)
         next = alarm_target;
     }
 
+    if (next > UINT64_MAX / TICKS_PER_US) {
+        next = UINT64_MAX / TICKS_PER_US;
+    }
+
     write_mtimecmp(next * TICKS_PER_US);
 }
 
