@@ -13,6 +13,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `boards/qemu-cortex-m3/board.c` and `boards/qemu-riscv32-virt/board.c`.
 - Shell core in `lib/br_shell.c`: `br_shell_register`, `br_shell_readline` (echo, backspace, CRLF), `br_shell_execute`, `br_shell_run` and a built-in `help` command. `CONFIG_SHELL_LINE_MAX` (default 64) and `CONFIG_SHELL_MAX_ARGS` (default 8).
 - `test_shell` on every target.
+- `br_printf` and `br_snprintf` in `lib/br_console.c` with `%d %i %u %x %X %c %s %p %%`, `-` and `0` flags, width and `l`, `ll`, `z` length modifiers.
+- `br_task_get_info()` returns name, state, priority, stack size, stack high-water mark and CPU time of a task. New tasks get their stack filled with `BR_STACK_FILL` (`0xA5`) to measure the mark.
+- `CONFIG_TASK_STATS` (default on): per-task CPU time accounting in the scheduler.
+- `br_hook_idle()`: weak function called in a loop by the idle task.
+- `br_hal_reset()` on every target.
+- Shell commands `tasks`, `mem`, `uptime`, `version` and `reboot`, registered with `br_shell_register_builtin()` (`lib/br_shell_cmds.c`).
+- `br_pool_count()`, `br_pool_get()` and `br_pool_block_size()` to enumerate memory pools.
+- `test_console`, `test_task_info` and `test_shell_cmds` on every target.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

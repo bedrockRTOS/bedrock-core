@@ -156,6 +156,42 @@ br_tid_t br_task_self(void);
 
 Get the task ID of the currently running task.
 
+### `br_task_get_info`
+
+```c
+br_err_t br_task_get_info(br_tid_t tid, br_task_info_t *info);
+```
+
+Experimental. Fill `info` with a snapshot of the task `tid`.
+
+```c
+typedef struct {
+    const char     *name;
+    br_task_state_t state;
+    uint8_t         priority;
+    size_t          stack_size;
+    size_t          stack_used;
+    br_time_t       cpu_time_us;
+} br_task_info_t;
+```
+
+`stack_used` is the stack high-water mark in bytes. `br_task_create` fills the stack with `BR_STACK_FILL` (`0xA5`), and `br_task_get_info` counts the bytes still holding that value from the bottom of the stack up. The first four bytes hold the overflow canary and count as used. A task that writes `0xA5` bytes over the whole stack can make the value too low, which is unlikely in practice.
+
+`cpu_time_us` is the total time the task has been running, including interrupt time spent while it was current. It is always `0` when `CONFIG_TASK_STATS` is disabled.
+
+| Return | Meaning |
+|--------|---------|
+| `BR_OK` | `info` is filled |
+| `BR_ERR_INVALID` | `tid` is out of range, the slot is unused, or `info` is `NULL` |
+
+### `br_hook_idle`
+
+```c
+void br_hook_idle(void);
+```
+
+Experimental. Called in a loop by the idle task whenever no other task is ready. The kernel provides an empty weak definition. Define `br_hook_idle` in the application to run code there, for example to enter a low-power state. The hook runs on the idle task stack (`CONFIG_DEFAULT_STACK_SIZE`), must not block, and must not call functions that block or sleep.
+
 ## Time Services
 
 ### `br_sleep_us`
@@ -328,6 +364,41 @@ Read one received character. The UART receive interrupt puts incoming bytes into
 | `BR_ERR_INVALID` | `c` is `NULL` |
 | `BR_ERR_ISR` | Called from an ISR with a non-zero timeout |
 
+## Console
+
+Declared in `lib/br_console.h`. Output goes through `br_uart_putc`.
+
+### `br_printf`
+
+```c
+int br_printf(const char *fmt, ...);
+```
+
+Write formatted output to the console and return the number of characters written. No buffer is used, so it is safe to call from several tasks, but output of concurrent calls can interleave.
+
+### `br_snprintf`
+
+```c
+int br_snprintf(char *buf, size_t size, const char *fmt, ...);
+```
+
+Write formatted output into `buf`. At most `size - 1` characters are stored and the result is always terminated when `size` is not zero. Returns the length the full output would have, as in C99. `buf` can be `NULL` when `size` is `0`.
+
+### Format
+
+Both functions accept:
+
+| Element | Supported |
+|---------|-----------|
+| Conversions | `%d` `%i` `%u` `%x` `%X` `%c` `%s` `%p` `%%` |
+| Flags | `-` (left align), `0` (zero pad) |
+| Width | decimal digits |
+| Length | `l`, `ll`, `z` |
+
+`%p` prints `0x` followed by the address in lower-case hex. A `NULL` string prints as `(null)`. Precision, `*` width, `+`, space, `#` and floating point are not supported. An unknown conversion is printed as is.
+
+With `-Wformat`, `uint32_t` and `uint64_t` do not match `%u` and `%llu` on every target. Cast the argument to `unsigned` or `unsigned long long`.
+
 ## Shell
 
 Declared in `lib/br_shell.h`. No dynamic allocation: commands are structures owned by the application.
@@ -374,3 +445,21 @@ void br_shell_run(void) __attribute__((noreturn));
 ```
 
 Print `> `, read a line of up to `CONFIG_SHELL_LINE_MAX - 1` characters and execute it, forever. Call it from a dedicated task.
+
+### `br_shell_register_builtin`
+
+```c
+void br_shell_register_builtin(void);
+```
+
+Register the commands from `lib/br_shell_cmds.c`. Call it once before `br_shell_run`.
+
+| Command | Output |
+|---------|--------|
+| `tasks` | One line per task: ID, name, state, priority, stack used and size in bytes, CPU share since boot (`-` without `CONFIG_TASK_STATS`) |
+| `mem` | One line per pool created with `br_pool_create`: block size, free and total blocks |
+| `uptime` | Time since boot in seconds with microsecond digits |
+| `version` | Kernel version |
+| `reboot` | Reset the system with `br_hal_reset` |
+
+The pool query functions used by `mem` are in `lib/br_pool.h`: `br_pool_count()`, `br_pool_get(index)` and `br_pool_block_size(handle)`.

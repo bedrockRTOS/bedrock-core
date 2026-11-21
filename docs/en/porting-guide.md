@@ -112,6 +112,12 @@ void br_hal_board_init(void);
 
 Perform any early board-level initialization (clock setup, GPIO, peripheral enables, UART). The startup code calls it after `.data` and `.bss` are initialized and before `main()`, so `br_uart_puts()` works from the first line of `main()`. The kernel does not call it. Can be a no-op if nothing is needed. The arch layer provides a weak empty version, a board overrides it with its own `board.c` linked as an object file, not from an archive.
 
+```c
+void br_hal_reset(void) __attribute__((noreturn));
+```
+
+Reset the system. Disable interrupts, trigger the hardware reset and never return. It is used by the shell `reboot` command. Cortex-M writes `SYSRESETREQ` to `SCB->AIRCR` (`br_hal_context.c`). On the QEMU `virt` machine the RISC-V port writes the reset code to the SiFive test device (`boards/qemu-riscv32-virt/board.c`), real RISC-V boards need their own reset source. The host port exits the process.
+
 ## Step 6: Startup Code
 
 Provide a `startup.c` (or `.s`) that sets up the stack, initializes `.data` and `.bss`, installs the interrupt entry and calls `main()`.

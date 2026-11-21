@@ -79,6 +79,7 @@ Configuration values are passed as `-D` flags in `CFLAGS`:
 | `CONFIG_NUM_PRIORITIES` | 8 | Number of priority levels |
 | `CONFIG_DEFAULT_STACK_SIZE` | 1024 | Default stack size in bytes |
 | `CONFIG_TICKLESS` | 1 | Enable tickless operation |
+| `CONFIG_TASK_STATS` | 1 | Per-task CPU time accounting |
 | `BR_HAL_SYS_CLOCK_HZ` | 16000000 | System clock frequency |
 
 To change a value, edit the `CFLAGS` line in `chorus.build`.

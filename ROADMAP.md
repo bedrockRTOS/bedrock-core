@@ -44,16 +44,16 @@
 
 - [x] UART RX on interrupts instead of the polled TX-only driver
 - [x] Shell core: line editing, command parsing, command registration
-- [ ] Shell commands:
-  - [ ] `tasks`: tasks with state, priority and stack usage
-  - [ ] `mem`: memory pool usage
-  - [ ] `uptime`: time since boot
-  - [ ] `version`: kernel version
-  - [ ] `reboot`: system reset
-- [ ] `br_console` API for formatted output (`br_printf` or a smaller equivalent)
-- [ ] Stack high-water mark: fill the stack with a pattern and scan it
-- [ ] Per-task CPU usage under `CONFIG_TASK_STATS`
-- [ ] `br_hook_idle()` for user code in the idle task, for example power management
+- [x] Shell commands:
+  - [x] `tasks`: tasks with state, priority and stack usage
+  - [x] `mem`: memory pool usage
+  - [x] `uptime`: time since boot
+  - [x] `version`: kernel version
+  - [x] `reboot`: system reset
+- [x] `br_console` API for formatted output (`br_printf` or a smaller equivalent)
+- [x] Stack high-water mark: fill the stack with a pattern and scan it
+- [x] Per-task CPU usage under `CONFIG_TASK_STATS`
+- [x] `br_hook_idle()` for user code in the idle task, for example power management
 
 ## 0.4.0: Drivers
 
