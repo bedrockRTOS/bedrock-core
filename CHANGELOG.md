@@ -5,6 +5,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 ## [Unreleased]
 
 ### Added
+- IPv6 in `ports/lwip`: dual stack with a link-local address from the MAC address, SLAAC from router advertisements, static addresses (`br_net_ip6_add()`, `br_net_wait_ip6()`), ICMPv6 ping, TCP and UDP over IPv6 sockets, AAAA lookups and IPv6 DNS servers. `br_ip_t` (`include/bedrock/br_ip.h`) holds an address of either family, with `br_ip_parse()`, `br_ip_format()` (RFC 5952), `br_ip_equal()`, `br_ip_is_any()` and `br_ip_any()`. Link-local addresses carry the interface in `scope`. The shell commands `ifconfig`, `ping` and `nslookup` handle IPv6 (`nslookup <name> [4|6]`). Tests in `test_net` and `test_net_qemu`.
 - System calls for the device model, file system and network: `br_user_device_*`, `br_user_fs_*`, `br_user_net_*`. Modules register their own call numbers with `br_syscall_register()` and enable them with `br_device_enable_user_calls()`, `br_fs_enable_user_calls()` and `br_net_enable_user_calls()`. Devices are open to unprivileged tasks only after `br_device_set_user()`, `ioctl` goes through a whitelist (`br_device_user_allow_ioctl()`), descriptors belong to their task and are closed when it is deleted (`br_user_release_register()`). Tests in `test_mpu`.
 - Interrupt-driven UART receive on all targets: `br_uart_getc(char *c, br_time_t timeout)` reads from a ring buffer that the UART RX interrupt fills (`kernel/br_uart.c`). `br_uart_putc`, `br_uart_puts` and `br_uart_getc` are declared in `bedrock.h` as experimental API.
 - `CONFIG_UART_RX_BUF_SIZE` (default 64).
@@ -59,6 +60,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - `BR_ERR_PERM` for an access that a task is not allowed to make, and `BR_STACK_MIN` for the smallest task stack.
 
 ### Changed
+- **BREAKING CHANGE:** the network API takes `br_ip_t` instead of an IPv4 `uint32_t`. `br_net_socket(family, type)` takes the family, `br_net_bind`, `br_net_connect`, `br_net_sendto`, `br_net_ping`, `br_net_set_dns` take `const br_ip_t *` (`NULL` means any address for `br_net_bind`), `br_net_accept`, `br_net_recvfrom` and `br_net_dns` return it through a pointer, `br_net_resolve(name, family, &ip)` takes a family, and `br_net_netif_add` takes pointers (`NULL` for DHCP). `BR_IP4(a, b, c, d)` is now a `br_ip_t` and `br_net_ifinfo_t` holds `br_ip_t` fields. The system calls `br_user_net_*` changed the same way. To port IPv4 code: `br_net_socket(BR_AF_INET, type)` and `&BR_IP4(...)`.
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.
 - Libraries are linked inside `--start-group`/`--end-group` because the kernel and HAL now reference each other both ways.
 - `boards/*/renode.resc` only set up the machine. The caller runs `emulation RunFor` and `quit`, and can feed UART input in between.

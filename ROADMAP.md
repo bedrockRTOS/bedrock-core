@@ -95,7 +95,7 @@
 - [x] Interrupt-driven receive instead of polling
 - [ ] Network drivers for real hardware
 - [x] DNS
-- [ ] IPv6
+- [x] IPv6
 
 ## 0.7.0: More architectures and boards
 

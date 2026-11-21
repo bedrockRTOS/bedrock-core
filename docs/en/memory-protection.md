@@ -104,7 +104,7 @@ Rules the kernel enforces:
 - When a task is deleted, its devices, files and sockets are closed (`br_user_release_register` lets a module add its own cleanup).
 - Every buffer and string is checked as for the other calls. Strings are copied into the kernel before use.
 - Calls that need more than four values pass a small block of words in the task's memory. Out parameters (addresses, ports, sizes, info structures) are written by the kernel only after the pointer is checked.
-- Addresses are IPv4 in host order, as in `br_net_*`. `br_user_net_accept` and `_recvfrom` return the port in a `uint32_t`.
+- Addresses are `br_ip_t` (IPv4 or IPv6), passed by pointer, and the pointer must be aligned to 4 bytes. `br_user_net_socket` takes a family and a type. `br_user_net_accept` and `_recvfrom` return the port in a `uint32_t`.
 
 A call to a module that was not enabled returns `BR_ERR_INVALID`.
 
