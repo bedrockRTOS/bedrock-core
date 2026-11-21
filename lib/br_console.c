@@ -70,10 +70,35 @@ static size_t format_number(char *tmp, uint64_t value, unsigned base, bool upper
     const char *digits = upper ? "0123456789ABCDEF" : "0123456789abcdef";
     size_t n = 0;
 
-    do {
-        tmp[n++] = digits[value % base];
-        value /= base;
-    } while (value != 0);
+    if (value <= UINT32_MAX) {
+        /* Most values fit in 32 bits, which is much cheaper to divide on
+         * an 8-bit or 32-bit core */
+        uint32_t v = (uint32_t)value;
+        do {
+            tmp[n++] = digits[v % base];
+            v /= base;
+        } while (v != 0);
+    } else {
+        /* Long division of the 8 bytes by the base, so that no 64-bit
+         * division routine of the compiler is needed */
+        uint8_t be[8];
+        for (int i = 0; i < 8; i++) {
+            be[i] = (uint8_t)(value >> (56 - 8 * i));
+        }
+
+        bool more;
+        do {
+            unsigned rem = 0;
+            more = false;
+            for (int i = 0; i < 8; i++) {
+                unsigned cur = (rem << 8) | be[i];
+                be[i] = (uint8_t)(cur / base);
+                rem = cur % base;
+                more = more || be[i] != 0;
+            }
+            tmp[n++] = digits[rem];
+        } while (more);
+    }
 
     for (size_t i = 0; i < n / 2; i++) {
         char t = tmp[i];
