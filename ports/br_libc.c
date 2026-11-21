@@ -64,3 +64,22 @@ size_t strcspn(const char *s, const char *reject)
     }
     return n;
 }
+
+size_t strlen(const char *s)
+{
+    size_t n = 0;
+
+    while (s[n] != '\0') {
+        n++;
+    }
+    return n;
+}
+
+int strcmp(const char *a, const char *b)
+{
+    while (*a != '\0' && *a == *b) {
+        a++;
+        b++;
+    }
+    return (unsigned char)*a - (unsigned char)*b;
+}

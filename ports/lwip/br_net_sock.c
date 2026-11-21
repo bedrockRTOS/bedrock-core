@@ -5,6 +5,8 @@
 #include "br_net.h"
 
 #include "lwip/api.h"
+#include "lwip/dns.h"
+#include "lwip/tcpip.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/prot/icmp.h"
 #include "lwip/prot/ip.h"
@@ -388,4 +390,47 @@ br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us)
 
     netconn_delete(conn);
     return result;
+}
+
+br_err_t br_net_resolve(const char *name, uint32_t *ip)
+{
+    if (name == NULL || ip == NULL || br_hal_in_isr()) {
+        return BR_ERR_INVALID;
+    }
+
+    size_t n = 0;
+    while (name[n] != '\0') {
+        n++;
+    }
+    if (n == 0 || n >= DNS_MAX_NAME_LENGTH) {
+        return BR_ERR_INVALID;
+    }
+
+    ip_addr_t addr;
+    err_t err = netconn_gethostbyname_addrtype(name, &addr, NETCONN_DNS_IPV4);
+    if (err == ERR_OK) {
+        *ip = from_lwip_addr(&addr);
+        return BR_OK;
+    }
+    return err == ERR_VAL ? BR_ERR_NOENT : map_err(err);
+}
+
+br_err_t br_net_set_dns(uint32_t ip)
+{
+    ip_addr_t addr;
+    to_lwip_addr(&addr, ip);
+
+    LOCK_TCPIP_CORE();
+    dns_setserver(0, &addr);
+    UNLOCK_TCPIP_CORE();
+    return BR_OK;
+}
+
+uint32_t br_net_dns(void)
+{
+    LOCK_TCPIP_CORE();
+    const ip_addr_t *addr = dns_getserver(0);
+    uint32_t ip = ip_addr_isany(addr) ? 0 : from_lwip_addr(addr);
+    UNLOCK_TCPIP_CORE();
+    return ip;
 }

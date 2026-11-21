@@ -24,7 +24,11 @@
 #define LWIP_DHCP_DOES_ACD_CHECK        0
 #define LWIP_ACD                        0
 #define LWIP_AUTOIP                     0
-#define LWIP_DNS                        0
+#define LWIP_DNS                        1
+#define DNS_MAX_SERVERS                 2
+#define DNS_TABLE_SIZE                  4
+#define DNS_MAX_NAME_LENGTH             64
+#define LWIP_DHCP_PROVIDE_DNS_SERVERS   2
 #define LWIP_IGMP                       0
 #define LWIP_HAVE_LOOPIF                1
 #define LWIP_NETIF_LOOPBACK             1
@@ -39,6 +43,7 @@
 #define LWIP_DEBUG                      0
 #define LWIP_PROVIDE_ERRNO              1
 #define LWIP_NO_INTTYPES_H              1
+#define LWIP_NO_CTYPE_H                 1
 
 #define MEM_LIBC_MALLOC                 0
 #define MEMP_MEM_MALLOC                 0
@@ -46,7 +51,7 @@
 #define MEM_SIZE                        (8 * 1024)
 
 #define MEMP_NUM_PBUF                   8
-#define MEMP_NUM_UDP_PCB                6
+#define MEMP_NUM_UDP_PCB                7
 #define MEMP_NUM_TCP_PCB                4
 #define MEMP_NUM_TCP_PCB_LISTEN         2
 #define MEMP_NUM_TCP_SEG                16

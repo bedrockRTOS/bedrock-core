@@ -48,6 +48,10 @@ br_err_t br_net_close(int fd);
 
 br_err_t br_net_ping(uint32_t ip, br_time_t timeout, uint32_t *rtt_us);
 
+br_err_t br_net_resolve(const char *name, uint32_t *ip);
+br_err_t br_net_set_dns(uint32_t ip);
+uint32_t br_net_dns(void);
+
 uint32_t br_net_rx_wakeups(void);
 
 void     br_shell_register_net(void);
