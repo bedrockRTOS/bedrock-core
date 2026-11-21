@@ -15,6 +15,7 @@ SECTIONS
 {
     .text :
     {
+        _text_start = .;
         KEEP(*(.text.start))
         *(.text*)
         . = ALIGN(4);
@@ -25,6 +26,7 @@ SECTIONS
         *(.rodata*)
         *(.srodata*)
         . = ALIGN(4);
+        _code_end = .;
     } > RAM
 
     .data :
@@ -42,6 +44,14 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
+    } > RAM
+
+    .user_bss (NOLOAD) : ALIGN(4096)
+    {
+        _user_data_start = .;
+        *(.user_bss*)
+        . = _user_data_start + 4096;
+        _user_data_end = .;
     } > RAM
 
     _estack = ORIGIN(RAM) + LENGTH(RAM);

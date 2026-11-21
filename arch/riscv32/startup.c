@@ -3,8 +3,11 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 extern uint32_t _sbss, _ebss;
+extern uint32_t _user_data_start __attribute__((weak));
+extern uint32_t _user_data_end __attribute__((weak));
 
 extern int main(void);
 extern void br_hal_board_init(void);
@@ -16,6 +19,11 @@ void reset_handler(void)
 {
     uint32_t *dst = &_sbss;
     while (dst < &_ebss) {
+        *dst++ = 0;
+    }
+
+    dst = &_user_data_start;
+    while (dst != NULL && dst < &_user_data_end) {
         *dst++ = 0;
     }
 

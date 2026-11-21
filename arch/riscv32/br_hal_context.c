@@ -20,11 +20,19 @@
 #define FRAME_A0         6
 #define FRAME_MEPC       28
 #define FRAME_MSTATUS    29
+#define FRAME_USP        30
+#define FRAME_KSP        31
+#define MSTATUS_MPP_MASK (3UL << 11)
 
 extern void br_hal_timer_isr(void);
 extern void br_hal_external_isr(void);
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
+
+#if CONFIG_MPU
+extern void *br_hal_mpu_trap(uint32_t *frame, uint32_t mcause, bool *handled);
+extern void  br_hal_mpu_switch(br_tcb_t *t);
+#endif
 
 static void **volatile switch_old_sp;
 static void **volatile switch_new_sp;
@@ -37,6 +45,12 @@ __asm__(
     ".globl br_hal_trap_return\n"
     ".align 2\n"
     "br_hal_trap_entry:\n"
+#if CONFIG_MPU
+    "    csrrw sp, mscratch, sp\n"
+    "    bnez sp, 1f\n"
+    "    csrrw sp, mscratch, sp\n"
+    "1:\n"
+#endif
     "    addi sp, sp, -128\n"
     "    sw ra,    0(sp)\n"
     "    sw t0,    4(sp)\n"
@@ -70,6 +84,13 @@ __asm__(
     "    sw t0,  112(sp)\n"
     "    csrr t0, mstatus\n"
     "    sw t0,  116(sp)\n"
+#if CONFIG_MPU
+    "    csrr t0, mscratch\n"
+    "    sw t0,  120(sp)\n"
+    "    addi t0, sp, 128\n"
+    "    sw t0,  124(sp)\n"
+    "    csrw mscratch, zero\n"
+#endif
     "    mv a0, sp\n"
     "    csrr a1, mcause\n"
     "    call br_hal_trap\n"
@@ -79,8 +100,18 @@ __asm__(
     "    csrw mepc, t0\n"
     "    lw t0,  116(sp)\n"
     "    csrw mstatus, t0\n"
+#if CONFIG_MPU
+    "    srli t0, t0, 11\n"
+    "    andi t0, t0, 3\n"
+    "    bnez t0, 2f\n"
+    "    lw t0,  120(sp)\n"
+    "    csrw mscratch, t0\n"
+    "2:\n"
+#endif
     "    lw ra,    0(sp)\n"
+#if !CONFIG_MPU
     "    lw t0,    4(sp)\n"
+#endif
     "    lw t1,    8(sp)\n"
     "    lw t2,   12(sp)\n"
     "    lw s0,   16(sp)\n"
@@ -107,11 +138,62 @@ __asm__(
     "    lw t4,  100(sp)\n"
     "    lw t5,  104(sp)\n"
     "    lw t6,  108(sp)\n"
+#if CONFIG_MPU
+    "    csrr t0, mstatus\n"
+    "    srli t0, t0, 11\n"
+    "    andi t0, t0, 3\n"
+    "    bnez t0, 3f\n"
+    "    lw t0,  124(sp)\n"
+    "    csrrw t0, mscratch, t0\n"
+    "    sw t0,  120(sp)\n"
+    "    lw t0,    4(sp)\n"
+    "    lw sp,  120(sp)\n"
+    "    mret\n"
+    "3:\n"
+    "    lw t0,    4(sp)\n"
     "    addi sp, sp, 128\n"
     "    mret\n"
+#else
+    "    addi sp, sp, 128\n"
+    "    mret\n"
+#endif
 );
 
 void *br_hal_trap(void *sp, uint32_t mcause);
+
+static void print_hex(uint32_t v)
+{
+    br_uart_puts("0x");
+    for (int shift = 28; shift >= 0; shift -= 4) {
+        br_uart_putc("0123456789abcdef"[(v >> shift) & 0xF]);
+    }
+}
+
+static void print_reg(const char *name, uint32_t v)
+{
+    br_uart_puts(name);
+    print_hex(v);
+    br_uart_puts("\n");
+}
+
+static void br_hal_trap_fatal(void *sp, uint32_t mcause)
+{
+    const uint32_t *f = sp;
+    uint32_t mtval;
+
+    __asm volatile ("csrr %0, mtval" : "=r" (mtval));
+
+    br_uart_puts("\n*** CPU FAULT ***\n");
+    print_reg("mcause:  ", mcause);
+    print_reg("mepc:    ", f[FRAME_MEPC]);
+    print_reg("mtval:   ", mtval);
+    print_reg("mstatus: ", f[FRAME_MSTATUS]);
+    print_reg("ra:      ", f[FRAME_RA]);
+    print_reg("a0:      ", f[FRAME_A0]);
+    br_uart_puts("*****************\n");
+
+    br_hal_panic("Unhandled exception", __FILE__, __LINE__);
+}
 
 void *br_hal_trap(void *sp, uint32_t mcause)
 {
@@ -127,7 +209,16 @@ void *br_hal_trap(void *sp, uint32_t mcause)
             br_hal_external_isr();
         }
     } else {
-        br_hal_panic("Unhandled exception", __FILE__, __LINE__);
+#if CONFIG_MPU
+        bool handled = false;
+        void *next = br_hal_mpu_trap(sp, mcause, &handled);
+        if (handled) {
+            sp = next;
+        } else
+#endif
+        {
+            br_hal_trap_fatal(sp, mcause);
+        }
     }
 
     in_isr = false;
@@ -136,6 +227,9 @@ void *br_hal_trap(void *sp, uint32_t mcause)
         switch_pending = false;
         CLINT_MSIP = 0;
         *switch_old_sp = sp;
+#if CONFIG_MPU
+        br_hal_mpu_switch((br_tcb_t *)switch_new_sp);
+#endif
         sp = *switch_new_sp;
     }
 
@@ -177,6 +271,46 @@ void br_hal_context_switch(void **old_sp, void **new_sp)
     }
 }
 
+#if CONFIG_MPU
+
+extern br_tcb_t *br_sched_current(void);
+
+void *br_hal_stack_init_user(void *kstack_top, void *stack_top, br_task_entry_t entry, void *arg)
+{
+    uint32_t *sp = (uint32_t *)((uintptr_t)kstack_top & ~0xFUL);
+
+    sp -= FRAME_WORDS;
+    for (int i = 0; i < FRAME_WORDS; i++) {
+        sp[i] = 0;
+    }
+
+    sp[FRAME_RA]      = (uint32_t)(uintptr_t)task_exit_handler;
+    sp[FRAME_A0]      = (uint32_t)(uintptr_t)arg;
+    sp[FRAME_MEPC]    = (uint32_t)(uintptr_t)entry;
+    sp[FRAME_MSTATUS] = MSTATUS_MPIE;
+    sp[FRAME_USP]     = (uint32_t)((uintptr_t)stack_top & ~0xFUL);
+    sp[FRAME_KSP]     = (uint32_t)(uintptr_t)(sp + FRAME_WORDS);
+
+    (void)stack_top;
+    return (void *)sp;
+}
+
+void br_hal_start_first_task(void *sp)
+{
+    br_hal_mpu_switch(br_sched_current());
+
+    __asm volatile (
+        "li t0, 8\n"
+        "csrs mie, t0\n"
+        "mv sp, %0\n"
+        "j br_hal_trap_return\n"
+        :: "r" (sp)
+    );
+    __builtin_unreachable();
+}
+
+#else
+
 __attribute__((naked))
 void br_hal_start_first_task(void *sp)
 {
@@ -188,6 +322,8 @@ void br_hal_start_first_task(void *sp)
         "j br_hal_trap_return\n"
     );
 }
+
+#endif
 
 uint32_t br_hal_irq_disable(void)
 {
