@@ -42,6 +42,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - x86 port in `arch/x86` and `boards/qemu-x86`: 32-bit protected mode, multiboot, PIT one-shot alarms over a TSC clock, 16550 UART, context switch on interrupt exit. `chorus x86` and `chorus run-x86`. The peripheral HAL returns `BR_ERR_INVALID` and there is no network interface.
 - STM32F4-Discovery board in `boards/stm32f4-discovery` (STM32F407, Cortex-M4 without the FPU, 16 MHz internal clock): USART1 console, GPIO, SPI1, I2C1, TIM2 PWM and TIM3 capture. `chorus stm32f4`, `chorus run-stm32f4`, `chorus defconfig-stm32f4`.
 - Porting guide section on adding a board.
+- Memory protection, `CONFIG_MPU`: unprivileged tasks (`br_task_create_user()`), per-task MPU regions on Cortex-M, PMP on RISC-V and paging on x86, grants (`br_task_grant()`), and system calls for task, time, semaphore, mutex, message queue and UART (`br_user_*`). Faulting tasks are stopped with a report. See `docs/en/memory-protection.md`. Run on QEMU for Cortex-M3, Cortex-M4, RISC-V and x86. Cortex-M0+ builds but has not been run.
+- Fault handlers with diagnostic output for HardFault, MemManage, BusFault and UsageFault on Cortex-M and for traps on RISC-V and x86.
+- Linker scripts of LM3S6965, STM32F4, RP2040, RISC-V `virt` and x86 reserve a 4 KiB section for shared user data.
+- `test_mpu` for Cortex-M3, Cortex-M4, RISC-V, x86 and RP2040 (build only) and `test_audit`.
+
+### Fixed
+- `br_mqueue_init` accepted dimensions whose product overflows `size_t`, which made the queue indices wrap.
+- `br_task_create` accepted a stack that is too small for the initial frame, which wrote below the stack.
+- `br_shell_readline` wrote to the buffer when the size was 0.
+- A sleep or timeout close to `BR_TIME_INFINITE` wrapped around and woke the task at once. The wake time now saturates. The RISC-V timer clamps the alarm so that the compare value does not overflow.
+- `BR_ERR_PERM` for an access that a task is not allowed to make, and `BR_STACK_MIN` for the smallest task stack.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

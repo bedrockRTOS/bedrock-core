@@ -39,7 +39,8 @@ typedef enum {
     BR_ERR_OVERFLOW  = -6,
     BR_ERR_STACK_OVF = -7,
     BR_ERR_NOENT     = -8,
-    BR_ERR_IO        = -9
+    BR_ERR_IO        = -9,
+    BR_ERR_PERM      = -10
 } br_err_t;
 ```
 
@@ -393,6 +394,10 @@ Read one received character. The UART receive interrupt puts incoming bytes into
 | `BR_ERR_TIMEOUT` | No data within `timeout` |
 | `BR_ERR_INVALID` | `c` is `NULL` |
 | `BR_ERR_ISR` | Called from an ISR with a non-zero timeout |
+
+## Memory Protection
+
+Experimental, with `CONFIG_MPU`. `br_task_create_user()`, `br_task_grant()` and the `br_user_*` system calls are described in the [memory protection guide](memory-protection.md). `br_task_get_info()` reports `faulted` and `user`. The error `BR_ERR_PERM` (`-10`) is returned for an access that a task may not make.
 
 ## Filesystem
 

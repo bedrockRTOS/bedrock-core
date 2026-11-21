@@ -115,17 +115,21 @@
 
 ## 0.8.0: Memory protection
 
-- [ ] MPU HAL
-- [ ] Per-task MPU regions on Cortex-M: stack, peripherals
-- [ ] PMP on RISC-V
-- [ ] `CONFIG_MPU`: tasks cannot write to other tasks' stacks
-- [ ] Kernel runs privileged, tasks run unprivileged (Cortex-M Handler/Thread mode)
-- [ ] System calls (`svc`/`ecall`) for unprivileged tasks
-- [ ] Kernel code audit:
+- [x] MPU HAL
+- [x] Per-task MPU regions on Cortex-M: stack, peripherals
+- [x] PMP on RISC-V
+- [x] Paging and ring 3 on x86
+- [x] `CONFIG_MPU`: tasks cannot write to other tasks' stacks
+- [x] Kernel runs privileged, tasks run unprivileged (Cortex-M Handler/Thread mode)
+- [x] System calls (`svc`/`ecall`/`int`) for unprivileged tasks
+- [x] Kernel code audit:
   - Buffer overflows
   - Integer overflows in size math
   - Unchecked pointer dereferences
-- [ ] Fault handlers with diagnostic output: HardFault on Cortex-M, trap handler on RISC-V
+- [x] Fault handlers with diagnostic output: HardFault on Cortex-M, trap handler on RISC-V and x86
+- [ ] Run the Cortex-M0+ (RP2040) memory protection on a model or a board
+- [ ] System calls for the device model, filesystem and network
+- [ ] NX bit and PAE on x86
 
 ## 0.9.0: API freeze, docs, performance
 

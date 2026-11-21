@@ -171,6 +171,21 @@ On QEMU RISC-V `virt` the image is loaded straight into RAM at `0x80000000`, so 
 
 Add compile and link targets for the new architecture in `chorus.build`, an `ARCH_<NAME>` option to `Kconfig`, a `boards/<board_name>/defconfig`, and a job in `.github/workflows/ci.yml` that builds the port and runs the tests on QEMU.
 
+## Step 5d: Memory Protection (optional)
+
+An architecture that supports `CONFIG_MPU` implements these functions from `br_hal.h`, with `CONFIG_MPU` set:
+
+```c
+void     br_hal_mpu_init(void);
+bool     br_hal_mpu_region_valid(const br_region_t *r);
+void     br_hal_mpu_code_region(br_region_t *r);
+void     br_hal_mpu_user_data_region(br_region_t *r);
+void    *br_hal_stack_init_user(void *kstack_top, void *stack_top, br_task_entry_t entry, void *arg);
+uint32_t br_hal_syscall(uint32_t num, uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3);
+```
+
+On every context switch to a task, program the memory protection for that task and set its privilege level. A system call is a trap that moves the task onto `tcb->kstack_top` as a privileged thread running `br_syscall_dispatch(args)`, and a second trap that restores the user context with the result. A fault from a task with `user` set and `in_syscall` clear calls `br_task_fault()`. The details of the three ports are in [memory protection](memory-protection.md).
+
 ## Adding a Board
 
 A board is a directory `boards/<board_name>/` on top of an existing architecture. Nothing in `kernel/`, `lib/` or `drivers/` changes. `boards/stm32f4-discovery/` is a short example: an STM32F407 on the `arch/arm-cortex-m/` core.
