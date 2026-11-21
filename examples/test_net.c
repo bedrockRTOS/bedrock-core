@@ -310,6 +310,93 @@ static void run_wire_tests(void)
 }
 
 static uint8_t stack_peer[2048];
+static br_tid_t peer_tid;
+static volatile int dns_queries;
+
+static bool dns_name_is(const uint8_t *q, const char *label1, const char *label2)
+{
+    size_t l1 = 0;
+    while (label1[l1] != '\0') {
+        l1++;
+    }
+    size_t l2 = 0;
+    while (label2[l2] != '\0') {
+        l2++;
+    }
+    if (q[0] != l1 || q[1 + l1] != l2 || q[2 + l1 + l2] != 0) {
+        return false;
+    }
+    for (size_t i = 0; i < l1; i++) {
+        if (q[1 + i] != (uint8_t)label1[i]) {
+            return false;
+        }
+    }
+    for (size_t i = 0; i < l2; i++) {
+        if (q[2 + l1 + i] != (uint8_t)label2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void answer_dns(uint8_t *f, int n)
+{
+    uint8_t *dns = f + 42;
+    size_t   qlen = 0;
+    while (dns[12 + qlen] != 0) {
+        qlen += (size_t)dns[12 + qlen] + 1;
+    }
+    qlen += 1;
+
+    size_t question_end = 12 + qlen + 4;
+    bool   known = dns_name_is(dns + 12, "bedrock", "test");
+
+    dns_queries++;
+
+    dns[2] = 0x81;
+    dns[3] = known ? 0x80 : 0x83;
+    dns[6] = 0;
+    dns[7] = known ? 1 : 0;
+    dns[8] = dns[9] = dns[10] = dns[11] = 0;
+
+    size_t dns_len = question_end;
+    if (known) {
+        uint8_t *a = dns + question_end;
+        a[0] = 0xC0; a[1] = 0x0C;
+        a[2] = 0; a[3] = 1;
+        a[4] = 0; a[5] = 1;
+        a[6] = 0; a[7] = 0; a[8] = 0; a[9] = 60;
+        a[10] = 0; a[11] = 4;
+        a[12] = 192; a[13] = 168; a[14] = 7; a[15] = 50;
+        dns_len += 16;
+    }
+
+    for (int i = 0; i < 6; i++) {
+        f[i] = local_mac[i];
+        f[6 + i] = peer_mac[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        uint8_t t = f[26 + i];
+        f[26 + i] = f[30 + i];
+        f[30 + i] = t;
+    }
+    uint8_t p0 = f[34], p1 = f[35];
+    f[34] = f[36]; f[35] = f[37];
+    f[36] = p0; f[37] = p1;
+
+    size_t ip_len = 20 + 8 + dns_len;
+    f[16] = (uint8_t)(ip_len >> 8); f[17] = (uint8_t)ip_len;
+    f[24] = 0; f[25] = 0;
+    uint16_t c = checksum(f + 14, 20);
+    f[24] = (uint8_t)(c >> 8); f[25] = (uint8_t)c;
+
+    size_t udp_len = 8 + dns_len;
+    f[38] = (uint8_t)(udp_len >> 8); f[39] = (uint8_t)udp_len;
+    f[40] = 0; f[41] = 0;
+
+    (void)n;
+    br_netif_mock_inject(&mock, f, 42 + dns_len);
+}
 
 static void peer_task(void *arg)
 {
@@ -321,6 +408,12 @@ static void peer_task(void *arg)
         int n = br_netif_mock_take(&mock, f, sizeof(f));
         if (n < 42) {
             br_sleep_ms(2);
+            continue;
+        }
+
+        if (f[12] == 0x08 && f[13] == 0x00 && f[23] == 17 && f[36] == 0 && f[37] == 53 &&
+            f[30] == 192 && f[31] == 168 && f[32] == 7 && f[33] == 1) {
+            answer_dns(f, n);
             continue;
         }
 
@@ -354,8 +447,7 @@ static void run_ping_tests(void)
 {
     br_uart_puts("Test 6: Ping\n");
 
-    br_tid_t tid;
-    br_task_create(&tid, "peer", peer_task, NULL, 1, stack_peer, sizeof(stack_peer));
+    br_task_create(&peer_tid, "peer", peer_task, NULL, 1, stack_peer, sizeof(stack_peer));
 
     uint32_t rtt = 0;
     print_result(br_net_ping(BR_IP4(127, 0, 0, 1), BR_MSEC(500), &rtt) == BR_OK,
@@ -367,7 +459,55 @@ static void run_ping_tests(void)
     print_result(br_net_ping(BR_IP4(192, 168, 7, 99), BR_MSEC(300), &rtt) == BR_ERR_TIMEOUT,
                  "Test 6c: ping of a silent address times out");
 
-    br_task_suspend(tid);
+}
+
+static void run_dns_tests(void)
+{
+    br_uart_puts("Test 8: DNS\n");
+
+    print_result(br_net_dns() == 0, "Test 8a: no DNS server before one is set");
+
+    br_net_set_dns(PEER_IP);
+    print_result(br_net_dns() == PEER_IP, "Test 8b: set the DNS server");
+
+    uint32_t ip = 0;
+    print_result(br_net_resolve("bedrock.test", &ip) == BR_OK && ip == BR_IP4(192, 168, 7, 50) &&
+                 dns_queries == 1,
+                 "Test 8c: resolve a name through the interface");
+
+    ip = 0;
+    print_result(br_net_resolve("bedrock.test", &ip) == BR_OK && ip == BR_IP4(192, 168, 7, 50) &&
+                 dns_queries == 1,
+                 "Test 8d: a second lookup comes from the cache");
+
+    print_result(br_net_resolve("10.1.2.3", &ip) == BR_OK && ip == BR_IP4(10, 1, 2, 3) &&
+                 dns_queries == 1,
+                 "Test 8e: a dotted address needs no query");
+
+    print_result(br_net_resolve("nosuch.test", &ip) == BR_ERR_NOENT && dns_queries == 2,
+                 "Test 8f: an unknown name is reported");
+
+    char longname[80];
+    for (int i = 0; i < 79; i++) {
+        longname[i] = 'a';
+    }
+    longname[79] = '\0';
+    print_result(br_net_resolve(NULL, &ip) == BR_ERR_INVALID && br_net_resolve("", &ip) == BR_ERR_INVALID &&
+                 br_net_resolve(longname, &ip) == BR_ERR_INVALID &&
+                 br_net_resolve("a.test", NULL) == BR_ERR_INVALID,
+                 "Test 8g: bad arguments are rejected");
+
+    char found[] = "nslookup bedrock.test";
+    char missing[] = "nslookup nosuch.test";
+    char usage[] = "nslookup";
+    print_result(br_shell_execute(found) == 0 && br_shell_execute(missing) == -1 &&
+                 br_shell_execute(usage) == -1,
+                 "Test 8h: nslookup");
+}
+
+static void stop_peer(void)
+{
+    br_task_suspend(peer_tid);
 }
 
 static void run_shell_tests(void)
@@ -409,6 +549,8 @@ static void supervisor_task(void *arg)
     run_wire_tests();
     run_ping_tests();
     run_shell_tests();
+    run_dns_tests();
+    stop_peer();
 
     br_uart_puts("\n=== All Tests Complete ===\n");
 

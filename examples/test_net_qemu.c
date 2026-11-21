@@ -37,6 +37,8 @@ static void run_tests(void)
     }
     print_result(found, "Test 1d: the lease is 10.0.2.15 with gateway 10.0.2.2");
 
+    print_result(br_net_dns() == BR_IP4(10, 0, 2, 3), "Test 1h: DHCP provides the DNS server");
+
     uint32_t rtt = 0;
     print_result(br_net_ping(BR_IP4(10, 0, 2, 2), BR_SEC(3), &rtt) == BR_OK && rtt > 0,
                  "Test 1e: ping the gateway");
