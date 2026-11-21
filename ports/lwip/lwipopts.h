@@ -13,7 +13,16 @@
 #define LWIP_NETCONN_SEM_PER_THREAD     0
 
 #define LWIP_IPV4                       1
-#define LWIP_IPV6                       0
+#define LWIP_IPV6                       1
+#define LWIP_IPV6_MLD                   0
+#define LWIP_IPV6_FRAG                  0
+#define LWIP_IPV6_REASS                 0
+#define LWIP_IPV6_DUP_DETECT_ATTEMPTS   1
+#define LWIP_ND6_NUM_NEIGHBORS          4
+#define LWIP_ND6_NUM_DESTINATIONS       4
+#define LWIP_ND6_NUM_PREFIXES           2
+#define LWIP_ND6_NUM_ROUTERS            2
+#define MEMP_NUM_ND6_QUEUE              4
 #define LWIP_ARP                        1
 #define LWIP_ETHERNET                   1
 #define LWIP_ICMP                       1

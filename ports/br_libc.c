@@ -83,3 +83,22 @@ int strcmp(const char *a, const char *b)
     }
     return (unsigned char)*a - (unsigned char)*b;
 }
+
+int atoi(const char *s)
+{
+    int sign = 1;
+    int v = 0;
+
+    while (*s == ' ' || *s == '\t') {
+        s++;
+    }
+    if (*s == '-' || *s == '+') {
+        sign = *s == '-' ? -1 : 1;
+        s++;
+    }
+    while (*s >= '0' && *s <= '9') {
+        v = v * 10 + (*s - '0');
+        s++;
+    }
+    return sign * v;
+}

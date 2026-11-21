@@ -2113,6 +2113,38 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  lwip_ip6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  lwip_ip6_addr.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  lwip_ip6_frag.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  lwip_icmp6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  lwip_inet6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  lwip_nd6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  lwip_mld6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  lwip_ethip6.o:
+    cmds:
+      - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   lwip_api_lib.o:
     cmds:
       - "${CC} ${CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -2166,7 +2198,7 @@ targets:
       - "${CC} ${CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
 
   liblwip.a:
-    deps: [lwip_init.o, lwip_def.o, lwip_dns.o, lwip_inet_chksum.o, lwip_ip.o, lwip_mem.o, lwip_memp.o, lwip_netif.o, lwip_pbuf.o, lwip_raw.o, lwip_stats.o, lwip_sys.o, lwip_tcp.o, lwip_tcp_in.o, lwip_tcp_out.o, lwip_timeouts.o, lwip_udp.o, lwip_acd.o, lwip_autoip.o, lwip_dhcp.o, lwip_etharp.o, lwip_icmp.o, lwip_igmp.o, lwip_ip4_frag.o, lwip_ip4.o, lwip_ip4_addr.o, lwip_api_lib.o, lwip_api_msg.o, lwip_err.o, lwip_if_api.o, lwip_netbuf.o, lwip_netdb.o, lwip_netifapi.o, lwip_tcpip.o, lwip_ethernet.o, sys_arch.o, br_net.o, br_net_sock.o, br_shell_net.o]
+    deps: [lwip_init.o, lwip_def.o, lwip_dns.o, lwip_inet_chksum.o, lwip_ip.o, lwip_mem.o, lwip_memp.o, lwip_netif.o, lwip_pbuf.o, lwip_raw.o, lwip_stats.o, lwip_sys.o, lwip_tcp.o, lwip_tcp_in.o, lwip_tcp_out.o, lwip_timeouts.o, lwip_udp.o, lwip_acd.o, lwip_autoip.o, lwip_dhcp.o, lwip_etharp.o, lwip_icmp.o, lwip_igmp.o, lwip_ip4_frag.o, lwip_ip4.o, lwip_ip4_addr.o, lwip_ip6.o, lwip_ip6_addr.o, lwip_ip6_frag.o, lwip_icmp6.o, lwip_inet6.o, lwip_nd6.o, lwip_mld6.o, lwip_ethip6.o, lwip_api_lib.o, lwip_api_msg.o, lwip_err.o, lwip_if_api.o, lwip_netbuf.o, lwip_netdb.o, lwip_netifapi.o, lwip_tcpip.o, lwip_ethernet.o, sys_arch.o, br_net.o, br_net_sock.o, br_shell_net.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -2274,6 +2306,38 @@ targets:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  host-lwip_ip6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  host-lwip_ip6_addr.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  host-lwip_ip6_frag.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  host-lwip_icmp6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  host-lwip_inet6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  host-lwip_nd6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  host-lwip_mld6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  host-lwip_ethip6.o:
+    cmds:
+      - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   host-lwip_api_lib.o:
     cmds:
       - "${HOST_CC} ${HOST_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -2327,7 +2391,7 @@ targets:
       - "${HOST_CC} ${HOST_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
 
   liblwip_host.a:
-    deps: [host-lwip_init.o, host-lwip_def.o, host-lwip_dns.o, host-lwip_inet_chksum.o, host-lwip_ip.o, host-lwip_mem.o, host-lwip_memp.o, host-lwip_netif.o, host-lwip_pbuf.o, host-lwip_raw.o, host-lwip_stats.o, host-lwip_sys.o, host-lwip_tcp.o, host-lwip_tcp_in.o, host-lwip_tcp_out.o, host-lwip_timeouts.o, host-lwip_udp.o, host-lwip_acd.o, host-lwip_autoip.o, host-lwip_dhcp.o, host-lwip_etharp.o, host-lwip_icmp.o, host-lwip_igmp.o, host-lwip_ip4_frag.o, host-lwip_ip4.o, host-lwip_ip4_addr.o, host-lwip_api_lib.o, host-lwip_api_msg.o, host-lwip_err.o, host-lwip_if_api.o, host-lwip_netbuf.o, host-lwip_netdb.o, host-lwip_netifapi.o, host-lwip_tcpip.o, host-lwip_ethernet.o, host-sys_arch.o, host-br_net.o, host-br_net_sock.o, host-br_shell_net.o]
+    deps: [host-lwip_init.o, host-lwip_def.o, host-lwip_dns.o, host-lwip_inet_chksum.o, host-lwip_ip.o, host-lwip_mem.o, host-lwip_memp.o, host-lwip_netif.o, host-lwip_pbuf.o, host-lwip_raw.o, host-lwip_stats.o, host-lwip_sys.o, host-lwip_tcp.o, host-lwip_tcp_in.o, host-lwip_tcp_out.o, host-lwip_timeouts.o, host-lwip_udp.o, host-lwip_acd.o, host-lwip_autoip.o, host-lwip_dhcp.o, host-lwip_etharp.o, host-lwip_icmp.o, host-lwip_igmp.o, host-lwip_ip4_frag.o, host-lwip_ip4.o, host-lwip_ip4_addr.o, host-lwip_ip6.o, host-lwip_ip6_addr.o, host-lwip_ip6_frag.o, host-lwip_icmp6.o, host-lwip_inet6.o, host-lwip_nd6.o, host-lwip_mld6.o, host-lwip_ethip6.o, host-lwip_api_lib.o, host-lwip_api_msg.o, host-lwip_err.o, host-lwip_if_api.o, host-lwip_netbuf.o, host-lwip_netdb.o, host-lwip_netifapi.o, host-lwip_tcpip.o, host-lwip_ethernet.o, host-sys_arch.o, host-br_net.o, host-br_net_sock.o, host-br_shell_net.o]
     cmds:
       - "ar rcs ${@} ${^}"
 
@@ -2435,6 +2499,38 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  riscv32-lwip_ip6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  riscv32-lwip_ip6_addr.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  riscv32-lwip_ip6_frag.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  riscv32-lwip_icmp6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  riscv32-lwip_inet6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  riscv32-lwip_nd6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  riscv32-lwip_mld6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  riscv32-lwip_ethip6.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   riscv32-lwip_api_lib.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -2488,7 +2584,7 @@ targets:
       - "${RV_CC} ${RV_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
 
   liblwip_riscv32.a:
-    deps: [riscv32-lwip_init.o, riscv32-lwip_def.o, riscv32-lwip_dns.o, riscv32-lwip_inet_chksum.o, riscv32-lwip_ip.o, riscv32-lwip_mem.o, riscv32-lwip_memp.o, riscv32-lwip_netif.o, riscv32-lwip_pbuf.o, riscv32-lwip_raw.o, riscv32-lwip_stats.o, riscv32-lwip_sys.o, riscv32-lwip_tcp.o, riscv32-lwip_tcp_in.o, riscv32-lwip_tcp_out.o, riscv32-lwip_timeouts.o, riscv32-lwip_udp.o, riscv32-lwip_acd.o, riscv32-lwip_autoip.o, riscv32-lwip_dhcp.o, riscv32-lwip_etharp.o, riscv32-lwip_icmp.o, riscv32-lwip_igmp.o, riscv32-lwip_ip4_frag.o, riscv32-lwip_ip4.o, riscv32-lwip_ip4_addr.o, riscv32-lwip_api_lib.o, riscv32-lwip_api_msg.o, riscv32-lwip_err.o, riscv32-lwip_if_api.o, riscv32-lwip_netbuf.o, riscv32-lwip_netdb.o, riscv32-lwip_netifapi.o, riscv32-lwip_tcpip.o, riscv32-lwip_ethernet.o, riscv32-sys_arch.o, riscv32-br_net.o, riscv32-br_net_sock.o, riscv32-br_shell_net.o]
+    deps: [riscv32-lwip_init.o, riscv32-lwip_def.o, riscv32-lwip_dns.o, riscv32-lwip_inet_chksum.o, riscv32-lwip_ip.o, riscv32-lwip_mem.o, riscv32-lwip_memp.o, riscv32-lwip_netif.o, riscv32-lwip_pbuf.o, riscv32-lwip_raw.o, riscv32-lwip_stats.o, riscv32-lwip_sys.o, riscv32-lwip_tcp.o, riscv32-lwip_tcp_in.o, riscv32-lwip_tcp_out.o, riscv32-lwip_timeouts.o, riscv32-lwip_udp.o, riscv32-lwip_acd.o, riscv32-lwip_autoip.o, riscv32-lwip_dhcp.o, riscv32-lwip_etharp.o, riscv32-lwip_icmp.o, riscv32-lwip_igmp.o, riscv32-lwip_ip4_frag.o, riscv32-lwip_ip4.o, riscv32-lwip_ip4_addr.o, riscv32-lwip_ip6.o, riscv32-lwip_ip6_addr.o, riscv32-lwip_ip6_frag.o, riscv32-lwip_icmp6.o, riscv32-lwip_inet6.o, riscv32-lwip_nd6.o, riscv32-lwip_mld6.o, riscv32-lwip_ethip6.o, riscv32-lwip_api_lib.o, riscv32-lwip_api_msg.o, riscv32-lwip_err.o, riscv32-lwip_if_api.o, riscv32-lwip_netbuf.o, riscv32-lwip_netdb.o, riscv32-lwip_netifapi.o, riscv32-lwip_tcpip.o, riscv32-lwip_ethernet.o, riscv32-sys_arch.o, riscv32-br_net.o, riscv32-br_net_sock.o, riscv32-br_shell_net.o]
     cmds:
       - "${RV_AR} rcs ${@} ${^}"
 
@@ -2596,6 +2692,38 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  rp2040-lwip_ip6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  rp2040-lwip_ip6_addr.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  rp2040-lwip_ip6_frag.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  rp2040-lwip_icmp6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  rp2040-lwip_inet6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  rp2040-lwip_nd6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  rp2040-lwip_mld6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  rp2040-lwip_ethip6.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   rp2040-lwip_api_lib.o:
     cmds:
       - "${CC} ${M0_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -2649,7 +2777,7 @@ targets:
       - "${CC} ${M0_CFLAGS} -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/br_shell_net.c -o ${@}"
 
   liblwip_rp2040.a:
-    deps: [rp2040-lwip_init.o, rp2040-lwip_def.o, rp2040-lwip_dns.o, rp2040-lwip_inet_chksum.o, rp2040-lwip_ip.o, rp2040-lwip_mem.o, rp2040-lwip_memp.o, rp2040-lwip_netif.o, rp2040-lwip_pbuf.o, rp2040-lwip_raw.o, rp2040-lwip_stats.o, rp2040-lwip_sys.o, rp2040-lwip_tcp.o, rp2040-lwip_tcp_in.o, rp2040-lwip_tcp_out.o, rp2040-lwip_timeouts.o, rp2040-lwip_udp.o, rp2040-lwip_acd.o, rp2040-lwip_autoip.o, rp2040-lwip_dhcp.o, rp2040-lwip_etharp.o, rp2040-lwip_icmp.o, rp2040-lwip_igmp.o, rp2040-lwip_ip4_frag.o, rp2040-lwip_ip4.o, rp2040-lwip_ip4_addr.o, rp2040-lwip_api_lib.o, rp2040-lwip_api_msg.o, rp2040-lwip_err.o, rp2040-lwip_if_api.o, rp2040-lwip_netbuf.o, rp2040-lwip_netdb.o, rp2040-lwip_netifapi.o, rp2040-lwip_tcpip.o, rp2040-lwip_ethernet.o, rp2040-sys_arch.o, rp2040-br_net.o, rp2040-br_net_sock.o, rp2040-br_shell_net.o]
+    deps: [rp2040-lwip_init.o, rp2040-lwip_def.o, rp2040-lwip_dns.o, rp2040-lwip_inet_chksum.o, rp2040-lwip_ip.o, rp2040-lwip_mem.o, rp2040-lwip_memp.o, rp2040-lwip_netif.o, rp2040-lwip_pbuf.o, rp2040-lwip_raw.o, rp2040-lwip_stats.o, rp2040-lwip_sys.o, rp2040-lwip_tcp.o, rp2040-lwip_tcp_in.o, rp2040-lwip_tcp_out.o, rp2040-lwip_timeouts.o, rp2040-lwip_udp.o, rp2040-lwip_acd.o, rp2040-lwip_autoip.o, rp2040-lwip_dhcp.o, rp2040-lwip_etharp.o, rp2040-lwip_icmp.o, rp2040-lwip_igmp.o, rp2040-lwip_ip4_frag.o, rp2040-lwip_ip4.o, rp2040-lwip_ip4_addr.o, rp2040-lwip_ip6.o, rp2040-lwip_ip6_addr.o, rp2040-lwip_ip6_frag.o, rp2040-lwip_icmp6.o, rp2040-lwip_inet6.o, rp2040-lwip_nd6.o, rp2040-lwip_mld6.o, rp2040-lwip_ethip6.o, rp2040-lwip_api_lib.o, rp2040-lwip_api_msg.o, rp2040-lwip_err.o, rp2040-lwip_if_api.o, rp2040-lwip_netbuf.o, rp2040-lwip_netdb.o, rp2040-lwip_netifapi.o, rp2040-lwip_tcpip.o, rp2040-lwip_ethernet.o, rp2040-sys_arch.o, rp2040-br_net.o, rp2040-br_net_sock.o, rp2040-br_shell_net.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
@@ -2988,6 +3116,38 @@ targets:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  x86-lwip_ip6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  x86-lwip_ip6_addr.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  x86-lwip_ip6_frag.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  x86-lwip_icmp6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  x86-lwip_inet6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  x86-lwip_nd6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  x86-lwip_mld6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  x86-lwip_ethip6.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   x86-lwip_api_lib.o:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -3148,7 +3308,7 @@ targets:
       - "ar rcs ${@} ${^}"
 
   liblwip_x86.a:
-    deps: [x86-lwip_init.o, x86-lwip_def.o, x86-lwip_dns.o, x86-lwip_inet_chksum.o, x86-lwip_ip.o, x86-lwip_mem.o, x86-lwip_memp.o, x86-lwip_netif.o, x86-lwip_pbuf.o, x86-lwip_raw.o, x86-lwip_stats.o, x86-lwip_sys.o, x86-lwip_tcp.o, x86-lwip_tcp_in.o, x86-lwip_tcp_out.o, x86-lwip_timeouts.o, x86-lwip_udp.o, x86-lwip_acd.o, x86-lwip_autoip.o, x86-lwip_dhcp.o, x86-lwip_etharp.o, x86-lwip_icmp.o, x86-lwip_igmp.o, x86-lwip_ip4_frag.o, x86-lwip_ip4.o, x86-lwip_ip4_addr.o, x86-lwip_api_lib.o, x86-lwip_api_msg.o, x86-lwip_err.o, x86-lwip_if_api.o, x86-lwip_netbuf.o, x86-lwip_netdb.o, x86-lwip_netifapi.o, x86-lwip_tcpip.o, x86-lwip_ethernet.o, x86-sys_arch.o, x86-br_net.o, x86-br_net_sock.o, x86-br_shell_net.o]
+    deps: [x86-lwip_init.o, x86-lwip_def.o, x86-lwip_dns.o, x86-lwip_inet_chksum.o, x86-lwip_ip.o, x86-lwip_mem.o, x86-lwip_memp.o, x86-lwip_netif.o, x86-lwip_pbuf.o, x86-lwip_raw.o, x86-lwip_stats.o, x86-lwip_sys.o, x86-lwip_tcp.o, x86-lwip_tcp_in.o, x86-lwip_tcp_out.o, x86-lwip_timeouts.o, x86-lwip_udp.o, x86-lwip_acd.o, x86-lwip_autoip.o, x86-lwip_dhcp.o, x86-lwip_etharp.o, x86-lwip_icmp.o, x86-lwip_igmp.o, x86-lwip_ip4_frag.o, x86-lwip_ip4.o, x86-lwip_ip4_addr.o, x86-lwip_ip6.o, x86-lwip_ip6_addr.o, x86-lwip_ip6_frag.o, x86-lwip_icmp6.o, x86-lwip_inet6.o, x86-lwip_nd6.o, x86-lwip_mld6.o, x86-lwip_ethip6.o, x86-lwip_api_lib.o, x86-lwip_api_msg.o, x86-lwip_err.o, x86-lwip_if_api.o, x86-lwip_netbuf.o, x86-lwip_netdb.o, x86-lwip_netifapi.o, x86-lwip_tcpip.o, x86-lwip_ethernet.o, x86-sys_arch.o, x86-br_net.o, x86-br_net_sock.o, x86-br_shell_net.o]
     cmds:
       - "ar rcs ${@} ${^}"
 
@@ -3547,6 +3707,38 @@ targets:
     cmds:
       - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv4/ip4_addr.c -o ${@}"
 
+  f4-lwip_ip6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6.c -o ${@}"
+
+  f4-lwip_ip6_addr.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_addr.c -o ${@}"
+
+  f4-lwip_ip6_frag.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ip6_frag.c -o ${@}"
+
+  f4-lwip_icmp6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/icmp6.c -o ${@}"
+
+  f4-lwip_inet6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/inet6.c -o ${@}"
+
+  f4-lwip_nd6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/nd6.c -o ${@}"
+
+  f4-lwip_mld6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/mld6.c -o ${@}"
+
+  f4-lwip_ethip6.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/core/ipv6/ethip6.c -o ${@}"
+
   f4-lwip_api_lib.o:
     cmds:
       - "${CC} ${F4_CFLAGS} -std=gnu11 -w -Iports/lwip -Iports/lwip/upstream/src/include ports/lwip/upstream/src/api/api_lib.c -o ${@}"
@@ -3707,7 +3899,7 @@ targets:
       - "${AR} rcs ${@} ${^}"
 
   liblwip_f4.a:
-    deps: [f4-lwip_init.o, f4-lwip_def.o, f4-lwip_dns.o, f4-lwip_inet_chksum.o, f4-lwip_ip.o, f4-lwip_mem.o, f4-lwip_memp.o, f4-lwip_netif.o, f4-lwip_pbuf.o, f4-lwip_raw.o, f4-lwip_stats.o, f4-lwip_sys.o, f4-lwip_tcp.o, f4-lwip_tcp_in.o, f4-lwip_tcp_out.o, f4-lwip_timeouts.o, f4-lwip_udp.o, f4-lwip_acd.o, f4-lwip_autoip.o, f4-lwip_dhcp.o, f4-lwip_etharp.o, f4-lwip_icmp.o, f4-lwip_igmp.o, f4-lwip_ip4_frag.o, f4-lwip_ip4.o, f4-lwip_ip4_addr.o, f4-lwip_api_lib.o, f4-lwip_api_msg.o, f4-lwip_err.o, f4-lwip_if_api.o, f4-lwip_netbuf.o, f4-lwip_netdb.o, f4-lwip_netifapi.o, f4-lwip_tcpip.o, f4-lwip_ethernet.o, f4-sys_arch.o, f4-br_net.o, f4-br_net_sock.o, f4-br_shell_net.o]
+    deps: [f4-lwip_init.o, f4-lwip_def.o, f4-lwip_dns.o, f4-lwip_inet_chksum.o, f4-lwip_ip.o, f4-lwip_mem.o, f4-lwip_memp.o, f4-lwip_netif.o, f4-lwip_pbuf.o, f4-lwip_raw.o, f4-lwip_stats.o, f4-lwip_sys.o, f4-lwip_tcp.o, f4-lwip_tcp_in.o, f4-lwip_tcp_out.o, f4-lwip_timeouts.o, f4-lwip_udp.o, f4-lwip_acd.o, f4-lwip_autoip.o, f4-lwip_dhcp.o, f4-lwip_etharp.o, f4-lwip_icmp.o, f4-lwip_igmp.o, f4-lwip_ip4_frag.o, f4-lwip_ip4.o, f4-lwip_ip4_addr.o, f4-lwip_ip6.o, f4-lwip_ip6_addr.o, f4-lwip_ip6_frag.o, f4-lwip_icmp6.o, f4-lwip_inet6.o, f4-lwip_nd6.o, f4-lwip_mld6.o, f4-lwip_ethip6.o, f4-lwip_api_lib.o, f4-lwip_api_msg.o, f4-lwip_err.o, f4-lwip_if_api.o, f4-lwip_netbuf.o, f4-lwip_netdb.o, f4-lwip_netifapi.o, f4-lwip_tcpip.o, f4-lwip_ethernet.o, f4-sys_arch.o, f4-br_net.o, f4-br_net_sock.o, f4-br_shell_net.o]
     cmds:
       - "${AR} rcs ${@} ${^}"
 
