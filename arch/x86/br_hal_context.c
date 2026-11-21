@@ -13,13 +13,25 @@
 #define FRAME_ARG        14
 #define EFLAGS_IF        0x200U
 #define CODE_SELECTOR    0x08
+#define USER_CODE_SELECTOR  0x1B
+#define USER_DATA_SELECTOR  0x23
+#define FRAME_ESP        13
+#define FRAME_SS         14
+#define FRAME_USER_WORDS 15
 
-#define VECTOR_COUNT     49
+#define VECTOR_COUNT     51
+#define VECTOR_SYSCALL   0x80
+#define VECTOR_SYSRET    0x81
 
 extern void br_hal_timer_isr(void);
 extern void br_hal_external_isr(uint32_t irq);
 extern void br_uart_puts(const char *s);
 extern void br_uart_putc(char c);
+
+#if CONFIG_MPU
+extern void *br_hal_mpu_trap(uint32_t *frame, uint32_t vector, bool *handled);
+extern void  br_hal_mpu_switch(br_tcb_t *t);
+#endif
 
 static void **volatile switch_old_sp;
 static void **volatile switch_new_sp;
@@ -105,6 +117,8 @@ __asm__(
     "ISR_NOERR 46\n"
     "ISR_NOERR 47\n"
     "ISR_NOERR 48\n"
+    "ISR_NOERR 128\n"
+    "ISR_NOERR 129\n"
     ".globl br_hal_trap_return\n"
     ".align 16\n"
     "isr_common:\n"
@@ -139,7 +153,21 @@ void *br_hal_trap(uint32_t *sp)
 
     in_isr = true;
 
-    if (vector < VECTOR_IRQ_BASE) {
+#if CONFIG_MPU
+    if (vector == VECTOR_SYSCALL || vector == VECTOR_SYSRET || (sp[FRAME_CS] & 3U) == 3U ||
+        vector < VECTOR_IRQ_BASE) {
+        bool handled = false;
+        void *next = br_hal_mpu_trap(sp, vector, &handled);
+        if (handled) {
+            sp = next;
+            vector = 0xFFFFFFFFU;
+        }
+    }
+#endif
+
+    if (vector == 0xFFFFFFFFU) {
+        /* handled by the memory protection layer */
+    } else if (vector < VECTOR_IRQ_BASE) {
         br_uart_puts("\nCPU exception ");
         print_hex(vector);
         br_uart_puts(" error ");
@@ -168,6 +196,9 @@ void *br_hal_trap(uint32_t *sp)
     if (switch_pending) {
         switch_pending = false;
         *switch_old_sp = sp;
+#if CONFIG_MPU
+        br_hal_mpu_switch((br_tcb_t *)switch_new_sp);
+#endif
         sp = *switch_new_sp;
     }
 
@@ -212,6 +243,45 @@ void br_hal_context_switch(void **old_sp, void **new_sp)
     }
 }
 
+#if CONFIG_MPU
+
+extern br_tcb_t *br_sched_current(void);
+
+void *br_hal_stack_init_user(void *kstack_top, void *stack_top, br_task_entry_t entry, void *arg)
+{
+    uint32_t *usp = (uint32_t *)((uintptr_t)stack_top & ~0xFUL);
+    usp -= 2;
+    usp[0] = (uint32_t)(uintptr_t)task_exit_handler;
+    usp[1] = (uint32_t)(uintptr_t)arg;
+
+    uint32_t *sp = (uint32_t *)((uintptr_t)kstack_top & ~0xFUL);
+    sp -= FRAME_USER_WORDS;
+    for (int i = 0; i < FRAME_USER_WORDS; i++) {
+        sp[i] = 0;
+    }
+
+    sp[FRAME_EIP]    = (uint32_t)(uintptr_t)entry;
+    sp[FRAME_CS]     = USER_CODE_SELECTOR;
+    sp[FRAME_EFLAGS] = EFLAGS_IF | 0x2U;
+    sp[FRAME_ESP]    = (uint32_t)(uintptr_t)usp;
+    sp[FRAME_SS]     = USER_DATA_SELECTOR;
+    return sp;
+}
+
+void br_hal_start_first_task(void *sp)
+{
+    br_hal_mpu_switch(br_sched_current());
+
+    __asm volatile (
+        "movl %0, %%esp\n"
+        "jmp br_hal_trap_return\n"
+        :: "r" (sp)
+    );
+    __builtin_unreachable();
+}
+
+#else
+
 __attribute__((naked))
 void br_hal_start_first_task(void *sp)
 {
@@ -221,6 +291,8 @@ void br_hal_start_first_task(void *sp)
         "jmp br_hal_trap_return\n"
     );
 }
+
+#endif
 
 uint32_t br_hal_irq_disable(void)
 {

@@ -10,6 +10,7 @@ ENTRY(_start)
 SECTIONS
 {
     . = 1M;
+    _text_start = .;
 
     .multiboot :
     {
@@ -26,7 +27,8 @@ SECTIONS
     .rodata :
     {
         *(.rodata*)
-        . = ALIGN(16);
+        . = ALIGN(4096);
+        _code_end = .;
     }
 
     .data :
@@ -43,6 +45,16 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;
     }
+
+    .user_bss (NOLOAD) : ALIGN(4096)
+    {
+        _user_data_start = .;
+        *(.user_bss*)
+        . = _user_data_start + 4096;
+        _user_data_end = .;
+    }
+
+    ASSERT(. <= 4M, "the image must fit in the first 4 MiB")
 
     /DISCARD/ :
     {
