@@ -3906,6 +3906,14 @@ targets:
     cmds:
       - "${CC} ${CFLAGS} -DCONFIG_MPU=1 examples/test_mpu.c -o ${@}"
 
+  mpu-br_fs.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 lib/br_fs.c -o ${@}"
+
+  mpu-br_ramdisk.o:
+    cmds:
+      - "${CC} ${CFLAGS} -DCONFIG_MPU=1 lib/br_ramdisk.c -o ${@}"
+
   mpu-br_string.o:
     cmds:
       - "${CC} ${CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -3931,9 +3939,9 @@ targets:
       - "${CC} ${CFLAGS} -DCONFIG_MPU=1 boards/qemu-cortex-m3/br_netif_enet.c -o ${@}"
 
   test_mpu.elf:
-    deps: [mpu-br_sched.o, mpu-br_time.o, mpu-br_task.o, mpu-br_ipc.o, mpu-br_panic.o, mpu-br_uart.o, mpu-br_device.o, mpu-br_user.o, mpu-br_usercall.o, mpu-br_hal_context.o, mpu-br_hal_timer.o, mpu-startup.o, mpu-br_hal_fault.o, mpu-br_hal_mpu.o, mpu-br_hal_uart.o, mpu-br_string.o, mpu-br_hal_gpio.o, mpu-br_hal_spi.o, mpu-br_hal_i2c.o, mpu-br_hal_pwm.o, mpu-br_netif_enet.o, mpu-board.o, mpu-test_mpu.o]
+    deps: [mpu-br_sched.o, mpu-br_time.o, mpu-br_task.o, mpu-br_ipc.o, mpu-br_panic.o, mpu-br_uart.o, mpu-br_device.o, mpu-br_user.o, mpu-br_usercall.o, mpu-br_hal_context.o, mpu-br_hal_timer.o, mpu-startup.o, mpu-br_hal_fault.o, mpu-br_hal_mpu.o, mpu-br_hal_uart.o, mpu-br_string.o, mpu-br_fs.o, mpu-br_ramdisk.o, mpu-br_hal_gpio.o, mpu-br_hal_spi.o, mpu-br_hal_i2c.o, mpu-br_hal_pwm.o, mpu-br_netif_enet.o, mpu-board.o, mpu-test_mpu.o]
     cmds:
-      - "${CC} ${LDFLAGS} mpu-test_mpu.o mpu-board.o mpu-br_sched.o mpu-br_time.o mpu-br_task.o mpu-br_ipc.o mpu-br_panic.o mpu-br_uart.o mpu-br_device.o mpu-br_user.o mpu-br_usercall.o mpu-br_hal_context.o mpu-br_hal_timer.o mpu-startup.o mpu-br_hal_fault.o mpu-br_hal_mpu.o mpu-br_hal_uart.o mpu-br_string.o mpu-br_hal_gpio.o mpu-br_hal_spi.o mpu-br_hal_i2c.o mpu-br_hal_pwm.o mpu-br_netif_enet.o -lgcc -o ${@}"
+      - "${CC} ${LDFLAGS} mpu-test_mpu.o mpu-board.o mpu-br_sched.o mpu-br_time.o mpu-br_task.o mpu-br_ipc.o mpu-br_panic.o mpu-br_uart.o mpu-br_device.o mpu-br_user.o mpu-br_usercall.o mpu-br_hal_context.o mpu-br_hal_timer.o mpu-startup.o mpu-br_hal_fault.o mpu-br_hal_mpu.o mpu-br_hal_uart.o mpu-br_string.o mpu-br_fs.o mpu-br_ramdisk.o mpu-br_hal_gpio.o mpu-br_hal_spi.o mpu-br_hal_i2c.o mpu-br_hal_pwm.o mpu-br_netif_enet.o -lgcc -o ${@}"
 
   test-mpu:
     deps: [test_mpu.elf]
@@ -4008,6 +4016,14 @@ targets:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 boards/qemu-riscv32-virt/board.c -o ${@}"
 
+  mpurv-br_fs.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 lib/br_fs.c -o ${@}"
+
+  mpurv-br_ramdisk.o:
+    cmds:
+      - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 lib/br_ramdisk.c -o ${@}"
+
   mpurv-br_string.o:
     cmds:
       - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -4017,9 +4033,9 @@ targets:
       - "${RV_CC} ${RV_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x10000000UL -DTEST_CODE_ADDR=0x80000100UL examples/test_mpu.c -o ${@}"
 
   test_mpu_riscv32.elf:
-    deps: [mpurv-br_sched.o, mpurv-br_time.o, mpurv-br_task.o, mpurv-br_ipc.o, mpurv-br_panic.o, mpurv-br_uart.o, mpurv-br_device.o, mpurv-br_user.o, mpurv-br_usercall.o, mpurv-br_hal_context.o, mpurv-br_hal_timer.o, mpurv-startup.o, mpurv-br_hal_mpu.o, mpurv-br_hal_uart.o, mpurv-br_hal_periph.o, mpurv-br_netif_virtio.o, mpurv-br_string.o, mpurv-board.o, mpurv-test_mpu.o]
+    deps: [mpurv-br_sched.o, mpurv-br_time.o, mpurv-br_task.o, mpurv-br_ipc.o, mpurv-br_panic.o, mpurv-br_uart.o, mpurv-br_device.o, mpurv-br_user.o, mpurv-br_usercall.o, mpurv-br_hal_context.o, mpurv-br_hal_timer.o, mpurv-startup.o, mpurv-br_hal_mpu.o, mpurv-br_hal_uart.o, mpurv-br_hal_periph.o, mpurv-br_netif_virtio.o, mpurv-br_string.o, mpurv-br_fs.o, mpurv-br_ramdisk.o, mpurv-board.o, mpurv-test_mpu.o]
     cmds:
-      - "${RV_CC} ${RV_LDFLAGS} mpurv-test_mpu.o mpurv-board.o mpurv-br_sched.o mpurv-br_time.o mpurv-br_task.o mpurv-br_ipc.o mpurv-br_panic.o mpurv-br_uart.o mpurv-br_device.o mpurv-br_user.o mpurv-br_usercall.o mpurv-br_hal_context.o mpurv-br_hal_timer.o mpurv-startup.o mpurv-br_hal_mpu.o mpurv-br_hal_uart.o mpurv-br_hal_periph.o mpurv-br_netif_virtio.o mpurv-br_string.o -lgcc -o ${@}"
+      - "${RV_CC} ${RV_LDFLAGS} mpurv-test_mpu.o mpurv-board.o mpurv-br_sched.o mpurv-br_time.o mpurv-br_task.o mpurv-br_ipc.o mpurv-br_panic.o mpurv-br_uart.o mpurv-br_device.o mpurv-br_user.o mpurv-br_usercall.o mpurv-br_hal_context.o mpurv-br_hal_timer.o mpurv-startup.o mpurv-br_hal_mpu.o mpurv-br_hal_uart.o mpurv-br_hal_periph.o mpurv-br_netif_virtio.o mpurv-br_string.o mpurv-br_fs.o mpurv-br_ramdisk.o -lgcc -o ${@}"
 
   test-mpu-riscv32:
     deps: [test_mpu_riscv32.elf]
@@ -4106,6 +4122,14 @@ targets:
     cmds:
       - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 boards/rpi-pico/br_hal_netif.c -o ${@}"
 
+  mpurp-br_fs.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 lib/br_fs.c -o ${@}"
+
+  mpurp-br_ramdisk.o:
+    cmds:
+      - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 lib/br_ramdisk.c -o ${@}"
+
   mpurp-br_string.o:
     cmds:
       - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -4115,9 +4139,9 @@ targets:
       - "${CC} ${M0_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x40034000UL -DTEST_CODE_ADDR=0x10000100UL examples/test_mpu.c -o ${@}"
 
   test_mpu_rp2040.elf:
-    deps: [mpurp-br_sched.o, mpurp-br_time.o, mpurp-br_task.o, mpurp-br_ipc.o, mpurp-br_panic.o, mpurp-br_uart.o, mpurp-br_device.o, mpurp-br_user.o, mpurp-br_usercall.o, mpurp-br_hal_context.o, mpurp-br_hal_timer.o, mpurp-startup.o, mpurp-br_hal_fault.o, mpurp-br_hal_mpu.o, mpurp-br_hal_uart.o, mpurp-br_hal_gpio.o, mpurp-br_hal_spi.o, mpurp-br_hal_i2c.o, mpurp-br_hal_pwm.o, mpurp-br_hal_netif.o, mpurp-br_string.o, mpurp-test_mpu.o, rp2040-boot2_crc.o]
+    deps: [mpurp-br_sched.o, mpurp-br_time.o, mpurp-br_task.o, mpurp-br_ipc.o, mpurp-br_panic.o, mpurp-br_uart.o, mpurp-br_device.o, mpurp-br_user.o, mpurp-br_usercall.o, mpurp-br_hal_context.o, mpurp-br_hal_timer.o, mpurp-startup.o, mpurp-br_hal_fault.o, mpurp-br_hal_mpu.o, mpurp-br_hal_uart.o, mpurp-br_hal_gpio.o, mpurp-br_hal_spi.o, mpurp-br_hal_i2c.o, mpurp-br_hal_pwm.o, mpurp-br_hal_netif.o, mpurp-br_string.o, mpurp-br_fs.o, mpurp-br_ramdisk.o, mpurp-test_mpu.o, rp2040-boot2_crc.o]
     cmds:
-      - "${CC} ${M0_LDFLAGS} mpurp-test_mpu.o rp2040-boot2_crc.o mpurp-br_sched.o mpurp-br_time.o mpurp-br_task.o mpurp-br_ipc.o mpurp-br_panic.o mpurp-br_uart.o mpurp-br_device.o mpurp-br_user.o mpurp-br_usercall.o mpurp-br_hal_context.o mpurp-br_hal_timer.o mpurp-startup.o mpurp-br_hal_fault.o mpurp-br_hal_mpu.o mpurp-br_hal_uart.o mpurp-br_hal_gpio.o mpurp-br_hal_spi.o mpurp-br_hal_i2c.o mpurp-br_hal_pwm.o mpurp-br_hal_netif.o mpurp-br_string.o -lgcc -o ${@}"
+      - "${CC} ${M0_LDFLAGS} mpurp-test_mpu.o rp2040-boot2_crc.o mpurp-br_sched.o mpurp-br_time.o mpurp-br_task.o mpurp-br_ipc.o mpurp-br_panic.o mpurp-br_uart.o mpurp-br_device.o mpurp-br_user.o mpurp-br_usercall.o mpurp-br_hal_context.o mpurp-br_hal_timer.o mpurp-startup.o mpurp-br_hal_fault.o mpurp-br_hal_mpu.o mpurp-br_hal_uart.o mpurp-br_hal_gpio.o mpurp-br_hal_spi.o mpurp-br_hal_i2c.o mpurp-br_hal_pwm.o mpurp-br_hal_netif.o mpurp-br_string.o mpurp-br_fs.o mpurp-br_ramdisk.o -lgcc -o ${@}"
 
   mpux-br_sched.o:
     cmds:
@@ -4183,6 +4207,14 @@ targets:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 boards/qemu-x86/board.c -o ${@}"
 
+  mpux-br_fs.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 lib/br_fs.c -o ${@}"
+
+  mpux-br_ramdisk.o:
+    cmds:
+      - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 lib/br_ramdisk.c -o ${@}"
+
   mpux-br_string.o:
     cmds:
       - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -4192,9 +4224,9 @@ targets:
       - "${HOST_CC} ${X86_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x200000UL -DTEST_CODE_ADDR=0x100000UL -DTEST_STACK_SIZE=4096 -DTEST_GRANT_BASE=0x300000UL examples/test_mpu.c -o ${@}"
 
   test_mpu_x86.elf:
-    deps: [mpux-br_sched.o, mpux-br_time.o, mpux-br_task.o, mpux-br_ipc.o, mpux-br_panic.o, mpux-br_uart.o, mpux-br_device.o, mpux-br_user.o, mpux-br_usercall.o, mpux-br_hal_context.o, mpux-br_hal_timer.o, mpux-startup.o, mpux-br_hal_mpu.o, mpux-br_hal_uart.o, mpux-br_hal_periph.o, mpux-br_string.o, mpux-board.o, mpux-test_mpu.o]
+    deps: [mpux-br_sched.o, mpux-br_time.o, mpux-br_task.o, mpux-br_ipc.o, mpux-br_panic.o, mpux-br_uart.o, mpux-br_device.o, mpux-br_user.o, mpux-br_usercall.o, mpux-br_hal_context.o, mpux-br_hal_timer.o, mpux-startup.o, mpux-br_hal_mpu.o, mpux-br_hal_uart.o, mpux-br_hal_periph.o, mpux-br_string.o, mpux-br_fs.o, mpux-br_ramdisk.o, mpux-board.o, mpux-test_mpu.o]
     cmds:
-      - "${HOST_CC} ${X86_LDFLAGS} mpux-test_mpu.o mpux-board.o mpux-br_sched.o mpux-br_time.o mpux-br_task.o mpux-br_ipc.o mpux-br_panic.o mpux-br_uart.o mpux-br_device.o mpux-br_user.o mpux-br_usercall.o mpux-br_hal_context.o mpux-br_hal_timer.o mpux-startup.o mpux-br_hal_mpu.o mpux-br_hal_uart.o mpux-br_hal_periph.o mpux-br_string.o -lgcc -o ${@}"
+      - "${HOST_CC} ${X86_LDFLAGS} mpux-test_mpu.o mpux-board.o mpux-br_sched.o mpux-br_time.o mpux-br_task.o mpux-br_ipc.o mpux-br_panic.o mpux-br_uart.o mpux-br_device.o mpux-br_user.o mpux-br_usercall.o mpux-br_hal_context.o mpux-br_hal_timer.o mpux-startup.o mpux-br_hal_mpu.o mpux-br_hal_uart.o mpux-br_hal_periph.o mpux-br_string.o mpux-br_fs.o mpux-br_ramdisk.o -lgcc -o ${@}"
 
   test_audit.o:
     cmds:
@@ -4354,6 +4386,14 @@ targets:
     cmds:
       - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 boards/stm32f4-discovery/board.c -o ${@}"
 
+  mpuf4-br_fs.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 lib/br_fs.c -o ${@}"
+
+  mpuf4-br_ramdisk.o:
+    cmds:
+      - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 lib/br_ramdisk.c -o ${@}"
+
   mpuf4-br_string.o:
     cmds:
       - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 -fno-tree-loop-distribute-patterns lib/br_string.c -o ${@}"
@@ -4363,9 +4403,9 @@ targets:
       - "${CC} ${F4_CFLAGS} -DCONFIG_MPU=1 -DTEST_UART_BASE=0x40011000UL -DTEST_CODE_ADDR=0x08000100UL examples/test_mpu.c -o ${@}"
 
   test_mpu_f4.elf:
-    deps: [mpuf4-br_sched.o, mpuf4-br_time.o, mpuf4-br_task.o, mpuf4-br_ipc.o, mpuf4-br_panic.o, mpuf4-br_uart.o, mpuf4-br_device.o, mpuf4-br_user.o, mpuf4-br_usercall.o, mpuf4-br_hal_context.o, mpuf4-br_hal_timer.o, mpuf4-startup.o, mpuf4-br_hal_fault.o, mpuf4-br_hal_mpu.o, mpuf4-br_hal_uart.o, mpuf4-br_hal_gpio.o, mpuf4-br_hal_spi.o, mpuf4-br_hal_i2c.o, mpuf4-br_hal_pwm.o, mpuf4-br_hal_netif.o, mpuf4-br_string.o, mpuf4-board.o, mpuf4-test_mpu.o]
+    deps: [mpuf4-br_sched.o, mpuf4-br_time.o, mpuf4-br_task.o, mpuf4-br_ipc.o, mpuf4-br_panic.o, mpuf4-br_uart.o, mpuf4-br_device.o, mpuf4-br_user.o, mpuf4-br_usercall.o, mpuf4-br_hal_context.o, mpuf4-br_hal_timer.o, mpuf4-startup.o, mpuf4-br_hal_fault.o, mpuf4-br_hal_mpu.o, mpuf4-br_hal_uart.o, mpuf4-br_hal_gpio.o, mpuf4-br_hal_spi.o, mpuf4-br_hal_i2c.o, mpuf4-br_hal_pwm.o, mpuf4-br_hal_netif.o, mpuf4-br_string.o, mpuf4-br_fs.o, mpuf4-br_ramdisk.o, mpuf4-board.o, mpuf4-test_mpu.o]
     cmds:
-      - "${CC} ${F4_LDFLAGS} mpuf4-test_mpu.o mpuf4-board.o mpuf4-br_sched.o mpuf4-br_time.o mpuf4-br_task.o mpuf4-br_ipc.o mpuf4-br_panic.o mpuf4-br_uart.o mpuf4-br_device.o mpuf4-br_user.o mpuf4-br_usercall.o mpuf4-br_hal_context.o mpuf4-br_hal_timer.o mpuf4-startup.o mpuf4-br_hal_fault.o mpuf4-br_hal_mpu.o mpuf4-br_hal_uart.o mpuf4-br_hal_gpio.o mpuf4-br_hal_spi.o mpuf4-br_hal_i2c.o mpuf4-br_hal_pwm.o mpuf4-br_hal_netif.o mpuf4-br_string.o -lgcc -o ${@}"
+      - "${CC} ${F4_LDFLAGS} mpuf4-test_mpu.o mpuf4-board.o mpuf4-br_sched.o mpuf4-br_time.o mpuf4-br_task.o mpuf4-br_ipc.o mpuf4-br_panic.o mpuf4-br_uart.o mpuf4-br_device.o mpuf4-br_user.o mpuf4-br_usercall.o mpuf4-br_hal_context.o mpuf4-br_hal_timer.o mpuf4-startup.o mpuf4-br_hal_fault.o mpuf4-br_hal_mpu.o mpuf4-br_hal_uart.o mpuf4-br_hal_gpio.o mpuf4-br_hal_spi.o mpuf4-br_hal_i2c.o mpuf4-br_hal_pwm.o mpuf4-br_hal_netif.o mpuf4-br_string.o mpuf4-br_fs.o mpuf4-br_ramdisk.o -lgcc -o ${@}"
 
   clean:
     cmds:
