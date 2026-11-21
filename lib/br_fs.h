@@ -43,4 +43,8 @@ br_err_t br_fs_stat(const char *name, size_t *size);
 br_err_t br_fs_list(uint32_t index, br_fs_info_t *info);
 br_err_t br_fs_usage(br_fs_usage_t *usage);
 
+#if CONFIG_MPU
+br_err_t br_fs_enable_user_calls(void);
+#endif
+
 #endif

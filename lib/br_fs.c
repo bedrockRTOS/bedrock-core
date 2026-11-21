@@ -1211,3 +1211,165 @@ br_err_t br_fs_readdir(const char *dir, uint32_t index, br_fs_info_t *out)
     br_mutex_unlock(&fs.lock);
     return err;
 }
+
+#if CONFIG_MPU
+
+#include "bedrock/br_syscall.h"
+
+#define USER_PATH_MAX  (CONFIG_FS_NAME_MAX * 2)
+
+static struct {
+    br_tid_t owner;
+    bool     used;
+} fd_owner[CONFIG_FS_MAX_OPEN];
+
+static bool fd_ok(const br_tcb_t *t, uint32_t fd)
+{
+    return fd < CONFIG_FS_MAX_OPEN && fd_owner[fd].used && fd_owner[fd].owner == t->id;
+}
+
+static bool out_ok(const br_tcb_t *t, uint32_t ptr, size_t size)
+{
+    return ptr % 4 == 0 && br_user_access_ok(t, (const void *)ptr, size, BR_MEM_W);
+}
+
+static int32_t fs_path(const br_tcb_t *t, uint32_t ptr, char *out)
+{
+    int n = br_user_copy_string(t, (const void *)ptr, out, USER_PATH_MAX);
+    return n < 0 ? n : BR_OK;
+}
+
+static uint32_t fs_handler(br_tcb_t *t, const uint32_t *a)
+{
+    char    path[USER_PATH_MAX];
+    int32_t r = BR_ERR_INVALID;
+
+    switch (a[0]) {
+    case BR_SYS_FS_OPEN:
+        r = fs_path(t, a[1], path);
+        if (r == BR_OK) {
+            r = br_fs_open(path, (uint8_t)a[2]);
+            if (r >= 0 && r < CONFIG_FS_MAX_OPEN) {
+                fd_owner[r].owner = t->id;
+                fd_owner[r].used  = true;
+            }
+        }
+        break;
+
+    case BR_SYS_FS_READ:
+    case BR_SYS_FS_WRITE: {
+        bool rd = a[0] == BR_SYS_FS_READ;
+        if (!fd_ok(t, a[1])) {
+            r = BR_ERR_INVALID;
+        } else if (!br_user_access_ok(t, (const void *)a[2], a[3], rd ? BR_MEM_W : BR_MEM_R)) {
+            r = BR_ERR_PERM;
+        } else {
+            r = rd ? br_fs_read((int)a[1], (void *)a[2], a[3])
+                   : br_fs_write((int)a[1], (const void *)a[2], a[3]);
+        }
+        break;
+    }
+
+    case BR_SYS_FS_SEEK:
+        r = fd_ok(t, a[1]) ? br_fs_seek((int)a[1], a[2]) : BR_ERR_INVALID;
+        break;
+
+    case BR_SYS_FS_CLOSE:
+        if (fd_ok(t, a[1])) {
+            r = br_fs_close((int)a[1]);
+            fd_owner[a[1]].used = false;
+        }
+        break;
+
+    case BR_SYS_FS_REMOVE:
+    case BR_SYS_FS_MKDIR:
+    case BR_SYS_FS_RMDIR:
+        r = fs_path(t, a[1], path);
+        if (r == BR_OK) {
+            r = a[0] == BR_SYS_FS_REMOVE ? br_fs_remove(path)
+              : a[0] == BR_SYS_FS_MKDIR  ? br_fs_mkdir(path) : br_fs_rmdir(path);
+        }
+        break;
+
+    case BR_SYS_FS_STAT: {
+        size_t size = 0;
+        r = fs_path(t, a[1], path);
+        if (r == BR_OK && !out_ok(t, a[2], sizeof(uint32_t))) {
+            r = BR_ERR_PERM;
+        } else if (r == BR_OK) {
+            r = br_fs_stat(path, &size);
+            if (r == BR_OK) {
+                *(uint32_t *)a[2] = (uint32_t)size;
+            }
+        }
+        break;
+    }
+
+    case BR_SYS_FS_INFO: {
+        br_fs_info_t info;
+        r = fs_path(t, a[1], path);
+        if (r == BR_OK && !out_ok(t, a[2], sizeof(info))) {
+            r = BR_ERR_PERM;
+        } else if (r == BR_OK) {
+            r = br_fs_info(path, &info);
+            if (r == BR_OK) {
+                *(br_fs_info_t *)a[2] = info;
+            }
+        }
+        break;
+    }
+
+    case BR_SYS_FS_READDIR: {
+        br_fs_info_t info;
+        r = fs_path(t, a[1], path);
+        if (r == BR_OK && !out_ok(t, a[3], sizeof(info))) {
+            r = BR_ERR_PERM;
+        } else if (r == BR_OK) {
+            r = br_fs_readdir(path, a[2], &info);
+            if (r == BR_OK) {
+                *(br_fs_info_t *)a[3] = info;
+            }
+        }
+        break;
+    }
+
+    case BR_SYS_FS_USAGE: {
+        br_fs_usage_t u;
+        if (!out_ok(t, a[1], sizeof(u))) {
+            r = BR_ERR_PERM;
+        } else {
+            r = br_fs_usage(&u);
+            if (r == BR_OK) {
+                *(br_fs_usage_t *)a[1] = u;
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    return (uint32_t)r;
+}
+
+static void fs_release(br_tid_t tid)
+{
+    for (int i = 0; i < CONFIG_FS_MAX_OPEN; i++) {
+        if (fd_owner[i].used && fd_owner[i].owner == tid) {
+            br_fs_close(i);
+            fd_owner[i].used = false;
+        }
+    }
+}
+
+br_err_t br_fs_enable_user_calls(void)
+{
+    br_err_t err = br_syscall_register(BR_SYS_FS_OPEN, 12, fs_handler);
+    if (err == BR_OK) {
+        err = br_user_release_register(fs_release);
+    }
+    return err;
+}
+
+#endif
