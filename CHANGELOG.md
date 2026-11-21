@@ -39,6 +39,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/). Versions fol
 - lwIP 2.2.1 as an optional port in `ports/lwip/` with socket-style API `br_net_*` (UDP, TCP, loopback, DHCP, ping), the system layer on kernel primitives and the shell commands `ifconfig` and `ping`. See `docs/en/networking.md`.
 - Example `examples/net_udp_echo.c`, `chorus run-udp-echo` and `chorus run-udp-echo-riscv32`.
 - `test_net` on the host, LM3S6965, RISC-V and RP2040, `test_net_qemu` on LM3S6965 and RISC-V.
+- x86 port in `arch/x86` and `boards/qemu-x86`: 32-bit protected mode, multiboot, PIT one-shot alarms over a TSC clock, 16550 UART, context switch on interrupt exit. `chorus x86` and `chorus run-x86`. The peripheral HAL returns `BR_ERR_INVALID` and there is no network interface.
+- STM32F4-Discovery board in `boards/stm32f4-discovery` (STM32F407, Cortex-M4 without the FPU, 16 MHz internal clock): USART1 console, GPIO, SPI1, I2C1, TIM2 PWM and TIM3 capture. `chorus stm32f4`, `chorus run-stm32f4`, `chorus defconfig-stm32f4`.
+- Porting guide section on adding a board.
 
 ### Changed
 - The QEMU `virt` UART driver moved from `arch/riscv32/` to `boards/qemu-riscv32-virt/`.

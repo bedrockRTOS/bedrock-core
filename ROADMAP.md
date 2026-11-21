@@ -99,19 +99,19 @@
 
 ## 0.7.0: More architectures and boards
 
-- [ ] Third architecture, one of:
-  - AVR (ATmega328P, Arduino Uno): 8-bit
-  - x86 (i386 or x86_64 bare metal)
-  - Xtensa (ESP32)
-- [ ] At least one real board per architecture:
-  - ARM: STM32F4-Discovery or similar
-  - RISC-V: Sipeed Longan Nano (GD32VF103) or similar
-- [ ] Board packages in `boards/<board>/`:
+- [x] Third architecture: x86 (32-bit protected mode, multiboot, QEMU)
+- [ ] AVR (ATmega328P, Arduino Uno): 8-bit
+- [ ] Xtensa (ESP32)
+- [x] ARM: STM32F4-Discovery (Cortex-M4) in QEMU and Renode
+- [ ] RISC-V: Sipeed Longan Nano (GD32VF103), no emulator model exists
+- [ ] x86 on real hardware: APIC, ACPI, PCI
+- [ ] STM32F4: PLL clock setup, FPU, check on a real board
+- [x] Board packages in `boards/<board>/`:
   - Linker script
   - Clock and pin setup
   - `br_hal_board_init()`
-- [ ] Run all examples and tests on the new targets
-- [ ] Porting guide section on adding a board
+- [x] Run all examples and tests on the new targets
+- [x] Porting guide section on adding a board
 
 ## 0.8.0: Memory protection
 

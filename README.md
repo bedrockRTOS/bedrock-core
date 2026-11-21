@@ -5,14 +5,15 @@
 
 ## About
 
-bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. It is for microcontroller firmware. Supported targets: ARM Cortex-M3 (QEMU LM3S6965, STM32F103C8 Blue Pill), ARM Cortex-M0+ (RP2040, Raspberry Pi Pico) and RISC-V RV32 (QEMU `virt`).
+bedrock[RTOS] is a tickless nanokernel RTOS in C11 with no dynamic allocation. It is for microcontroller firmware. Supported targets: ARM Cortex-M3 (QEMU LM3S6965, STM32F103C8 Blue Pill), ARM Cortex-M4 (STM32F4-Discovery), ARM Cortex-M0+ (RP2040, Raspberry Pi Pico), RISC-V RV32 (QEMU `virt`) and 32-bit x86 (QEMU).
 
 ## Dependencies
 
-- `arm-none-eabi-gcc` for Cortex-M3, STM32F103 and RP2040
+- `arm-none-eabi-gcc` for Cortex-M3, Cortex-M4, STM32F103 and RP2040
 - `riscv64-elf-gcc` for RISC-V
 - [chorus](https://github.com/z3nnix/chorus) 1.1.0 or newer
-- `qemu-system-arm` and `qemu-system-riscv32` to run on QEMU
+- `gcc` with 32-bit support (`gcc-multilib` on Debian and Ubuntu) for x86
+- `qemu-system-arm`, `qemu-system-riscv32` and `qemu-system-i386` to run on QEMU
 - `gcc` for host tests and for the RP2040 image tools
 - [Renode](https://renode.io/) 1.16.1, only to run STM32F103 and RP2040 tests without hardware, plus [Renode_RP2040](https://github.com/matgla/Renode_RP2040) for RP2040
 - [kconfig-tools](https://github.com/bedrockRTOS/kconfig-tools) and `zig`, only for Kconfig
@@ -68,6 +69,22 @@ chorus stm32f103
 
 The result is `bedrock_example_stm32f103.bin`, `bedrock_example_stm32f103.elf` and the `test_*_stm32f103.elf` tests.
 
+STM32F4-Discovery:
+
+```bash
+chorus stm32f4
+```
+
+The result is `bedrock_example_f4.elf` and the `test_*_f4.elf` tests.
+
+x86:
+
+```bash
+chorus x86
+```
+
+The result is `bedrock_example_x86.elf` and the `test_*_x86.elf` tests, 32-bit multiboot images.
+
 Clean:
 
 ```bash
@@ -86,6 +103,18 @@ RISC-V (`virt`):
 
 ```bash
 chorus run-riscv32
+```
+
+x86:
+
+```bash
+chorus run-x86
+```
+
+STM32F4 (Olimex STM32-H405, the same SoC family as the Discovery):
+
+```bash
+chorus run-stm32f4
 ```
 
 Exit QEMU with `Ctrl+A`, then `X`.
@@ -112,6 +141,19 @@ renode --disable-gui --console -e '$fw=@'"$PWD"'/test_scheduler_stm32f103.elf; $
 cat /tmp/uart.txt
 ```
 
+## Running on STM32F4-Discovery
+
+Flash `bedrock_example_f4.elf` at `0x08000000`, for example with `st-flash write` after `arm-none-eabi-objcopy -O binary`. The core runs from the 16 MHz internal oscillator, the PLL is not set up. Output goes to USART1: TX on PA9, RX on PA10, 115200 8N1. The port has been tested in QEMU and Renode only, not on hardware yet.
+
+QEMU (`olimex-stm32-h405`) runs the example and every test except `test_pwm`, which stalls in the QEMU timer model during the capture case. CI runs all tests in Renode.
+
+In Renode:
+
+```bash
+renode --disable-gui --console -e '$fw=@'"$PWD"'/test_scheduler_f4.elf; $out=@/tmp/uart.txt; include @'"$PWD"'/boards/stm32f4-discovery/renode.resc; emulation RunFor "2"; quit'
+cat /tmp/uart.txt
+```
+
 ## Tests
 
 The tests run on Linux x86-64 with a mock HAL:
@@ -125,7 +167,7 @@ The binaries are `test_task_delete_host`, `test_scheduler_host`, `test_semaphore
 
 `test_uart_rx` and `test_shell` wait for the line `bedrock` on the console: `printf 'bedrock\n' | ./test_uart_rx_host`, the same pipe into `qemu-system-*`, or `sysbus.uart0 WriteLine "bedrock"` (`sysbus.usart1` on STM32F103) in Renode after `emulation RunFor "0.5"`.
 
-The same tests under QEMU: `chorus test-scheduler`, `chorus test-semaphore` and so on for Cortex-M, `chorus test-scheduler-riscv32` and so on for RISC-V. RP2040 and STM32F103 tests run in Renode, see above.
+The same tests under QEMU: `chorus test-scheduler`, `chorus test-semaphore` and so on for Cortex-M, `chorus test-scheduler-riscv32` and so on for RISC-V. The x86 tests: `qemu-system-i386 -kernel test_scheduler_x86.elf -nographic`. RP2040, STM32F103 and STM32F4 tests run in Renode, see above.
 
 ## Configuration
 

@@ -171,9 +171,24 @@ On QEMU RISC-V `virt` the image is loaded straight into RAM at `0x80000000`, so 
 
 Add compile and link targets for the new architecture in `chorus.build`, an `ARCH_<NAME>` option to `Kconfig`, a `boards/<board_name>/defconfig`, and a job in `.github/workflows/ci.yml` that builds the port and runs the tests on QEMU.
 
+## Adding a Board
+
+A board is a directory `boards/<board_name>/` on top of an existing architecture. Nothing in `kernel/`, `lib/` or `drivers/` changes. `boards/stm32f4-discovery/` is a short example: an STM32F407 on the `arch/arm-cortex-m/` core.
+
+1. **Directory.** Copy the board closest to yours and rename it.
+2. **Linker script.** Flash and RAM regions with the real sizes, the sections from Step 7 and `_estack` at the top of RAM.
+3. **Clock and pins.** `board.c` defines `br_hal_board_init()`. Enable the clocks and the pins of the console UART there, then call `br_uart_init()`. If the clock tree is left at its reset state, say so in the file name or the docs, and set `BR_HAL_SYS_CLOCK_HZ` to the real core clock in the build flags. The SysTick and the UART divider depend on it.
+4. **UART.** `br_hal_uart.c` provides `br_uart_putc()`, `br_uart_puts()` and `br_uart_init()`, and passes received bytes to `br_uart_rx_push()` from an interrupt. On Cortex-M the handler is a function named `IRQ<n>_Handler`, which overrides the weak one in the startup file.
+5. **Peripheral HAL.** `br_hal_gpio.c`, `br_hal_spi.c`, `br_hal_i2c.c`, `br_hal_pwm.c` and `br_hal_netif.c`, see Steps 5b and 5c. A peripheral the chip does not have returns `BR_ERR_INVALID`. Keep the register definitions in one header (`stm32f4_regs.h`) so the pin muxing is in one place.
+6. **defconfig.** `boards/<board_name>/defconfig` with the core clock in `CONFIG_SYS_CLOCK_HZ`.
+7. **Build.** A set of flags and a target in `chorus.build`. If the CPU differs from an existing board, such as Cortex-M4 and Cortex-M3, the kernel and the arch objects are built again with the new `-mcpu`, so the board gets its own variant.
+8. **Tests.** The same `examples/test_*.c` must run unchanged. Add the board to the CI job of the emulator that can run it.
+
 ## Reference
 
 - `arch/arm-cortex-m/` and `boards/qemu-cortex-m3/`: QEMU LM3S6965 (Cortex-M3)
 - `arch/arm-cortex-m/` and `boards/stm32f103c8-bluepill/`: STM32F103C8 (Cortex-M3), board code in `board.c`
 - `arch/riscv32/` and `boards/qemu-riscv32-virt/`: QEMU `virt` (RV32IMAC, machine mode only)
 - `arch/arm-cortex-m0plus/` and `boards/rpi-pico/`: RP2040 (Cortex-M0+, ARMv6-M), with boot2 and UF2 tools
+- `arch/arm-cortex-m/` and `boards/stm32f4-discovery/`: STM32F407 (Cortex-M4 without the FPU)
+- `arch/x86/` and `boards/qemu-x86/`: 32-bit x86 in QEMU, started by the multiboot loader
